@@ -1,0 +1,10 @@
+<nav >
+    <a href="#">Hi {{request.user.first_name}}</a>
+    <a href="{% url 'users-profile' %}">View Profile</a>
+    <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-'primary'">
+        Logout
+    </button>
+</form>
+</nav>

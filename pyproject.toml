@@ -1,0 +1,17 @@
+[project]
+name = "gurukul"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "babel>=2.18.0",
+    "django>=6.0.6",
+    "django-phonenumber-field[phonenumbers]>=8.4.0",
+    "django-redis>=7.0.0",
+    "dotenv>=0.9.9",
+    "pillow>=12.2.0",
+    "psycopg2-binary>=2.9.12",
+    "redis>=8.0.0",
+    "social-auth-app-django>=5.9.0",
+]

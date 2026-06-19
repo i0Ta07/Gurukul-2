@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %} Login Page {% endblock title%}
+{% block content %}
+<div class="form-content my-3 p-3">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5">
+                <div class="card shadow-lg border-0 rounded-lg mt-0 mb-3">
+                    <div class="card-header justify-content-center">
+                        <h3 class="font-weight-light my-1 text-center">Sign In</h3>
+                    </div>
+                    {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div id="form_errors">
+                            {% for _, value in form.errors.items %}
+                            <strong>{{ value }}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="form-row">
+                                <div class="col-md-10 offset-md-1">
+                                    <div class="form-group">
+                                        <div class="d-flex justify-content-center">
+                                            <a href="{% url 'social:begin' 'github' %}"
+                                                class="btn btn-link btn-lg active btn-block"><i
+                                                    class="fa-brands fa-github fa-2xl"></i></a>
+                                            <a href="{% url 'social:begin' 'google-oauth2' %}"
+                                                class="btn btn-link btn-lg active btn-block"><i
+                                                    class="fa-brands fa-google fa-2xl"></i></i></a>
+                                        </div>
+                                        <hr>
+                                        <label class="small mb-1">{{ form.username.label }}</label>
+                                        {{ form.username }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-10 offset-md-1">
+                                    <div class="form-group">
+                                        <label class="small mb-1">{{ form.password.label }}</label>
+                                        {{ form.password }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-10 offset-md-1 mt-1">
+                                    <div class="form-group">
+                                        {{ form.remember_me }}
+                                        <label> Remember me</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-10 offset-md-1">
+                                    <div class="form-group mt-3 mb-1">
+                                        <button name="login" class="col-md-12 btn btn-dark" id="login">Sign in</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer text-center">
+                        <div class="small">
+                            <a href="{% url 'users-register' %}">Don't have an account yet? Go to signup</a><br>
+                            <a href="{% url 'reset-password' %}"><i>Forgot Password?</i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
