@@ -71,6 +71,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+SESSION_ENGINE = "apps.users.models"
+
 # Whenever a template is rendered with a request, a context is also returned. Imagine we are building an app where 
 # we have to include the same data in every view we create. It is hard and prone to error right. This is where context 
 # processors come in to play. context_processors contains a list of paths to callables which will return a dictionary to
@@ -214,7 +216,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # what is shown by browsers when we access those uploads like http://localhost/media/profile.png
 MEDIA_URL = '/media/'
 
-STATIC_URL = "/static/"
+STATIC_URL = "static/"
 
 # Global static directory. It is recommended to create app specific static dirs such as users/static/users/style.css
 STATICFILES_DIRS = [

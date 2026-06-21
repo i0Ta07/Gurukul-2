@@ -12,7 +12,7 @@ Home
     <button><a href="{% url 'users-dashboard' %}">Dashboard</a></button>
     {% else %}
     <button><a href="{% url 'login' %}">Go to Login Page</a></button>
-    <button><a href="{% url 'users-register' %}">Go to Register Page</a></button>
+    <button><a href="{% url 'register-email' %}">Go to Register Page</a></button>
     {% endif %}
 </div>
 {% endblock %}

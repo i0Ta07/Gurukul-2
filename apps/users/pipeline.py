@@ -14,7 +14,6 @@ def get_user_type(strategy, backend, details, user=None, **kwargs):
         # Details save the email,first_name, last_name etc. Therefore we have to return the user_type to details 
         # the create_user method in custom UserManager will create the user object using this details.
         details['user_type'] = user_type
-        details['is_verified'] = True # Google and github send both verified emails.
         return details
     
     context = {
@@ -24,4 +23,4 @@ def get_user_type(strategy, backend, details, user=None, **kwargs):
     }
     
     # Pause pipeline and render the form
-    return render(strategy.request,"users/select_user_type.html",context,)
+    return render(strategy.request,"users/register/select_user_type.html",context,)

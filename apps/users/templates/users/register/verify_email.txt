@@ -1,0 +1,15 @@
+{% autoescape off %}
+Hi,
+
+Thank you for registering your account with Gurukul! 
+
+To complete your registration and verify your email address, please open the following link in your browser:
+
+{{ protocol }}://{{ domain }}{% url 'complete-register-token' token=token %}"
+
+This link is valid for 5 minutes. If you did not attempt to register on our site, please ignore this email.
+
+Best regards,
+
+Team Gurukul
+{% endautoescape %}

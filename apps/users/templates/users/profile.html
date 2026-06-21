@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Profile Page{% endblock title %}
-{% block content %}
-    <div class="row my-3 p-3">
-        <h1>This is the profile page for {{request.user.first_name}}</h1>
-        <a href="{% url 'password-change' %}">Change Password</a>
-    </div>
-
-{% endblock content %}

@@ -3,6 +3,11 @@ from django.contrib.auth.models import AbstractUser,BaseUserManager
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
 import uuid,os
+from PIL import Image
+
+from django.contrib.sessions.backends.db import SessionStore as DBStore
+from django.contrib.sessions.base_session import AbstractBaseSession
+from django.db import models
 
 # AbstractUser's default manager expects a username. If you remove it, Django's createsuperuser can behave unexpectedly.
 # Create a custom manager
@@ -69,7 +74,7 @@ class User(AbstractUser):
 
     def user_directory_path(instance, filename):
         _, extension = os.path.splitext(filename)
-        return f"profile_photos/{uuid.uuid4()}.{extension.lower()}"
+        return f"profile_photos/{instance.id}/{uuid.uuid4()}{extension.lower()}"
 
     profile_photo = models.ImageField(
         # If the image is None show the default from static
@@ -78,14 +83,31 @@ class User(AbstractUser):
         blank=True
     )
     bio = models.CharField(max_length=100, blank=True)
-    is_verified = models.BooleanField(default=False)
-
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     objects = UserManager()
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.user_type})"
+    
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old_obj = User.objects.get(pk=self.pk)
+                # If a new file is being uploaded, delete the old file
+                if old_obj.profile_photo and self.profile_photo != old_obj.profile_photo:
+                    old_obj.profile_photo.delete(save=False)
+            except User.DoesNotExist:
+                pass
+                
+        super().save(*args, **kwargs)
+
+        if self.profile_photo:
+            img = Image.open(self.profile_photo.path)
+
+            if img.height > 100 or img.width > 100:
+                img.thumbnail((100, 100))
+                img.save(self.profile_photo.path)
 
 class Friendship(models.Model):
     class Status(models.TextChoices):
@@ -118,3 +140,30 @@ class Friendship(models.Model):
     def __str__(self):
         return f"{self.from_user} → {self.to_user} ({self.get_status_display()})"
 
+
+class CustomSession(AbstractBaseSession):
+    # Add a dedicated, indexed column for the user ID
+    user_id = models.IntegerField(null=True, db_index=True)
+
+    @classmethod
+    def get_session_store_class(cls):
+        return SessionStore
+
+
+class SessionStore(DBStore):
+    @classmethod
+    def get_model_class(cls):
+        return CustomSession
+
+    def create_model_instance(self, data):
+        """
+        Extract the user ID from the session data dictionary 
+        and save it to our custom database column.
+        """
+        obj = super().create_model_instance(data)
+        try:
+            user_id = int(data.get("_auth_user_id"))
+        except (ValueError, TypeError):
+            user_id = None
+        obj.user_id = user_id
+        return obj
