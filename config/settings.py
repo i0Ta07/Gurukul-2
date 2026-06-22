@@ -119,7 +119,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': "redis://127.0.0.1:6379",
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
@@ -193,6 +193,11 @@ PASSWORD_RESET_TIMEOUT = 3600  # Valid for 1 hour
 
 EMAIL_HOST_USER = os.getenv('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
+
+# Celery
+
+# Take the jobs from redis
+CELERY_BROKER_URL = "redis://127.0.0.1:6379"
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

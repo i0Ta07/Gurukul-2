@@ -1,5 +1,5 @@
 <nav >
-    <a href="#">Hi {{request.user.first_name}}</a>
+    <a href="{% url 'users-dashboard' %}">Go to Dashboard</a>
     <a href="{% url 'users-profile' %}">View Profile</a>
     <form method="post" action="{% url 'logout' %}">
     {% csrf_token %}

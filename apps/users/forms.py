@@ -51,6 +51,7 @@ class RegisterEmailForm(forms.Form):
         widget=forms.EmailInput(attrs={'class': 'form-control','placeholder':'john_doe@example.com'}),
     )
 
+
 class CompleteRegistrationForm(UserCreationForm):
     first_name = forms.CharField(
         max_length=30,
@@ -97,6 +98,7 @@ class CompleteRegistrationForm(UserCreationForm):
             'first_name', 'last_name','user_type',
             'password1', 'password2',
         ]
+
 
 class UpdateUserDetailsForm(forms.ModelForm):
     first_name = forms.CharField(
@@ -146,3 +148,5 @@ class UpdateUserDetailsForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name','last_name','email','user_type','phone_number','date_of_birth','profile_photo','bio']
+
+

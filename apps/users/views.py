@@ -4,11 +4,12 @@ from django.shortcuts import render,redirect
 from django.contrib import messages
 from django.views import View
 # Django reads your views.py file before it reads your urls.py file. It doesn't know your URL names yet. 
-# Inside a view if you put reverse('home'). It will try to find, but it cannot find it and throws an error. Hence use reverse_lazy in Class-Level Attribute.
+# Inside a view if you put reverse('home'). It will try to find, but it cannot find it and throws an error.
+#  Hence use reverse_lazy in Class-Level Attribute.
 
-# If you are indented inside a def, use reverse(). If you are writing a line directly under a class (not inside a method), use reverse_lazy(). Functions doesn't run as soon as website start.
-from django.urls import reverse, reverse_lazy
-from requests import delete
+# If you are indented inside a def, use reverse(). If you are writing a line directly under a class
+#  (not inside a method), use reverse_lazy(). Functions doesn't run as soon as website start.
+from django.urls import  reverse_lazy
 from .forms import (
     LoginForm,
     RegisterEmailForm,
@@ -25,10 +26,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 
 from django.contrib.sites.shortcuts import get_current_site
-from django.conf import settings
 import secrets
 
-from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from .models import User
 
@@ -48,8 +47,12 @@ from django.contrib.auth.views import (
     PasswordResetConfirmView,
     PasswordChangeView,
 )
-# Views seperate the design from backend. Also it is convention to create another folder of same app name inside templates
-# to specify the exact page. another home.html will be picked if that app is specified above users app, if we only did home.html
+
+from .tasks import send_email_task
+
+# Views seperate the design from backend. Also it is convention to create another folder of same app 
+# name inside templates to specify the exact page. another home.html will be picked if that app is 
+# specified above users app, if we only did home.html
 
 def home(request):
     return render(request, 'users/home.html')
@@ -59,6 +62,9 @@ def dashboard(request):
     return render(request,'users/dashboard.html')
 
 def send_email(request,email_template_name,html_email_template_name,subject,receiver,token):
+    """
+    Adds the send_email task to redis task queue.
+    """
     
     current_site = get_current_site(request)
     domain = current_site.domain
@@ -79,15 +85,8 @@ def send_email(request,email_template_name,html_email_template_name,subject,rece
         html_email_template_name,
         context=extra_email_context,
     )
-    msg = EmailMultiAlternatives(
-        subject=subject,
-        body=text_content,
-        from_email=settings.EMAIL_HOST_USER,
-        to=(receiver,),
-    )
-    msg.attach_alternative( html_content,"text/html")
-    sent = msg.send()
-    return sent
+
+    send_email_task.delay(subject,text_content,receiver,html_content)
 
 def get_register_token_key(token):
     return f'register:token:{token}'
@@ -122,24 +121,22 @@ class RegisterEmailView(View):
         # Generate token 
         token = get_token()
         # Send email
-        if send_email(
+        send_email(
             request=request,
             email_template_name="users/register/verify_email.txt",
             html_email_template_name="users/register/verify_email.html",
             subject="Verify your email address",
             receiver= email,
             token = token
-        ):
-            # Save token in Redis after sending the email.
-            value = {
-                'email': email,
-            }
-            key= get_register_token_key(token)
-            cache.set(key = key, value= value,timeout=300) # 5 minutes
+        )
+        # Save token in Redis after sending the email.
+        value = {
+            'email': email,
+        }
+        key= get_register_token_key(token)
+        cache.set(key = key, value= value,timeout=300) # 5 minutes
 
-            return create_message_and_redirect(request=request,message='Verification link has been sent. Kindly verify to proceed.',url='users-home',code='success')
-        else:
-            return create_message_and_redirect(request=request,message='Failed to send the verification link',url='users-home',code='error')
+        return create_message_and_redirect(request=request,message='Verification link will be sent to you shortly. Kindly verify it to proceed.',url='users-home',code='success')
 
     
     # Dispatch is traffic controller. Request goes to dispatch check if post -> call post; if get-> call get; earliest convenient hook in a Class based view
@@ -316,25 +313,20 @@ class UpdateProfile(LoginRequiredMixin,View):
         uidb64 = encode_user_id(user_id=request.user.id)
         signed_uid = sign_str(unsigned=uidb64, salt=old_email)
 
-        if send_email(
+        send_email(
             request=request,
             email_template_name="users/profile/change_email.txt",
             html_email_template_name="users/profile/change_email.html",
             subject="Verify Email Address",
             receiver=new_email,
             token=signed_uid,
-        ):
-            key = get_changeEmail_key(request.user.id)
-            cache.set(key=key, value={"new_email": new_email}, timeout=300)
-            messages.warning(
-                request,
-                "Profile updated. Email has been sent to verify your new email address.",
-            )
-        else:
-            messages.error(
-                request,
-                "Your profile was updated, but we couldn't send the email verification link. Your email address was not changed.",
-            )
+        )
+        key = get_changeEmail_key(request.user.id)
+        cache.set(key=key, value={"new_email": new_email}, timeout=300)
+        messages.warning(
+            request,
+            "Profile updated. Email has been sent to verify your new email address.",
+        )
         return redirect("users-dashboard")
 
 
