@@ -55,6 +55,8 @@ from .tasks import send_email_task
 # specified above users app, if we only did home.html
 
 def home(request):
+    if request.user.is_authenticated:
+        return redirect('users-dashboard')
     return render(request, 'users/home.html')
 
 @login_required 

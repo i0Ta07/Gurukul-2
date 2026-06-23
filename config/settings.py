@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'phonenumber_field',
     'apps.users.apps.UsersConfig',
+    'apps.orgs.apps.OrgsConfig',
     'social_django',
+    'treebeard',
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -98,6 +100,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+MAX_DEPTH = 5
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases

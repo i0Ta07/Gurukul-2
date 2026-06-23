@@ -29,12 +29,16 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("social/", include('social_django.urls', namespace="social")),
+
+    # Apps
     path("", include("apps.users.urls")),
+    path("org/", include("apps.orgs.urls")),
     
+    # Password
     path('reset-password/',ResetPasswordView.as_view(),name='reset-password'),
     
     # uidb64 = userid base 64 and password recovery token. Both were sent in the mail
-    path('password-reset-confirm/<uidb64>/<token>/',ResetPasswordConfirmView.as_view(), name='password-reset-confirm'),
+    path('password-reset-confirm/<str:uidb64>/<str:token>/',ResetPasswordConfirmView.as_view(), name='password-reset-confirm'),
     path('password-change/',ChangePasswordView.as_view(), name='password-change'),
 
     
