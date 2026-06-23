@@ -67,11 +67,6 @@ class User(AbstractUser):
         default=UserType.STUDENT,
     )
 
-    # If your Friend model already ensures both-way friendship on ACCEPTED — you're good. 
-    # means Bob-> alice means bob is a freind of alice and alice is a friend of bob
-    # solution: When query use Friendship.objects.filter(Q(from_user=user) | Q(to_user=user),status=Friendship.Status.ACCEPTED,)
-    friends = models.ManyToManyField('self', through='Friendship')
-
     def user_directory_path(instance, filename):
         _, extension = os.path.splitext(filename)
         return f"profile_photos/{instance.id}/{uuid.uuid4()}{extension.lower()}"
@@ -108,37 +103,6 @@ class User(AbstractUser):
             if img.height > 100 or img.width > 100:
                 img.thumbnail((100, 100))
                 img.save(self.profile_photo.path)
-
-class Friendship(models.Model):
-    class Status(models.TextChoices):
-        PENDING = 'P',_('Pending')
-        ACCEPTED = 'A',_('Accepted')
-        # If rejected we delete the relationship object if rejected
-
-    from_user = models.ForeignKey(User, related_name='sent_requests', related_query_name='sent_request',on_delete=models.CASCADE)
-    to_user = models.ForeignKey(User, related_name='received_requests',related_query_name='received_request', on_delete=models.CASCADE)
-    status = models.CharField(max_length=1, choices=Status, default=Status.PENDING)
-    created_at = models.DateTimeField(auto_now_add=True)
-        
-    class Meta:
-        ordering = ['-created_at']
-        # In views.py check both ['from_user', 'to_user'],['to_user','from_user] exists if yes then auto-accept, if already exists
-        # In views check if the user is not sending a freind request to himself.
-        # implement the "send friend request" with transaction.atomic()
-        constraints = [
-            models.UniqueConstraint(
-                fields=['from_user', 'to_user'],
-                name='unique_friend_req'
-            ),
-            models.CheckConstraint(
-                condition=~models.Q(from_user=models.F("to_user")),
-                name="prevent_self_req",
-            )
-        ]
-
-    # full_clean() calls clean() and full_clean() is called only when input come from model.form or forms.form or Django Admin
-    def __str__(self):
-        return f"{self.from_user} → {self.to_user} ({self.get_status_display()})"
 
 
 class CustomSession(AbstractBaseSession):
