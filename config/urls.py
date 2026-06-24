@@ -32,7 +32,7 @@ urlpatterns = [
 
     # Apps
     path("", include("apps.users.urls")),
-    path("org/", include("apps.orgs.urls")),
+    path("orgs/", include("apps.orgs.urls")),
     
     # Password
     path('reset-password/',ResetPasswordView.as_view(),name='reset-password'),

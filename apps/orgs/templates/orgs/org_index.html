@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}My orgs{% endblock %}
+
+{% block content %}
+
+<div class="d-col">
+{% for root in roots %}
+    <div class="fs-3">
+        {{ root.name }}
+        {% empty %}
+    </div>
+</div>
+{% endfor %}
+{% endblock content %}

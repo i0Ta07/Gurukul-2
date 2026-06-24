@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}{{ current_node.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">{{ current_node.name }}</h2>
+            {% if breadcrumbs %}
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    {% for node in breadcrumbs %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'org-detail' org_path=node.path %}">
+                            {{ node.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {{ current_node.name }}
+                    </li>
+                </ol>
+            </nav>
+            {% endif %}
+        </div>
+
+        <div>
+            <a href="#" class="btn btn-outline-secondary">
+                Edit / Move Organization
+            </a>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-4">
+
+        {% if can_add_org %}
+        <a href="#" class="btn btn-primary me-2">
+            + Create Organization
+        </a>
+        {% endif %}
+
+        {% if can_add_class %}
+        <a href="#" class="btn btn-success">
+            + Create Class
+        </a>
+        {% endif %}
+
+    </div>
+
+    <!-- Child Organizations -->
+    {% if show_orgs %}
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Organizations</h5>
+        </div>
+
+        <div class="list-group list-group-flush">
+            {% for org in child_orgs %}
+            <a href="{% url 'org-detail' org_path=org.path %}"
+                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+
+                <div>
+                    <strong>{{ org.name }}</strong>
+                </div>
+
+                <span class="text-muted">
+                    View →
+                </span>
+            </a>
+            {% empty %}
+            <div class="list-group-item text-muted">
+                No child organizations found.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Classes -->
+    {% if show_classes %}
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Classes</h5>
+        </div>
+
+        <div class="list-group list-group-flush">
+            {% for classroom in classes %}
+            <a href="{% url 'class-detail' classroom.id %}"
+                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+
+                <div>
+                    <strong>{{ classroom.name }}</strong>
+                </div>
+
+                <span class="text-muted">
+                    View →
+                </span>
+            </a>
+            {% empty %}
+            <div class="list-group-item text-muted">
+                No classes found.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
