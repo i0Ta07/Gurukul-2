@@ -80,20 +80,21 @@ class User(AbstractUser):
     bio = models.CharField(max_length=100, blank=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+    
+    # Override default UserManager, Quering DB, create_user() and createsuperuser() will be done through our custom manager
     objects = UserManager()
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.user_type})"
     
     def save(self, *args, **kwargs):
+        # we use self.pk to check if the object is created or modified. Modified objects 
+        # already have pk but created ones get thiers pk when saved in DB.
         if self.pk:
-            try:
-                old_obj = User.objects.get(pk=self.pk)
-                # If a new file is being uploaded, delete the old file
-                if old_obj.profile_photo and self.profile_photo != old_obj.profile_photo:
-                    old_obj.profile_photo.delete(save=False)
-            except User.DoesNotExist:
-                pass
+            old_obj = User.objects.get(pk=self.pk)
+            # If a new file is being uploaded, delete the old file
+            if old_obj.profile_photo and self.profile_photo != old_obj.profile_photo:
+                old_obj.profile_photo.delete(save=False)
                 
         super().save(*args, **kwargs)
 

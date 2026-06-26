@@ -1,5 +1,6 @@
 from typing import Literal
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from django.db import models
 from apps.users.models import User
@@ -90,9 +91,7 @@ class Class(models.Model):
             duplicate_classes  = duplicate_classes.exclude(pk= self.pk)
 
         if duplicate_classes.exists():
-            raise ValidationError({
-                "name": f"A class named '{self.name}' already exists within {self.org.name}."
-            })
+            raise ValidationError(f"A class named '{self.name}' already exists within {self.org.name}.")
     
     def save(self, *args, **kwargs):
         self.clean()
@@ -103,6 +102,11 @@ class Class(models.Model):
 
 
 class ClassMembership(models.Model):
+
+    class Status(models.TextChoices):
+        ACCEPTED = 'A',_('Accepted')
+        REVOKED = 'R',_('Revoked')
+        
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
@@ -117,6 +121,11 @@ class ClassMembership(models.Model):
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        choices=Status,
+        default=Status.ACCEPTED,
+        max_length=1
+    )
 
     # Prevents a user from joining the exact same class multiple times
 
@@ -125,21 +134,39 @@ class ClassMembership(models.Model):
         return f"{self.user.username} in {self.classroom.name}"
     
 
-def _validate_org_structure(ref_node: Organization, instance: Organization, position: Literal["sorted-child","sorted-sibling"] = "sorted-child"):
+def _validate_org_structure(ref_node: Organization, instance: Organization, position: Literal["child","sibling"] = "child"):
     """
     ref_node: when move ->  ref_node; when create: current_object
     instance: when move -> existing_node; when create: new_node
-    position: when move -> position w.r.t. to ref_node; when create: child or sibling w.r.t. to current object
-
+    position: when move -> position w.r.t. to ref_node; when create: only child w.r.t ref_node
+    Can be used with create and move orgs.
     """
-    
     
     data = _get_parent(ref_node=ref_node,position=position)
     target_depth = data['target_depth']
     parent_node = data['parent_node']
 
-    # --- RULE 1: Maximum Depth Limit (5) ---
+    # --- RULE 1: Maximum Depth Limit ---
     
+    _validate_depth(target_depth,instance)
+
+
+    # ---RULE 2: Classes at leaf nodes ---
+    
+    if parent_node and parent_node.classes.exists():
+        raise ValidationError(f'Organization and classes cannot be in same folder.')
+
+    # --- RULE 3: Scoped Sibling Uniqueness &  ---
+
+    _validateUniqueSiblings(parent_node,instance)
+
+# p1.add_sibling(pos = "sibling",p2)
+
+def _validate_depth(target_depth:int, instance:Organization):
+    """
+    Validate the depth of the instance, given it's expected depth i.e. target depth and instance itself.
+    Handle both create and move.
+    """
     # New Node Creation Validation 
     if not instance.pk:
         if target_depth > MAX_DEPTH:
@@ -156,12 +183,13 @@ def _validate_org_structure(ref_node: Organization, instance: Organization, posi
         if (target_depth + subtree_height) > MAX_DEPTH:
             raise ValidationError(f"Cannot move here. This branch is {subtree_height + 1} levels tall, which would push nested organizations past the {MAX_DEPTH}-level limit.")
 
-    # --- RULE 2: Scoped Sibling Uniqueness & Classes at leaf nodes ---
-
+def _validateUniqueSiblings(parent_node:Organization,instance:Organization):
+    """
+    Validate that siblings have unique name either during move or new node creation.
+    """
+    
     if parent_node:
         siblings = parent_node.get_children()
-        if parent_node.classes.exists():
-            raise ValidationError(f'Organization and classes cannot be in same folder.')
     else:
         siblings = Organization.get_root_nodes()
 
@@ -172,14 +200,10 @@ def _validate_org_structure(ref_node: Organization, instance: Organization, posi
     slug = instance.slug or slugify(instance.name)
 
     if siblings.filter(slug=slug).exists():
-        raise ValidationError({
-            "name": f"An organization with the name '{instance.name}' already exists at this exact level."
-        })
-
-# p1.add_sibling(pos = "sibling",p2)
+        raise ValidationError(f"An organization with the name '{instance.name}' already exists at this exact level.")
 
 
-def _get_parent(ref_node:Organization = None, position: Literal["sorted-child","sorted-sibling"] = "sorted-child") -> dict:
+def _get_parent(ref_node:Organization = None, position= "child") -> dict:
     """
     Move: ref_node = given in arg like node.move(ref_node= node1, pos="sorted-child")
     Create: ref_node = that invokes the method like node.add_sibling() 
@@ -188,7 +212,7 @@ def _get_parent(ref_node:Organization = None, position: Literal["sorted-child","
 
     # Calculate what the depth and parent will be based on the ref_node and position
     if ref_node:
-        if position == "sorted-child":
+        if position == "child":
             target_depth = ref_node.depth + 1
             parent_node = ref_node
         else:

@@ -65,7 +65,8 @@ def dashboard(request):
 
 def send_email(request,email_template_name,html_email_template_name,subject,receiver,token):
     """
-    Adds the send_email task to redis task queue.
+    Adds the send_email task to redis task queue for async compatibility. Celery worker takes the async task from the 
+     message broker queue i.e. Redis and finishes them. Function is used to send reset or register emails asynchronously.
     """
     
     current_site = get_current_site(request)
@@ -99,12 +100,15 @@ def get_token():
 def create_message_and_redirect(request, message: str, url: str, code: Literal['info', 'success', 'error', 'warning'] = 'error'):
     """Create the message and redirects to the given URL"""
     # Dynamically get the correct messages function based on the 'code' string
-    message_func = getattr(messages, code)
+    message_func = getattr(messages, code) # works as message.code
     message_func(request, message)
-    
     return redirect(url)
 
 class RegisterEmailView(View):
+    """
+    Two step verification for email. First we only a field for column then we send an email, User clicks the url
+    and redirected to register page to fill out the rest of the details. Email with secret token is sent to the user.
+    """
     form_class = RegisterEmailForm
     template_name = 'users/register/register_email.html'
 
@@ -136,12 +140,13 @@ class RegisterEmailView(View):
             'email': email,
         }
         key= get_register_token_key(token)
-        cache.set(key = key, value= value,timeout=300) # 5 minutes
+        cache.set(key = key, value= value,timeout=300) # TTL = 5 minutes
 
         return create_message_and_redirect(request=request,message='Verification link will be sent to you shortly. Kindly verify it to proceed.',url='users-home',code='success')
 
     
-    # Dispatch is traffic controller. Request goes to dispatch check if post -> call post; if get-> call get; earliest convenient hook in a Class based view
+    # Dispatch is traffic controller. Request goes to dispatch check if post -> call post; if get-> call get;
+    # earliest convenient hook in a Class based view
     def dispatch(self, request, *args, **kwargs):
         # will redirect to the dashboard page if a user tries to access the register page while logged in
         if request.user.is_authenticated:
@@ -151,6 +156,9 @@ class RegisterEmailView(View):
         return super(RegisterEmailView, self).dispatch(request, *args, **kwargs)    
 
 class CompleteRegistrationView(View):
+    """
+    When user clicks the register link.
+    """
     # class attributes of CompleteRegsitrationView Class; if URL -> use reverse_lazy
     form_class = CompleteRegistrationForm
     template_name = 'users/register/register_user.html'
@@ -159,17 +167,23 @@ class CompleteRegistrationView(View):
     }
     
     def get(self,request, *args, **kwargs):
+        """
+        GET request means user clicked the link within 5 minutes, so increase the TTL to 10 minutes 
+        """
         token = kwargs["token"]
         form = self.form_class(initial = self.initial)
-        # Increase the TTL to 5 minutes
+        # Increase the TTL to 10 minutes
         key = get_register_token_key(token)
-        if cache.touch(key,timeout=900):
+        if cache.touch(key,timeout=600):
             return render(request,self.template_name,{'form':form})
         else:
             messages.error(request,f'Invalid or expired link. Kindly register again')
             return redirect('register-email')
     
     def post(self,request,*args, **kwargs):
+        """
+        Handle register submission. Check if the cache is still in redis.
+        """
         form = self.form_class(request.POST)
         token = kwargs["token"]
         key = get_register_token_key(token)
@@ -181,6 +195,7 @@ class CompleteRegistrationView(View):
         if not value:
             return create_message_and_redirect(request=request,message=f'Session expired. Kindly register again',code='error',url='register-email')
 
+        # Get email from redis
         email = value['email']
         user = form.save(commit=False) # form.save; model.forms special fucntion to form attributes inside db for the selected model
         user.email = email
@@ -199,6 +214,7 @@ class CustomLoginView(LoginView):
     def form_valid(self, form):
         remember_me = form.cleaned_data.get("remember_me")
         if not remember_me:
+            # Expire immediately when the browser is closed.
             self.request.session.set_expiry(0)
 
             # Set session as modified to force data updates/cookie to be saved.
@@ -208,6 +224,11 @@ class CustomLoginView(LoginView):
         return super().form_valid(form)
 
 class ResetPasswordView(SuccessMessageMixin, PasswordResetView):
+    """
+    Here the token is created based on the existing password hash, email, pk, last login and secret key and other user info.
+    So that when the linked is clicked, it becomes invalidated after one use automatically. For verification same 
+    token is generated again and compared with the given token from the url.
+    """
     template_name = 'users/password/reset_password.html'
     email_template_name = 'users/password/password_reset_email.txt'
     html_email_template_name = 'users/password/password_reset_email.html'
@@ -236,6 +257,10 @@ def decode_user_id(encoded_id: str) -> int:
 
 # Use the old email as salt
 def get_signer(salt):
+    """
+    Same as django, we will use a changing field to invalidate the link after one use, such as email. 
+    When changing email we will use the old email as salt.
+    """
     return TimestampSigner(salt=salt)
 
 def sign_str(unsigned:str,salt:str):
@@ -258,11 +283,14 @@ def get_changeEmail_key(user_id):
 # Always follow early fail architecture and avoid nesting.
 class UpdateProfile(LoginRequiredMixin,View):
     """
-    View to update profile details. If email is changed
-    a verification link is sent to the new email. When clicked
-    then only it is changed. The user.id is signed with old_email
-    to introduce dynamic signed strings. Redis is used to save
-    the new_email for 5 minutes.
+    We will send user_id<base64> signed by TimeStampSigner with salt = old_email. Redis will save the new_email
+    for 5 minutes. When the link is clicked, we will identify the user from user_id<base_64>. If the link is tampered,
+    wrong user's email will be fetched and used to unsign the user_id, which will result in BadSignature. If the user is
+    right but the signature is being tampered, that too will be detected. Then, if the link is correct and clicked within
+    5 minutes the user_id will get unsign and coverted to base64. Corresponding to that user_id, new_email stored in redis
+    will be fetched and the email will be updated. We used a dynamic salt to introduce dynamic links, because signer uses 
+    the secret key to sign anything. If the secret key is static, everytime the change_email link will be the same. That
+    can cause security issues. We send the singature so that, the link cannot be regenerated by attackers.
     """
     form_class = UpdateUserDetailsForm
     template_name = "users/profile/profile.html"
@@ -357,20 +385,21 @@ def CompleteEmailUpdate(request,token):
         # The token format is value:timestamp:signature (or value:signature)
         uidb64 = signed_uidb64.split(':')[0]
         user_id = decode_user_id(uidb64)
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(id=user_id) # Fetch the user corresponding to the one given in the link.
     except (IndexError, ValueError, TypeError, User.DoesNotExist):
         return create_message_and_redirect(request=request,message='Invalid or corrupted link.',url="users-home",code='error')
 
-    unsigned_uidb64 = unsign_str(signed=signed_uidb64, salt=user.email)
+    unsigned_uidb64 = unsign_str(signed=signed_uidb64, salt=user.email) # Use the link to unsign the token
     
+    # If they tampered with the ID or the signature, this fails.
     if not unsigned_uidb64:
-        return create_message_and_redirect(request=request,message='Invalid or expired link.',url="users-home",code='error')
+        return create_message_and_redirect(request=request,message='Invalid or corrupted link.',url="users-home",code='error')
         
     key = get_changeEmail_key(user_id=user.id)
     data = cache.get(key)
     
     if not data:
-        return create_message_and_redirect(request=request,message='Link has expired or already been used.',url="users-home",code='error')
+        return create_message_and_redirect(request=request,message='Link has been expired.',url="users-home",code='error')
 
     new_email = data['new_email']
     

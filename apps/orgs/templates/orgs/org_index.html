@@ -5,11 +5,16 @@
 {% block content %}
 
 <div class="d-col">
-{% for root in roots %}
+    {% for root in roots %}
     <div class="fs-3">
-        {{ root.name }}
+        <a href="{% url 'org-detail' org_path=root.path  %}">
+            <div>
+                <strong>{{ root.name }}</strong>
+            </div>
+        </a>
         {% empty %}
+        <div>No org available</div>
     </div>
+    {% endfor %}
 </div>
-{% endfor %}
 {% endblock content %}

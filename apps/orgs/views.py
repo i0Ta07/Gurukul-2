@@ -1,8 +1,15 @@
-from django.shortcuts import render,get_object_or_404
+from os import name
+
+from django.shortcuts import render,get_object_or_404,redirect
 from django.contrib.auth.decorators import login_required
 from .models import Organization
-from django.urls import reverse
 from django.http import Http404
+from django.http import HttpResponseNotAllowed,HttpResponse
+from .models import _validate_org_structure,Class
+from django.core.exceptions import ValidationError
+from .forms import CreateClassForm,CreateOrgForm
+from django.contrib import messages
+from django.views import View
 # Create your views here.
 # Call add_root()
 
@@ -55,30 +62,103 @@ def build_breadcrumbs(node: Organization):
         )
     return breadcrumbs
 
+def build_path(node:Organization):
+    parts = []
+    for ancestor in node.get_ancestors():
+        parts.append(ancestor.name)
+
+    path = "/".join(parts)
+    return str(path)
+
+def build_slug(objects,parent_path = ""):
+    """
+    Build paths for a list of objects, based on parent_path. 
+    Adds the current object slug at the end of parent path.
+    Can work with both child orgs and classes.
+    """
+    return [
+        {
+            "name": obj.name,
+            "path": f"{parent_path}/{obj.slug}" if parent_path else f"{obj.slug}", # org_path always vips/vsit not vips/vsit/
+        }
+        for obj in objects
+    ]
+
+# should only show the TDS orgs the user has created
+@login_required
 def org_index(request):
     roots = (
         Organization.get_root_nodes()
         .filter(is_active=True)
         .order_by("name")
     )
+    print(roots)
     
-
     return render(
         request,
         "orgs/org_index.html",
         {
-            "roots": roots,
+            "roots": build_slug(roots),
         },
     )
 
-def build_child_orgs(child_orgs, parent_path):
-    return [
-        {
-            "name": child.name,
-            "path": f"{parent_path}/{child.slug}", # org_path always vips/vsit not vips/vsit/
-        }
-        for child in child_orgs
-    ]
+@login_required
+def create_classroom(request, org_id):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    org = get_object_or_404(Organization, pk=org_id)
+
+    form = CreateClassForm(request.POST)
+
+    if form.is_valid():
+        classroom = form.save(commit=False)
+        classroom.org = org
+        classroom.created_by = request.user
+
+        try:
+            classroom.save()
+            messages.success(request, "Classroom created successfully.")
+        except ValidationError as e:
+            messages.error(request, e.message)
+
+    else:
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, error)
+
+    return redirect("org-detail", org_path=org.path)
+
+@login_required
+def create_org(request, org_id):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    parent = get_object_or_404(Organization, pk=org_id)
+
+    # Load post date into the form
+    form = CreateOrgForm(request.POST)
+
+    if form.is_valid():
+        name = form.cleaned_data.get("name")
+        if not name.isalnum():
+            return HttpResponse(status=400)
+        org = form.save(commit=False)
+        org.created_by = request.user
+        try:
+            _validate_org_structure(parent, org)
+            parent.add_child(instance=org)
+            path = build_path(org)
+            context = {
+                "org":{ "name":org.name,"path":path
+                }
+            }
+            return render(request, "orgs/org_detail.html#org-row",context)
+        except ValidationError:
+            return HttpResponse(status=400)
+    return HttpResponse(status=400)
+
+
 
 def org_detail(request, org_path):
     current_node = resolve_org_path(org_path)
@@ -105,8 +185,8 @@ def org_detail(request, org_path):
         {
             "current_node": current_node,
             "breadcrumbs": build_breadcrumbs(current_node),
-            "child_orgs": build_child_orgs(child_orgs,org_path),
-            "classes": classes,
+            "child_orgs": build_slug(child_orgs,org_path),
+            "classes": build_slug(classes,org_path),
             "show_orgs": show_orgs,
             "show_classes": show_classes,
             "can_add_org": not classes.exists(),

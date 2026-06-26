@@ -26,14 +26,15 @@
     <!--Font awesome icons -->
     <script src="https://kit.fontawesome.com/87c5e321e1.js" crossorigin="anonymous"></script>
 
-    <!-- Global Public Styles -->
-    <!-- <link rel="stylesheet" href="{% static 'css/parent.css' %}">  -->
+    <!--HTMX-->
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+
 
     {% block extra_css %}
     {% endblock %}
 </head>
 
-<body>
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 
     {% block content %}
     {% endblock %}

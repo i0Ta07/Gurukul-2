@@ -1,15 +1,24 @@
 from django import forms
 from .models import Class,_validate_org_structure,Organization
 from treebeard.forms import MoveNodeForm, movenodeform_factory
+from django.http import HttpResponse
 
 
 class CreateClassForm(forms.ModelForm):
     class Meta:
         model = Class
-        fields = ['name', 'org']
+        fields = ['name']
 
+class CreateOrgForm(forms.ModelForm):
+    class Meta:
+        model = Organization
+        fields = ['name']
+        
 
-class BaseOrganizationForm(MoveNodeForm):
+# Create a get org form that will take a org slug, then check among the root_nodes check if that org
+# exists if yes, then check the membership of the user to the org.
+
+class MoveOrganizationForm(MoveNodeForm):
     """
     Overrides the default Treebeard MoveNodeForm to hook our custom validation
     engine into the Django Form lifecycle.
@@ -25,7 +34,7 @@ class BaseOrganizationForm(MoveNodeForm):
 
         _validate_org_structure(
             instance=self.instance, 
-            target_node=target_node, 
+            ref_node=target_node, 
             position=position
         )
             
@@ -34,6 +43,6 @@ class BaseOrganizationForm(MoveNodeForm):
 # Generate the actual form class using the factory
 OrganizationForm = movenodeform_factory(
     Organization,
-    form=BaseOrganizationForm,
+    form=MoveOrganizationForm,
     exclude=[ 'is_active','created_at','created_by'] # handle these along with .move in views.
 )

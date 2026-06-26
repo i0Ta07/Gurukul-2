@@ -4,11 +4,14 @@ from django.shortcuts import render
 
 @partial
 def get_user_type(strategy, backend, details, user=None, **kwargs):
-    # Existing user -> continue
+    """
+    Custom pipeline to ask the user_type, before creating a new user. 
+    """
+    # If existing user -> continue with the pipeline
     if user:
         return
 
-    # User submitted the form?
+    # If user submitted the form?
     user_type = strategy.request_data().get("user_type")
     if user_type:
         # Details save the email,first_name, last_name etc. Therefore we have to return the user_type to details 
