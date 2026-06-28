@@ -3,6 +3,7 @@ from typing import Literal
 from django.shortcuts import render,redirect
 from django.contrib import messages
 from django.views import View
+from django.db import IntegrityError
 # Django reads your views.py file before it reads your urls.py file. It doesn't know your URL names yet. 
 # Inside a view if you put reverse('home'). It will try to find, but it cannot find it and throws an error.
 #  Hence use reverse_lazy in Class-Level Attribute.
@@ -317,8 +318,12 @@ class UpdateProfile(LoginRequiredMixin,View):
         # Check which field has changed and save that. If Email is changed, verfication is required.
         if "email" not in form.changed_data:
             form.save()
-            messages.success(request=request,message="Profile updated successfully")
-            return render(request, self.template_name, {"form": form})
+            return create_message_and_redirect(
+                request=request,
+                message="Profile updated successfully",
+                url="users-dashboard",
+                code="success",
+            )
 
         # Social authenticated users cannot change email.
         if request.user.social_auth.exists():
@@ -331,9 +336,9 @@ class UpdateProfile(LoginRequiredMixin,View):
         
         new_email = form.cleaned_data["email"]
 
-        if User.objects.filter(email=new_email).exists():
-            messages.error(request=request,message="Email already taken. Failed to save changes")
-            return render(request, self.template_name, {"form": form})
+        # If we try to submit an already taken email, either in the form or in Django Admin, it will
+        # throw an error message since we defined email as unique entity, no need to check it. 
+        # Flow -> ModelForm_post_clean -> instance.full_clean -> Model.validate_unique()
 
         # Save fields other than email
         user = form.save(commit=False)
@@ -353,11 +358,12 @@ class UpdateProfile(LoginRequiredMixin,View):
         )
         key = get_changeEmail_key(request.user.id)
         cache.set(key=key, value={"new_email": new_email}, timeout=300)
-        messages.warning(
-            request,
-            "Profile updated. Email has been sent to verify your new email address.",
-        )
-        return redirect("users-dashboard")
+        return create_message_and_redirect(
+                request=request,
+                message="Profile updated. Email has been sent to verify your new email address.",
+                url="users-dashboard",
+                code="success",
+            )
 
 
 
@@ -402,13 +408,13 @@ def CompleteEmailUpdate(request,token):
         return create_message_and_redirect(request=request,message='Link has been expired.',url="users-home",code='error')
 
     new_email = data['new_email']
-    
-    if User.objects.filter(email=new_email).exists():
+
+    try:
+        user.email = new_email
+        user.save()
+    except IntegrityError: # Throws IntegrityError if race conditions are met.
         return create_message_and_redirect(request=request,message='Email is already in use by another account.',url="users-home",code='error')
 
-    user.email = new_email
-    user.save() 
-    
     cache.delete(key)
     
     logout_user_from_all_devices(request=request, user=user)

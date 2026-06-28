@@ -1,15 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}{{ current_node.name }}{% endblock %}
-{% partialdef org-row %}
-<a href="{% url 'org-detail' org_path=org.path %}"
-    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-    <div>
-        <strong><i class="fa-regular fa-folder px-3"></i>{{ org.name }}</strong>
-    </div>
-    <span class="text-muted">View →</span>
-</a>
-{% endpartialdef org-row %}
+
 {% block content %}
 <div class="container py-4">
 
@@ -50,7 +42,7 @@
         </button>
         {%endif %}
         {% if can_add_class %}
-        <a href="#" class="btn btn-success me-2">  <i class="fa-solid fa-plus"></i>  Create Class </a>
+        <a href="#" class="btn btn-success me-2"> <i class="fa-solid fa-plus"></i> Create Class </a>
         {% endif %}
     </div>
 
@@ -61,8 +53,8 @@
             <h5 class="mb-0">Organizations</h5>
         </div>
         <div class="list-group list-group-flush">
-            <form id="temp-org-form" hx-post="{% url 'create-org' org_id=current_node.id %}"
-                hx-target="#org-list" hx-swap="afterbegin" hx-on::after-request="hideTempFolder()"
+            <form id="temp-org-form" hx-post="{% url 'create-org' org_id=current_node.id %}" hx-target="#org-list"
+                hx-swap="afterbegin" hx-on::after-request="hideTempFolder()"
                 class="list-group-item list-group-item-action justify-content-between align-items-center bg-light d-none">
                 {% csrf_token %}
                 <div class="w-100 d-flex align-items-center">
@@ -97,7 +89,16 @@
 
             <div id="org-list">
                 {% for org in child_orgs %}
-                {% partial org-row %} {% empty %}
+                {% partialdef org-row inline %}
+                <a href="{% url 'org-detail' org_path=org.path %}"
+                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong><i class="fa-regular fa-folder px-3"></i>{{ org.name }}</strong>
+                    </div>
+                    <span class="text-muted">View →</span>
+                </a>
+                {% endpartialdef org-row %}
+                {% empty %}
                 <div class="list-group-item text-muted empty-state">
                     No child organizations found.
                 </div>
