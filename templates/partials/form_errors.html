@@ -2,7 +2,7 @@
 {% if form.errors %}
 <div class="absolute right-0 bottom-0 z-50">
     {% for field, value in form.errors.items %}
-    <div class="alert border-l-3 border-t-3 p-3 rounded-lg w-md h-auto m-4 opacity-100 transition-opacity duration-1000  bg-red-300 border-red-500 text-red-700">
+    <div class="alert border-l-3 border-t-3 p-3 rounded-lg w-md h-auto m-4 opacity-100 transition-opacity duration-1000 bg-red-300 border-red-500 text-red-700">
         <strong>{{ value  }}</strong>
     </div>
     {% endfor %}

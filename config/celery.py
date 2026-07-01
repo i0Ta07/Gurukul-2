@@ -18,3 +18,6 @@ app.autodiscover_tasks()
 
 # If any output from any task, ignore it
 app.conf.update(task_ignore_result = True)
+
+# Start Worker
+# celery -A config worker -P threads -E -l info

@@ -241,7 +241,8 @@ class ResetPasswordConfirmView(SuccessMessageMixin, PasswordResetConfirmView):
     template_name = 'users/password/password_reset_confirm.html'
     success_message = "Your password has been reset."
     success_url = reverse_lazy('login')
-    subject_template_name = 'Gurukul Password Reset'
+    post_reset_login = True
+    post_reset_login_backend = 'django.contrib.auth.backends.ModelBackend'
 
 class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
     template_name = 'Users/password/password_change.html'

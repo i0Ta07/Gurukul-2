@@ -8,14 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>{% block title %}Gurukul{% endblock %}</title>
-
-    {% if request.user.is_authenticated %}
-    {% include 'includes/navbar_authenticated.html' %}
-
-    {% else %}
-    {% include 'includes/navbar_public.html' %}
-    {% endif %}
-
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
@@ -26,17 +18,22 @@
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
         integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
         crossorigin="anonymous"></script>
-
-
-    {% block extra_css %}
-    {% endblock %}
 </head>
 
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 
-    {% block content %}
-    {% endblock %}
+    <main class="flex flex-col bg-black text-white min-h-screen">
 
+        {% if request.user.is_authenticated %}
+            {% include 'includes/navbar_authenticated.html' %}
+
+        {% else %}
+            {% include 'includes/navbar_public.html' %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
     <!--Alerts-->
     {% if messages %}
     <div class="absolute right-0 bottom-0 z-50">
@@ -60,7 +57,7 @@
     <!--Alert Timeout-->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            
+
             document.querySelectorAll(".alert").forEach(function (alert) {
                 // Start a 4s timer to remove op-100 and add op-0
                 setTimeout(function () {

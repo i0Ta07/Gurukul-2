@@ -121,11 +121,11 @@ class ClassMembership(models.Model):
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(
-        choices=Status,
-        default=Status.ACCEPTED,
-        max_length=1
-    )
+    # status = models.CharField(
+    #     choices=Status,
+    #     default=Status.ACCEPTED,
+    #     max_length=1
+    # )
 
     # Prevents a user from joining the exact same class multiple times
 

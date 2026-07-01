@@ -1,5 +1,5 @@
 {% load static %}
-<div class="bg-slate-900 p-3 flex items-center flex-wrap justify-between" id="nav-bar">
+<div class="bg-slate-950 p-3 flex items-center flex-wrap justify-between" id="nav-bar">
 
     <div class="flex items-center text-white gap-x-3">
         <p class="text-3xl font-extrabold font-mono mr-5 hover:scale-110 ">Gurukul</p>
@@ -15,7 +15,7 @@
             {% endif %}
         </button>
         <!-- Dropdown menu -->
-        <div class="absolute right-0 top-full z-50 hidden rounded-base shadow-lg  bg-gray-800" id="user-dropdown">
+        <div class="absolute right-0 top-full z-50 hidden rounded-base shadow-lg  bg-slate-950" id="user-dropdown">
             <div class="px-4 py-3 text-sm border-b">
                 <span class="block text-white">{{user.first_name}} {{user.last_name}}</span>
                 <span class="block text-gray-200">{{user.email}}</span>
