@@ -21,7 +21,7 @@
                     Suppose there are 4 cards in a grid layout, one of the two on the top row is 800 px, everyone else is 400px. By default the top row will be 800px and second 
                     row is 400px but using auto-row-fr, it will make the second row 800 px too, giving you a even layout. -->
                     <div class="flex flex-col lg:flex-row lg:col-span-2 border border-neutral-700 p-4 lg:p-8 rounded-2xl shadow-sm gap-y-5 lg:gap-x-10 h-full">
-                        <div class="flex flex-col justify-center items-center gap-y-1 w-full lg:w-auto lg:flex-shrink-0"> <!--flex-shrink-0 prevents the div from shrinking  -->
+                        <div class="flex flex-col justify-center items-center gap-y-1 w-full lg:w-auto lg:shrink-0"> <!--flex-shrink-0 prevents the div from shrinking  -->
                             {% if user.profile_photo %}
                             <img class="w-30 h-30 p-1 rounded-full ring-2 ring-gray-500" src="{{ user.profile_photo.url }}" alt="Profile Picture">
                             {% else %}
@@ -32,7 +32,7 @@
                         </div>
                         
                         <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center w-full gap-x-5">
-                            <div class="hidden lg:flex lg:flex-col lg:gap-y-5 w-auto flex-shrink-0 whitespace-nowrap pt-2">
+                            <div class="hidden lg:flex lg:flex-col lg:gap-y-5 w-auto shrink-0 whitespace-nowrap pt-2">
                                 <label class="font-medium text-md inline-block text-slate-50">{{form.first_name.label}}</label>
                                 <label class="font-medium text-md inline-block text-slate-50">{{form.last_name.label}}</label>
                                 <label class="font-medium text-md inline-block text-slate-50">{{form.user_type.label}}</label>
