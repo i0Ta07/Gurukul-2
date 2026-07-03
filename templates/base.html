@@ -11,18 +11,17 @@
 
     {% tailwind_css %}
 
-    <!--Font awesome icons -->
-    <script src="https://kit.fontawesome.com/87c5e321e1.js" crossorigin="anonymous"></script>
-
     <!--HTMX-->
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
         integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
-        crossorigin="anonymous"></script>
+        crossorigin="anonymous">
+    </script>
+
 </head>
 
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 
-    <main class="flex flex-col bg-black text-white min-h-screen">
+    <main class="flex flex-col min-h-screen bg-black">
 
         {% if request.user.is_authenticated %}
             {% include 'includes/navbar_authenticated.html' %}
@@ -38,17 +37,17 @@
     {% if messages %}
     <div class="absolute right-0 bottom-0 z-50">
         {% for message in messages %}
-        <div class="alert border-l-4 border-t-4 p-3 rounded-lg w-sm h-20 m-4 opacity-100 transition-opacity duration-1000
+        <div role="alert" class="alert alert-outline m-4 min-w-md max-w-lg opacity-100 transition-opacity duration-1000
         {% if message.tags == 'error' %}
-        bg-red-300 border-red-500 text-red-700
+        alert-error 
         {% elif message.tags == 'info' %}
-        bg-blue-300 border-blue-500 text-blue-700
+        alert-info
         {% elif message.tags == 'success' %}
-        bg-green-300 border-green-600 text-green-700
+        alert-success
         {% elif message.tags == 'warning' %}
-        bg-yellow-300 border-yellow-600 text-yellow-700
+        alert-warning
         {% endif %}">
-            <p class="font-semibold">{{ message }}</p>
+            <span>{{ message }}</span>
         </div>
         {% endfor %}
     </div>

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Class,_validate_org_structure,Organization
+from .models import Class,validate_org_structure,Organization
 from treebeard.forms import MoveNodeForm, movenodeform_factory
 from django.http import HttpResponse
 
@@ -32,7 +32,7 @@ class MoveOrganizationForm(MoveNodeForm):
         position = cleaned_data.get('treebeard_position') # either sorted-child or sorted-sibling
         
 
-        _validate_org_structure(
+        validate_org_structure(
             instance=self.instance, 
             ref_node=target_node, 
             position=position

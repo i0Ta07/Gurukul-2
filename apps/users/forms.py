@@ -12,21 +12,18 @@ from django.contrib.auth.forms import AuthenticationForm
 class LoginForm(AuthenticationForm):
     # Django AuthenticationForm still requires the name as username but since we did USERNAME_FIELD = "email", it will get replace
     username = forms.EmailField(max_length=100,label=_('Email') ,required=True,widget=forms.EmailInput(attrs={
-        'placeholder': 'john_doe@gmail.com','type':"email",
-        'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700 '
+        'placeholder': 'john_doe@gmail.com',
+        'class': 'form-input '
         })
     )
     
     password = forms.CharField(max_length=50,label=_('Password'),required=True,widget=forms.PasswordInput(attrs={
         'placeholder': '••••••••',
-        'class': "px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700",
-        'id': 'password',
-        'type':"password"
+        'class': "form-input",
         })
     )
     remember_me = forms.BooleanField(required=False, label=_('Remember Me'), widget=forms.CheckboxInput(attrs={
-        'type':'checkbox',
-        'class':'scheme-dark h-4 w-4'
+        'class':'scheme-dark'
     } ))
     class Meta:
         model = User
@@ -37,40 +34,47 @@ class RegisterEmailForm(forms.Form):
     email = forms.EmailField(
         required=True,
         label=_('Email'),
-        widget=forms.EmailInput(attrs={'placeholder': 'john_doe@gmail.com','type':"email",
-        'class':'px-3 py-2.5 text-sm  rounded-md  w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-600'}),
+        widget=forms.EmailInput(attrs={'placeholder': 'john_doe@gmail.com',
+        'class':'form-input'}),
     )
 
 
 class CompleteRegistrationForm(UserCreationForm):
+    email = forms.EmailField(
+        required=False,
+        label=_('Email'),
+        disabled=True,
+        widget=forms.EmailInput(attrs={'placeholder': 'john_doe@gmail.com',
+        'class':'form-input'}),
+    )
+
     first_name = forms.CharField(
         max_length=30,
         required=True,
         label=_('First Name'),
-        widget=forms.TextInput(attrs={'placeholder':'John', 'type':'text',
-        'class':'px-3 py-2.5 text-sm  rounded-md  w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}),
+        widget=forms.TextInput(attrs={'placeholder':'John', 
+        'class':'form-input'}),
     )
     last_name = forms.CharField(
         max_length=30,
         required=True,
         label=_('Last Name'),
-        widget=forms.TextInput(attrs={'placeholder':'Snow', 'type':'text',
-        'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}),
+        widget=forms.TextInput(attrs={'placeholder':'Snow', 
+        'class': 'form-input'}),
     )
     user_type = forms.ChoiceField(
         choices=User.UserType,
         label=_('User Type'),
         required=True,
         # initial=User.UserType.STUDENT,
-        widget=forms.Select(attrs={'class': ' px-3 py-2.5 text-sm rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}),
+        widget=forms.Select(attrs={'class': ' form-input'}),
     )
 
     password1 = forms.CharField(max_length=20,
         label=_('Password'),
         required=True,
         widget=forms.PasswordInput(attrs={
-            'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700',
-            'id': 'password','type':"password",
+            'class': 'form-input',
             'placeholder':'••••••••'
             })
         )
@@ -80,8 +84,7 @@ class CompleteRegistrationForm(UserCreationForm):
         max_length=20,
         required=True,
         widget=forms.PasswordInput(attrs={
-            'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700',
-            'id': 'password','type':"password",
+            'class': 'form-input',
             'placeholder':'••••••••'
             })
         )
@@ -97,7 +100,7 @@ class BootstrapSplitPhoneNumberField(SplitPhoneNumberField):
     def prefix_field(self):
         field = super().prefix_field()
         field.widget.attrs.update({
-            'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700 ',
+            'class': 'form-input ',
         })
         return field
 
@@ -105,7 +108,7 @@ class BootstrapSplitPhoneNumberField(SplitPhoneNumberField):
         field = super().number_field()
         field.widget.attrs.update({
             "maxlength": 10,
-            'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700 ',
+            'class': 'form-input ',
             'placeholder': '10 digit number',
         })
         return field
@@ -125,30 +128,29 @@ class UpdateUserDetailsForm(forms.ModelForm):
         max_length=30,
         required=True,
         label=_('First Name'),
-        widget=forms.TextInput(attrs={ 'type':'text',
-        'class':'px-3 py-2.5 text-sm  rounded-md  w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}),
+        widget=forms.TextInput(attrs={
+        'class':'form-input'}),
     )
     last_name = forms.CharField(
         max_length=30,
         required=True,
         label=_('Last Name'),
-        widget=forms.TextInput(attrs={'placeholder':'Snow', 'type':'text',
-        'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}),
+        widget=forms.TextInput(attrs={'placeholder':'Snow',
+        'class': 'form-input'}),
     )
     email = forms.EmailField(
         required=True,
         label=_('Email'),
         widget=forms.EmailInput(attrs={
-        'type':"email",
-        'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700 '
+        'class': 'form-input '
         })
     )
     user_type = forms.ChoiceField(
         choices=User.UserType,
         label=_('User Type'),
         required=True,
-        widget=forms.Select(attrs={'type':'radio',
-        'class': 'px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}),
+        widget=forms.Select(attrs={
+        'class': 'form-input'}),
     )
 
 
@@ -158,16 +160,16 @@ class UpdateUserDetailsForm(forms.ModelForm):
     )
     date_of_birth = forms.DateField(
         label=_('Date of Birth'),
-        widget=forms.DateInput(attrs={ 'type': 'date',
-        'class': 'scheme-dark px-3 py-2.5 text-sm  rounded-md w-full outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}),
+        widget=forms.DateInput(attrs={ 'type': 'date', # mention type date default string.
+        'class': 'scheme-dark form-input'}),
         required=False
     )
     profile_photo = forms.ImageField(widget=forms.FileInput(attrs={'class': 
     "cursor-pointer text-sm text-gray-200 p-1 rounded-2xl border border-neutral-700 file:bg-slate-600  hover:file:bg-slate-800 file:rounded-2xl file:text-white file:mr-4 file:px-2 file:py-1 file:font-semibold "
     }),required=False)
 
-    bio = forms.CharField(max_length=100,strip=True,label=_('Bio'),required=False,widget=forms.Textarea(attrs={'type':'text','placeholder':'About you',
-    'class': 'px-3 py-2.5 text-sm rounded-md w-full h-25 outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 text-slate-50 bg-black outline-neutral-700'}))
+    bio = forms.CharField(max_length=100,strip=True,label=_('Bio'),required=False,widget=forms.Textarea(attrs={'placeholder':'About you',
+    'class': 'form-input h-25'}))
 
     # BootstrapSplitPhoneNumberField store '' instead of Null. So, predefined clean function for devs by django, called automatically.
     def clean_phone_number(self):

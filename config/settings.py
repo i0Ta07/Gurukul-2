@@ -153,10 +153,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# tailwind
 TAILWIND_APP_NAME = "apps.theme"
 
 NPM_BIN_PATH = shutil.which('npm')
 
+# Social Auth
 SOCIAL_AUTH_PIPELINE = [
 
     'social_core.pipeline.social_auth.social_details',

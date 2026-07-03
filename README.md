@@ -5,8 +5,12 @@
 ```Python
 
 python manage.py runserver
-pyhton manage.py tailwind start # Start tailwind wacther
-celery -A config worker -P threads -E -l info # Celery worker
+
+# Start tailwind wacther
+python manage.py tailwind start 
+
+# Celery worker
+celery -A config worker -P threads -E -l info 
 ```
 
 ## To check for updates for tailwind npm packages and update them use

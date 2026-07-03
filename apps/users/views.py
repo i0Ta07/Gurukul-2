@@ -50,6 +50,7 @@ from django.contrib.auth.views import (
 )
 
 from .tasks import send_email_task
+from .mixins import AnonymousRequiredMixin
 
 # Views seperate the design from backend. Also it is convention to create another folder of same app 
 # name inside templates to specify the exact page. another home.html will be picked if that app is 
@@ -105,7 +106,7 @@ def create_message_and_redirect(request, message: str, url: str, code: Literal['
     message_func(request, message)
     return redirect(url)
 
-class RegisterEmailView(View):
+class RegisterEmailView(AnonymousRequiredMixin,View):
     """
     Two step verification for email. First we only a field for column then we send an email, User clicks the url
     and redirected to register page to fill out the rest of the details. Email with secret token is sent to the user.
@@ -139,22 +140,13 @@ class RegisterEmailView(View):
         # Save token in Redis after sending the email.
         value = {
             'email': email,
+            'inc_TTL':False
         }
         key= get_register_token_key(token)
         cache.set(key = key, value= value,timeout=300) # TTL = 5 minutes
 
         return create_message_and_redirect(request=request,message='Verification link will be sent to you shortly. Kindly verify it to proceed.',url='users-home',code='success')
 
-    
-    # Dispatch is traffic controller. Request goes to dispatch check if post -> call post; if get-> call get;
-    # earliest convenient hook in a Class based view
-    def dispatch(self, request, *args, **kwargs):
-        # will redirect to the dashboard page if a user tries to access the register page while logged in
-        if request.user.is_authenticated:
-            return redirect("users-dashboard")
-
-        # else process dispatch as it otherwise normally would
-        return super(RegisterEmailView, self).dispatch(request, *args, **kwargs)    
 
 class CompleteRegistrationView(View):
     """
@@ -164,22 +156,30 @@ class CompleteRegistrationView(View):
     form_class = CompleteRegistrationForm
     template_name = 'users/register/register_user.html'
     initial  = {
-        'user_type':User.UserType.STUDENT
-    }
-    
+            'user_type':User.UserType.STUDENT,
+        }
+
     def get(self,request, *args, **kwargs):
         """
         GET request means user clicked the link within 5 minutes, so increase the TTL to 10 minutes 
         """
+
         token = kwargs["token"]
-        form = self.form_class(initial = self.initial)
-        # Increase the TTL to 10 minutes
-        key = get_register_token_key(token)
-        if cache.touch(key,timeout=600):
-            return render(request,self.template_name,{'form':form})
-        else:
+        key= get_register_token_key(token)
+        val = cache.get(key)
+
+        if not val:
             messages.error(request,f'Invalid or expired link. Kindly register again')
             return redirect('register-email')
+        
+        # Update TTL, only if it is not updated once, else every reload updates the TTL
+        self.initial['email'] = val['email']
+        if not val['inc_TTL']:
+            val['inc_TTL'] = True
+            cache.set(key = key,value= val,timeout=600)
+
+        form = self.form_class(initial = self.initial)
+        return render(request,self.template_name,{'form':form})
     
     def post(self,request,*args, **kwargs):
         """
@@ -224,7 +224,7 @@ class CustomLoginView(LoginView):
         # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
         return super().form_valid(form)
 
-class ResetPasswordView(SuccessMessageMixin, PasswordResetView):
+class ResetPasswordView(AnonymousRequiredMixin,SuccessMessageMixin, PasswordResetView):
     """
     Here the token is created based on the existing password hash, email, pk, last login and secret key and other user info.
     So that when the linked is clicked, it becomes invalidated after one use automatically. For verification same 
@@ -298,7 +298,11 @@ class UpdateProfile(LoginRequiredMixin,View):
     template_name = "users/profile/profile.html"
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {"form": self.form_class(instance=request.user)})
+        context = {
+            "form": self.form_class(instance=request.user),
+            "can_change_password": request.user.has_usable_password(),
+        }
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST,request.FILES,instance=request.user,)

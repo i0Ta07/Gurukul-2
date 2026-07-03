@@ -127,14 +127,43 @@ class ClassMembership(models.Model):
     #     max_length=1
     # )
 
-    # Prevents a user from joining the exact same class multiple times
-
-
     def __str__(self):
         return f"{self.user.username} in {self.classroom.name}"
     
 
-def _validate_org_structure(ref_node: Organization, instance: Organization, position: Literal["child","sibling"] = "child"):
+# We will create a orgmembership, for only root orgs. Only teacher can be a part of org. Students will only see classes
+# While accessing any org or it's child we will check if there is Orgmembership between the root and user if yes -> PERMITTED
+# Also give option to create this using a .csv file. Each org can have max 50 members; if more -> pay
+# class OrganizstionMembership(models.Model):
+
+#     class Status(models.TextChoices):
+#         ACCEPTED = 'A',_('Accepted')
+#         REVOKED = 'R',_('Revoked')
+        
+#     user = models.ForeignKey(
+#         User, 
+#         on_delete=models.CASCADE, 
+#         related_name='memberships', 
+#         related_query_name='membership'
+#     )
+#     organization = models.ForeignKey(
+#         Organization, 
+#         on_delete=models.CASCADE, 
+#         related_name="memberships", 
+#         related_query_name="membership"
+#     )
+#     is_active = models.BooleanField(default=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     status = models.CharField(
+#         choices=Status,
+#         default=Status.ACCEPTED,
+#         max_length=1
+#     )
+
+#     def __str__(self):
+#         return f"{self.user.username} in {self.organization.name}"
+    
+def validate_org_structure(ref_node: Organization, instance: Organization, position: Literal["child","sibling"] = "child"):
     """
     ref_node: when move ->  ref_node; when create: current_object
     instance: when move -> existing_node; when create: new_node

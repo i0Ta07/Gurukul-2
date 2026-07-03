@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Organization
 from django.http import Http404
 from django.http import HttpResponseNotAllowed,HttpResponse
-from .models import _validate_org_structure,Class
+from .models import validate_org_structure,Class
 from django.core.exceptions import ValidationError
 from .forms import CreateClassForm,CreateOrgForm
 from django.contrib import messages
@@ -146,7 +146,7 @@ def create_org(request, org_id):
         org = form.save(commit=False)
         org.created_by = request.user
         try:
-            _validate_org_structure(parent, org)
+            validate_org_structure(parent, org)
             parent.add_child(instance=org)
             path = build_path(org)
             context = {

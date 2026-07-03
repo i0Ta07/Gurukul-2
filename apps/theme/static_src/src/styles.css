@@ -8,4 +8,41 @@
   * If your final CSS file is not being updated after code changes, you may want to broaden or narrow
   * the scope of this path.
   */
+
+  
+/* I use border for things that should always show like cards, and outline for things that should conditionally 
+show (like focus/hover state). Rings are just box shadows */
+
 @source "../../../../**/*.{html,py,js}";
+
+@layer base {
+  h1 {
+    @apply text-3xl font-bold text-slate-50
+  }
+}
+
+@utility form-input {
+  @apply px-3 py-2.5 text-sm  rounded-md w-full
+  outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600
+  text-slate-50 bg-black outline-neutral-700 transition-all
+  disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-900
+
+}
+@utility form-label {
+  @apply font-medium inline-block text-slate-50
+}
+/* The Base Button: Structure, typography, spacing, and transition */
+@utility cbtn {
+  @apply w-full py-2 px-3.5 text-sm text-center rounded-md font-semibold cursor-pointer tracking-wide text-white ;
+}
+
+@utility hyperlink {
+  @apply text-sm hover:underline ml-1 font-medium text-blue-500
+}
+
+@utility bordered-card {
+  @apply p-6 rounded-lg border w-full shadow-neutral-700/80 shadow-md md:p-8 border-neutral-700
+}
+/* 
+card css
+hyperlink */
