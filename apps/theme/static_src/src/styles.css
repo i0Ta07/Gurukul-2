@@ -32,8 +32,10 @@ show (like focus/hover state). Rings are just box shadows */
   @apply font-medium inline-block text-slate-50
 }
 /* The Base Button: Structure, typography, spacing, and transition */
-@utility cbtn {
-  @apply w-full py-2 px-3.5 text-sm text-center rounded-md font-semibold cursor-pointer tracking-wide text-white ;
+@utility base-button {
+  @apply w-full rounded-md px-3.5 py-2 text-sm  font-semibold cursor-pointer tracking-wide 
+  transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 /* focus-visble works when we navigate using tab */
+  disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none ;
 }
 
 @utility hyperlink {
@@ -41,8 +43,15 @@ show (like focus/hover state). Rings are just box shadows */
 }
 
 @utility bordered-card {
-  @apply p-6 rounded-lg border w-full shadow-neutral-700/80 shadow-md md:p-8 border-neutral-700
+  @apply w-full p-6 md:p-8 rounded-lg border border-neutral-700 shadow-md shadow-neutral-700/80   
 }
-/* 
-card css
-hyperlink */
+
+/* flex-auto enables the page-container to grow and cover the length since parent is flex flex-col min-h-screen it will conver the height.
+flex-auto grows or shrinks along the main axis of the flex container, means if parent flex-col, flex-auto on child will take remaining vertical space.
+If flex-row it will take remaining horizontal space. applied to child elements of a flex container to allow them to grow and shrink as needed, 
+This is the child of main base.html flex flex-col div. The div contains two child navbar and this container. This container will shrink
+or grow based on remaining height. If full, it will take the whole height of the page and place itself in center (justify-center, items-center) */
+    
+@utility page-container {
+  @apply flex flex-col py-4 px-4 md:px-8 flex-auto 
+}

@@ -4,25 +4,23 @@
 
 {% block content %}
 
-<main class="flex flex-col items-center justify-center flex-auto">
-    <div class="px-4 md:px-8">
-        <div class="bordered-card md:w-md">
-            <h1 class=" text-center mb-5">Create Account</h1>
-            <form class="space-y-6" method="post">
-                {% csrf_token %}
-                <div>
-                    <label class="mb-2 text-sm form-label">{{ form.email.label}}</label>
-                    {{ form.email }}
-                </div>
-                <button type="submit" class="cbtn bg-blue-600 hover:bg-blue-700">
-                    Send Verification Mail
-                </button>
-                <div class=" text-sm text-center text-slate-50">
-                    Already have an account? <a href="{% url 'login' %}" class="hyperlink">Login here</a>
-                </div>
-            </form>
-            {% include "users/login.html#social-auth" %}
-        </div>
+<main class="page-container items-center justify-center ">
+    <div class="bordered-card md:w-md">
+        <h1 class=" text-center mb-5">Create Account</h1>
+        <form class="space-y-6" method="post">
+            {% csrf_token %}
+            <div>
+                <label class="mb-2 text-sm form-label">{{ form.email.label}}</label>
+                {{ form.email }}
+            </div>
+            <button type="submit" class="base-button bg-blue-600 hover:bg-blue-700">
+                Send Verification Mail
+            </button>
+            <div class=" text-sm text-center text-slate-50">
+                Already have an account? <a href="{% url 'login' %}" class="hyperlink">Login here</a>
+            </div>
+        </form>
+        {% include "users/login.html#social-auth" %}
     </div>
 </main>
 

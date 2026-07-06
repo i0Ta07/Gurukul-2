@@ -4,52 +4,49 @@
 
 {% block content %}
 
-<main class="flex flex-col items-center justify-center flex-auto"> <!--flex-auto take the remaining space from the parent flexbox, but take initail width into account-->
-    <div class="px-4 py-4 md:px-8 ">
-        <div class="bordered-card">
-            <h1 class="text-center mb-5">Create Account</h1>
-            <form class="w-full" method="post">
-                {% csrf_token %}
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label class="mb-2 text-sm form-label">{{form.email.label}}</label>
-                        {{ form.email }}
-                    </div>
-                    <div>
-                        <label class="mb-2 text-sm form-label">{{ form.user_type.label}}</label>
-                        {{ form.user_type }}
-                    </div>
-                    <div>
-                        <label class="mb-2 text-sm form-label">{{form.first_name.label}}</label>
-                        {{ form.first_name }}
-                    </div>
-                    <div>
-                        <label for="lname"
-                            class="mb-2 text-sm form-label">{{form.last_name.label }}</label>
-                        {{ form.last_name }}
-                    </div>
-                    <div>
-                        <label class="mb-2 text-sm form-label">{{ form.password1.label}}</label>
-                        {{ form.password1 }}
-                    </div>
-                    <div>
-                        <label class="mb-2 text-sm form-label">{{form.password2.label}}</label>
-                        {{ form.password2 }}
-                    </div>
-                    <div class="flex items-center  flex-wrap  col-span-2">
-                        <input type="checkbox" name="tmc" class="mt-0.5 scheme-dark mr-2" required class="sr-only">
-                        <span class="text-sm text-slate-50">I accept the</span>
-                        <a href="#" class="hyperlink">Terms and Conditions</a>
-                    </div>
+<main class="page-container items-center justify-center"> <!--flex-auto take the remaining space from the parent flexbox, but take initail width into account-->
+    <div class="bordered-card">
+        <h1 class="text-center mb-5">Create Account</h1>
+        <form class="w-full" method="post">
+            {% csrf_token %}
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="mb-2 text-sm form-label">{{form.email.label}}</label>
+                    {{ form.email }}
                 </div>
-                <div class="mt-6 flex justify-center">
-                    <button type="submit"
-                        class="cbtn bg-blue-600 hover:bg-blue-700">
-                        Create an account</button>
+                <div>
+                    <label class="mb-2 text-sm form-label">{{ form.user_type.label}}</label>
+                    {{ form.user_type }}
                 </div>
-            </form>
-        </div>
-    </div>
+                <div>
+                    <label class="mb-2 text-sm form-label">{{form.first_name.label}}</label>
+                    {{ form.first_name }}
+                </div>
+                <div>
+                    <label for="lname"
+                        class="mb-2 text-sm form-label">{{form.last_name.label }}</label>
+                    {{ form.last_name }}
+                </div>
+                <div>
+                    <label class="mb-2 text-sm form-label">{{ form.password1.label}}</label>
+                    {{ form.password1 }}
+                </div>
+                <div>
+                    <label class="mb-2 text-sm form-label">{{form.password2.label}}</label>
+                    {{ form.password2 }}
+                </div>
+                <div class="flex items-center  flex-wrap  col-span-2">
+                    <input type="checkbox" name="tmc" class="mt-0.5 scheme-dark mr-2" required class="sr-only">
+                    <span class="text-sm text-slate-50">I accept the</span>
+                    <a href="#" class="hyperlink">Terms and Conditions</a>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-center">
+                <button type="submit"
+                    class="base-button bg-blue-600 hover:bg-blue-700">
+                    Create an account</button>
+            </div>
+        </form>
     </div>
 </main>
 {% include "partials/form_errors.html#form-errors" %}

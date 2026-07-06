@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<main class="flex flex-col items-center justify-center flex-auto">
+<main class="page-container items-center justify-center ">
     <div class="px-4 md:px-8 max-w-md">
         <div class="bordered-card">
         <h1 class=" text-center mb-3">Email Updated</h1>
@@ -14,7 +14,7 @@
                 Please log in again using your <strong>new email address</strong>.
             </p>
             <div class="flex justify-center items-center">
-                <a href="{% url 'login' %}" class="cbtn bg-blue-600 hover:bg-blue-700 mt-5">
+                <a href="{% url 'login' %}" class="base-button bg-blue-600 hover:bg-blue-700 mt-5">
                     Login
                 </a>
             </div>
