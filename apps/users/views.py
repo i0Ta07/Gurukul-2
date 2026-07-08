@@ -1,7 +1,6 @@
-from typing import Literal
 
+from config.utils import create_message_and_redirect
 from django.shortcuts import render,redirect
-from django.contrib import messages
 from django.views import View
 from django.db import IntegrityError
 # Django reads your views.py file before it reads your urls.py file. It doesn't know your URL names yet. 
@@ -99,13 +98,6 @@ def get_register_token_key(token):
 def get_token():
     return secrets.token_hex(32)
 
-def create_message_and_redirect(request, message: str, url: str, code: Literal['info', 'success', 'error', 'warning'] = 'error'):
-    """Create the message and redirects to the given URL"""
-    # Dynamically get the correct messages function based on the 'code' string
-    message_func = getattr(messages, code) # works as message.code
-    message_func(request, message)
-    return redirect(url)
-
 class RegisterEmailView(AnonymousRequiredMixin,View):
     """
     Two step verification for email. First we only a field for column then we send an email, User clicks the url
@@ -169,9 +161,8 @@ class CompleteRegistrationView(View):
         val = cache.get(key)
 
         if not val:
-            messages.error(request,f'Invalid or expired link. Kindly register again')
-            return redirect('register-email')
-        
+            return create_message_and_redirect(request,message=f'Invalid or expired link. Kindly register again',url='register-email')
+
         # Update TTL, only if it is not updated once, else every reload updates the TTL
         self.initial['email'] = val['email']
         if not val['inc_TTL']:
@@ -234,7 +225,7 @@ class ResetPasswordView(AnonymousRequiredMixin,SuccessMessageMixin, PasswordRese
     email_template_name = 'users/password/password_reset_email.txt'
     html_email_template_name = 'users/password/password_reset_email.html'
     subject_template_name = 'users/password/password_reset_subject.txt'
-    success_message = "If the email is registered with us, you'll receive a password reset link shortly."
+    success_message = "Check your email for a password reset link. If you don't receive it, please verify you are using the correct login method. Note that accounts created via OAuth (Google/Github) do not require a password."
     success_url = reverse_lazy('login')
 
 class ResetPasswordConfirmView(SuccessMessageMixin, PasswordResetConfirmView):
@@ -310,14 +301,18 @@ class UpdateProfile(LoginRequiredMixin,View):
         old_email = request.user.email
 
         if not form.is_valid():
-            return render(request, self.template_name, {"form": form})
+            return render(request, self.template_name, {
+                "form": self.form_class(instance=request.user),
+                "can_change_password": request.user.has_usable_password(),
+            }
+        )
     
         if not form.has_changed():
             return create_message_and_redirect(
                 request=request,
                 message="No changes were made",
                 url="users-dashboard",
-                code="info",
+                code="error",
             )
         
         # Check which field has changed and save that. If Email is changed, verfication is required.
@@ -424,6 +419,5 @@ def CompleteEmailUpdate(request,token):
     
     logout_user_from_all_devices(request=request, user=user)
     
-    messages.success(request, 'Email updated successfully. Please log in again.')
-    return render(request=request,template_name='users/profile/update_email_complete.html')
+    return create_message_and_redirect(request,message='Email updated successfully. Please log in again.',url='login',code='success')
     

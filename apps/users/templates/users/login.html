@@ -17,10 +17,19 @@
                         class="mb-2 text-sm form-label">{{form.username.label}}</label>
                     {{ form.username }}
                 </div>
-                <div>
-                    <label
-                        class="mb-2 text-sm form-label">{{form.password.label}}</label>
-                    {{ form.password }}
+                <div x-data="{showPass:false}">
+                    <label class="mb-2 text-sm form-label">{{form.password.label}}</label>
+                    <div class="relative">
+                        {{ form.password }}
+                        {% partialdef toggle-password-btn inline %}
+                        <button type="button" @click="showPass = !showPass" class="absolute right-3 top-1/2 -translate-y-1/2">
+                            <img class="size-4.5" draggable="false" alt="Toggle password visibility" :src="showPass
+                                    ? '{% static 'users/icons/svg/eye-password-hide.svg' %}'
+                                    : '{% static 'users/icons/svg/eye-password-show.svg' %}'"
+                            >
+                        </button>
+                        {% endpartialdef %}
+                    </div>
                 </div>
                 <div class="flex justify-between gap-2">
                     <div>

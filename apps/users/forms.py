@@ -19,7 +19,8 @@ class LoginForm(AuthenticationForm):
     
     password = forms.CharField(max_length=50,label=_('Password'),required=True,widget=forms.PasswordInput(attrs={
         'placeholder': '••••••••',
-        'class': "form-input",
+        'class': "form-input ",
+        ':type': "showPass ? 'text': 'password'"
         })
     )
     remember_me = forms.BooleanField(required=False, label=_('Remember Me'), widget=forms.CheckboxInput(attrs={
@@ -75,7 +76,8 @@ class CompleteRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.PasswordInput(attrs={
             'class': 'form-input',
-            'placeholder':'••••••••'
+            'placeholder':'••••••••',
+            ':type': "showPass ? 'text': 'password'"
             })
         )
     
@@ -85,7 +87,8 @@ class CompleteRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.PasswordInput(attrs={
             'class': 'form-input',
-            'placeholder':'••••••••'
+            'placeholder':'••••••••',
+            ':type': "showPass ? 'text': 'password'"
             })
         )
     

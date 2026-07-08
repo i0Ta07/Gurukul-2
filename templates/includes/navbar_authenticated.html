@@ -1,12 +1,12 @@
 {% load static %}
-<div class="bg-slate-950 p-3 flex items-center flex-wrap justify-between" id="nav-bar">
+<div class="bg-slate-950 p-3 flex items-center flex-wrap justify-between">
 
     <div class="flex items-center text-white gap-x-3">
         <p class="text-3xl font-extrabold font-mono mr-5 hover:scale-105">Gurukul</p>
         <a href="{% url 'users-dashboard' %}" class=" font-semibold hover:text-blue-400">Dashboard</a>
     </div>
-    <div class="relative flex items-center text-white">
-        <button type="button" class="  flex text-sm rounded-full focus:ring-2" id="user-menu-button">
+    <div class="relative flex items-center text-white" x-data="{ open: false }">
+        <button @click="open = ! open" type="button" class="  flex text-sm rounded-full focus:ring-2">
             {% if user.profile_photo %}
             <img class="w-10 h-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">
             {% else %}
@@ -15,12 +15,12 @@
             {% endif %}
         </button>
         <!-- Dropdown menu -->
-        <div class="absolute right-0 top-full z-50 hidden rounded-base shadow-lg  bg-slate-950" id="user-dropdown">
+        <div  x-show="open" @click.outside="open = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
             <div class="px-4 py-3 text-sm border-b">
                 <span class="block text-white">{{user.first_name}} {{user.last_name}}</span>
                 <span class="block text-gray-200">{{user.email}}</span>
             </div>
-            <ul class="p-2 text-sm text-body font-medium " aria-labelledby="user-menu-button">
+            <ul class="p-2 text-sm text-body font-medium">
                 <li>
                     <a href="{% url 'users-profile' %}"
                         class=" inline-flex items-center w-full p-2  text-gray-200 hover:bg-gray-700 hover:text-white hover:rounded-lg">View
@@ -37,13 +37,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const user_menu_button = document.getElementById("user-menu-button")
-        const dropdown = document.getElementById("user-dropdown")
-        user_menu_button.addEventListener('click', function () {
-            dropdown.classList.toggle("hidden");
-        })
-    })
-</script>
