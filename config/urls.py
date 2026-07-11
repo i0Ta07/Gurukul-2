@@ -33,6 +33,7 @@ urlpatterns = [
     # Apps
     path("", include("apps.users.urls")),
     path("orgs/", include("apps.orgs.urls")),
+    path("classes/", include("apps.classes.urls")),
     
     # Password
     path('reset-password/',ResetPasswordView.as_view(),name='reset-password'),

@@ -152,6 +152,7 @@ class UpdateUserDetailsForm(forms.ModelForm):
         choices=User.UserType,
         label=_('User Type'),
         required=True,
+        disabled=True,
         widget=forms.Select(attrs={
         'class': 'form-input'}),
     )

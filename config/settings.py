@@ -45,8 +45,10 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'treebeard',
     "tailwind",
-    
     'social_django',
+    "django_htmx",
+
+    'apps.classes.apps.ClassesConfig',
     'apps.users.apps.UsersConfig',
     'apps.orgs.apps.OrgsConfig',
     'apps.theme.apps.ThemeConfig',
@@ -74,6 +76,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'

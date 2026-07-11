@@ -1,4 +1,5 @@
 {% load static %}
+{% load django_htmx %}
 {% load static tailwind_tags %}
 <!DOCTYPE html>
 <html lang="en">
@@ -9,17 +10,12 @@
 
     <title>{% block title %}Gurukul{% endblock %}</title>
 
+    {% htmx_script %}
     {% tailwind_css %}
 
     <!--Aphine-->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!--HTMX-->
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
-        integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
-        crossorigin="anonymous">
-    </script>
-
+    
 </head>
 
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
