@@ -3,7 +3,7 @@
 {% block title %}User Type Confirmation{% endblock %}
 
 {% block content %}
-<main class="page-container items-center justify-center ">
+<div class="page-container items-center justify-center ">
     <div class="bordered-card md:w-md">
         <h1 class=" text-center">Who are you?</h1>
         <form class="mt-5 space-y-3" method="post" action="{% url 'social:complete' backend %}">
@@ -20,7 +20,7 @@
                 Continue</button>
         </form>
     </div>
-</main>
+</div>
 
 {% include "partials/form_errors.html#form-errors" %}
 

@@ -4,7 +4,7 @@
 {% block title %} Login Page {% endblock title%}
 {% block content %}
 
-<main class="page-container items-center justify-center ">
+<div class="page-container items-center justify-center ">
     <div class="grid items-center gap-6 max-w-6xl lg:grid-cols-2">
         <div class="bordered-card mx-auto lg:mx-0"> <!--in split screen layout the card should be center in md screen but at start when screen is large, so we can show the image -->
             <div class="mb-8">
@@ -80,7 +80,7 @@
                 alt="login img" />
         </div>
     </div>
-</main>
+</div>
 
 {% include "partials/form_errors.html#form-errors" %}
 {% endblock content %}

@@ -5,7 +5,7 @@
 
 {% block content %}
 
-<main class="page-container">
+<div class="page-container">
     <div class="grid grid-cols-1 2xl:grid-cols-2 gap-5 2xl:auto-rows-fr">
         <form method="POST" enctype="multipart/form-data"  class="space-y-5 w-full max-w-4xl" x-data="{ saving: false }" @submit="saving = true">
             {% csrf_token %}
@@ -81,7 +81,7 @@
                 alt="login img" />
         </div>
     </div>
-</main>
+</div>
 
 {% include "partials/form_errors.html#form-errors" %}
 

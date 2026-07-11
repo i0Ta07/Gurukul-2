@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<main class="page-container items-center justify-center"> <!--flex-auto take the remaining space from the parent flexbox, but take initail width into account-->
+<div class="page-container items-center justify-center"> <!--flex-auto take the remaining space from the parent flexbox, but take initail width into account-->
     <div class="bordered-card max-w-5xl">
         <h1 class="text-center mb-5">Create Account</h1>
         <form class="w-full" method="post">
@@ -54,6 +54,6 @@
             </div>
         </form>
     </div>
-</main>
+</div>
 {% include "partials/form_errors.html#form-errors" %}
 {% endblock content %}

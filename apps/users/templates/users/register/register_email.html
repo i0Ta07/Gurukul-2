@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<main class="page-container items-center justify-center ">
+<div class="page-container items-center justify-center ">
     <div class="bordered-card md:w-md">
         <h1 class=" text-center mb-5">Create Account</h1>
         <form class="space-y-6" method="post">
@@ -22,7 +22,7 @@
         </form>
         {% include "users/login.html#social-auth" %}
     </div>
-</main>
+</div>
 
 {% include "partials/form_errors.html#form-errors" %}
 {% endblock content %}
