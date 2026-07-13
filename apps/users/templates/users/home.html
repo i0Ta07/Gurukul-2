@@ -5,14 +5,14 @@ Home
 {% endblock %}
 
 {% block content %}
-<div>
-    <h1>Welcome to Gurukul</h1>
-    <p>This is the landing page.</p>
-    {% if request.user.is_authenticated %}
-    <button><a href="{% url 'users-dashboard' %}">Dashboard</a></button>
-    {% else %}
-    <button><a href="{% url 'login' %}">Go to Login Page</a></button>
-    <button><a href="{% url 'register-email' %}">Go to Register Page</a></button>
-    {% endif %}
+<div class="page-container">
+    <div class= "flex flex-col gap-y-3"> 
+        <h1>Welcome to Gurukul</h1>
+        <p>This is the landing page.</p>
+        <div class="flex gap-x-3 text-center">
+        <a class="base-button w-25 bg-blue-500 hover:bg-blue-700" href="{% url 'login' %}">Login </a>
+        <a class="base-button w-25 bg-blue-500 hover:bg-blue-700" href="{% url 'register-email' %}">Register </a>
+        </div>
+    </div>
 </div>
 {% endblock %}

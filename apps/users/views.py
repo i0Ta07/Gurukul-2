@@ -1,5 +1,6 @@
 
 from config.utils import create_message_and_redirect
+from django.contrib import messages
 from django.shortcuts import render,redirect
 from django.views import View
 from django.db import IntegrityError
@@ -62,6 +63,8 @@ def home(request):
 
 @login_required 
 def dashboard(request):
+    if request.htmx:
+        return render(request,'users/dashboard.html#dashboard')
     return render(request,'users/dashboard.html')
 
 def send_email(request,email_template_name,html_email_template_name,subject,receiver,token):
@@ -236,9 +239,16 @@ class ResetPasswordConfirmView(SuccessMessageMixin, PasswordResetConfirmView):
     post_reset_login_backend = 'django.contrib.auth.backends.ModelBackend'
 
 class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
-    template_name = 'Users/password/password_change.html'
     success_url = reverse_lazy('users-dashboard')
     success_message = "You password has been changed successfully"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.htmx:
+            self.template_name = 'Users/password/password_change.html#password-change'
+        else:
+            self.template_name = 'Users/password/password_change.html'
+
+        return super().dispatch(request, *args, **kwargs)    
 
 def encode_user_id(user_id: int) -> str:
     """Converts an integer user_id to a URL-safe base64 string."""
@@ -293,46 +303,41 @@ class UpdateProfile(LoginRequiredMixin,View):
             "form": self.form_class(instance=request.user),
             "can_change_password": request.user.has_usable_password(),
         }
-        return render(request, self.template_name, context)
+        if request.htmx:
+            return render(request, "users/profile/profile.html#profile", context)
+        return render(request, "users/profile/profile.html", context)
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST,request.FILES,instance=request.user,)
         # Extract old_email before form.is_valid(), otherwise after POST request; request.user.email = new_email
         old_email = request.user.email
+        context = {
+            "form": form,
+            "can_change_password": request.user.has_usable_password(),
+        }
+
+        def get_template(request):
+            if request.htmx:
+                return "users/profile/profile.html#profile-form"
+            return "users/profile/profile.html"
 
         if not form.is_valid():
-            return render(request, self.template_name, {
-                "form": self.form_class(instance=request.user),
-                "can_change_password": request.user.has_usable_password(),
-            }
-        )
+            return render(request, get_template(request), context)
     
         if not form.has_changed():
-            return create_message_and_redirect(
-                request=request,
-                message="No changes were made",
-                url="users-dashboard",
-                code="error",
-            )
+            messages.error(request,f"No changes detected")
+            return render(request, get_template(request), context)
         
         # Check which field has changed and save that. If Email is changed, verfication is required.
         if "email" not in form.changed_data:
             form.save()
-            return create_message_and_redirect(
-                request=request,
-                message="Profile updated successfully",
-                url="users-dashboard",
-                code="success",
-            )
+            messages.success(request,"Profile Updated successfully")
+            return render(request, get_template(request), context)
 
         # Social authenticated users cannot change email.
         if request.user.social_auth.exists():
-            return create_message_and_redirect(
-                request=request,
-                message="Your email address is managed by your social account and cannot be changed.",
-                url="users-dashboard",
-                code="error",
-            )
+            messages.error(request,f"Your email address is managed by your social account and cannot be changed.")
+            return render(request, get_template(request), context)
         
         new_email = form.cleaned_data["email"]
 

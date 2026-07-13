@@ -1,0 +1,20 @@
+{% partialdef messages %}
+{% if messages %}
+<div class="absolute right-0 bottom-0 z-50">
+    {% for message in messages %}
+    <div role="alert" class="alert alert-outline m-4 min-w-md max-w-lg opacity-100 transition-opacity duration-1000
+    {% if message.tags == 'error' %}
+    alert-error 
+    {% elif message.tags == 'info' %}
+    alert-info
+    {% elif message.tags == 'success' %}
+    alert-success
+    {% elif message.tags == 'warning' %}
+    alert-warning
+    {% endif %}">
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endpartialdef %}

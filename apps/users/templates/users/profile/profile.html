@@ -5,84 +5,92 @@
 
 {% block content %}
 
-<div class="page-container">
+<div class="page-container" id="page-container">
+    {% partialdef profile inline %}
+
     <div class="grid grid-cols-1 2xl:grid-cols-2 gap-5 2xl:auto-rows-fr">
-        <form method="POST" enctype="multipart/form-data"  class="space-y-5 w-full max-w-4xl" x-data="{ saving: false }" @submit="saving = true">
-            {% csrf_token %}
-            {% if can_change_password %}
-            <div class="flex justify-end w-full">
-                <a href="{% url 'password-change' %}" class="w-fit base-button bg-indigo-600 hover:bg-indigo-700">
-                    Change Password
-                </a>
-            </div>
-            {% endif %}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:auto-rows-fr">
-                <!--auto-rows-fr enables explicitly-created grid rows to automatically expand to fill an equal fraction of the remaining vertical space in other grid cards. 
-                Suppose there are 4 cards in a grid layout, one of the two on the top row is 800 px, everyone else is 400px. By default the top row will be 800px and second 
-                row is 400px but using auto-row-fr, it will make the second row 800 px too, giving you a even layout. -->
-                <div class="flex flex-col lg:flex-row lg:col-span-2  gap-y-5 lg:gap-x-10 bordered-card">
-                    <div class="flex flex-col justify-center items-center gap-y-1 w-full lg:w-auto lg:shrink-0"> <!--flex-shrink-0 prevents the div from shrinking  -->
-                        {% if user.profile_photo %}
-                        <img class="w-30 h-30 p-1 rounded-full ring-2 ring-gray-500" src="{{ user.profile_photo.url }}" alt="Profile Picture">
-                        {% else %}
-                        <img class="w-30 h-30 p-1 rounded-full ring-2 ring-gray-500" src="{% static 'users/images/default_profile.png' %}" alt="Default profile">
-                        {% endif %}
-                        <label class="block my-1 text-sm font-medium text-heading">Upload new</label>
-                        {{ form.profile_photo }}
-                    </div>
-                    
-                    <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center w-full gap-x-5">
-                        <div class="hidden lg:flex lg:flex-col lg:gap-y-5 lg:mt-4 whitespace-nowrap">
-                            <label class="form-label text-base">{{form.first_name.label}}</label>
-                            <label class="form-label text-base">{{form.last_name.label}}</label>
-                                <label class="form-label text-base">{{form.user_type.label}}</label>
+        <div id="profile-form">
+            {% partialdef profile-form inline %} <!-- Update the form, any form errors and page messages. -->
+
+            <form method="POST" enctype="multipart/form-data" hx-post="{% url 'users-profile' %}" hx-swap="innerHTML"  hx-target="#profile-form" class="space-y-5 w-full max-w-4xl" x-data="{ saving: false }" @submit="saving = true">
+                {% csrf_token %}
+                {% if can_change_password %}
+                <div class="flex justify-end w-full">
+                    <a href="{% url 'password-change' %}" hx-get="{% url 'password-change' %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true" class="w-fit base-button bg-indigo-600 hover:bg-indigo-700">
+                        Change Password
+                    </a>
+                </div>
+                {% endif %}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:auto-rows-fr">
+                    <!--auto-rows-fr enables explicitly-created grid rows to automatically expand to fill an equal fraction of the remaining vertical space in other grid cards. 
+                    Suppose there are 4 cards in a grid layout, one of the two on the top row is 800 px, everyone else is 400px. By default the top row will be 800px and second 
+                    row is 400px but using auto-row-fr, it will make the second row 800 px too, giving you a even layout. -->
+                    <div class="flex flex-col lg:flex-row lg:col-span-2  gap-y-5 lg:gap-x-10 bordered-card">
+                        <div class="flex flex-col justify-center items-center gap-y-1 w-full lg:w-auto lg:shrink-0"> <!--flex-shrink-0 prevents the div from shrinking  -->
+                            {% if user.profile_photo %}
+                            <img class="w-30 h-30 p-1 rounded-full ring-2 ring-gray-500" src="{{ user.profile_photo.url }}" alt="Profile Picture">
+                            {% else %}
+                            <img class="w-30 h-30 p-1 rounded-full ring-2 ring-gray-500" src="{% static 'users/images/default_profile.png' %}" alt="Default profile">
+                            {% endif %}
+                            <label class="block my-1 text-sm font-medium text-heading">Upload new</label>
+                            {{ form.profile_photo }}
                         </div>
-                        <div class="flex flex-col gap-y-3 w-full">
-                            {{ form.first_name }}
-                            {{ form.last_name }}
-                            {{ form.user_type }}
+                        
+                        <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center w-full gap-x-5">
+                            <div class="hidden lg:flex lg:flex-col lg:gap-y-5 lg:mt-4 whitespace-nowrap">
+                                <label class="form-label text-base">{{form.first_name.label}}</label>
+                                <label class="form-label text-base">{{form.last_name.label}}</label>
+                                    <label class="form-label text-base">{{form.user_type.label}}</label>
+                            </div>
+                            <div class="flex flex-col gap-y-3 w-full">
+                                {{ form.first_name }}
+                                {{ form.last_name }}
+                                {{ form.user_type }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center items-center gap-x-3 bordered-card">
+                        <div class="hidden lg:flex lg:flex-col justify-center items-center lg:gap-y-5">
+                            <label class="form-label">{{form.email.label}}</label>
+                            <label class="form-label">{{form.phone_number.label}}</label>
+                        </div>
+                        <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
+                            {{ form.email }}
+                            <div class="inline-flex gap-x-2 w-full">
+                                {{ form.phone_number }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class=" flex justify-center items-center  gap-x-3 bordered-card">
+                        <div class="hidden lg:flex lg:flex-col items-center whitespace-nowrap">
+                            <label class="form-label  mb-20">{{form.date_of_birth.label}}</label>
+                            <label class="form-label">{{form.bio.label}}</label>
+                        </div>
+                        <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
+                            {{ form.date_of_birth }}
+                            {{ form.bio }}
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-center items-center gap-x-3 bordered-card">
-                    <div class="hidden lg:flex lg:flex-col justify-center items-center lg:gap-y-5">
-                        <label class="form-label">{{form.email.label}}</label>
-                        <label class="form-label">{{form.phone_number.label}}</label>
-                    </div>
-                    <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
-                        {{ form.email }}
-                        <div class="inline-flex gap-x-2 w-full">
-                            {{ form.phone_number }}
-                        </div>
-                    </div>
+                <div class="flex justify-between">
+                    <button type="submit" x-bind:disabled="saving"  x-text="saving ? 'Saving...' : 'Save'" class="w-25 base-button bg-blue-600 hover:bg-blue-700">
+                    </button>
+                    <button type="reset" class="w-25 base-button text-black  bg-yellow-400 hover:bg-yellow-500">
+                        Reset
+                    </button>
                 </div>
-                <div class=" flex justify-center items-center  gap-x-3 bordered-card">
-                    <div class="hidden lg:flex lg:flex-col items-center whitespace-nowrap">
-                        <label class="form-label  mb-20">{{form.date_of_birth.label}}</label>
-                        <label class="form-label">{{form.bio.label}}</label>
-                    </div>
-                    <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
-                        {{ form.date_of_birth }}
-                        {{ form.bio }}
-                    </div>
-                </div>
-            </div>
-            <div class="flex justify-between">
-                <button type="submit" x-bind:disabled="saving"  x-text="saving ? 'Saving...' : 'Save'" class="w-fit base-button bg-blue-600 hover:bg-blue-700">
-                </button>
-                <button type="reset" class="w-fit base-button text-black  bg-yellow-500 hover:bg-yellow-600">
-                    Reset
-                </button>
-            </div>
-        </form>
+            </form>
+            {% include "partials/form_errors.html#form-errors" %}
+            {% include "partials/messages.html#messages" %}
+
+            {% endpartialdef %}
+        </div>
         <!-- relative to the parent, stick the image to all four corners. -->
         <div class="relative">
-            <img src="{% static 'users/quotes/1.png' %}" class="absolute inset-0 w-full h-full object-contain"
-                alt="login img" />
+            <img src="{% static 'users/quotes/1.png' %}" class="absolute inset-0 w-full h-full object-contain" alt="Quote1" />
         </div>
     </div>
+    
+    {% endpartialdef %} 
 </div>
-
-{% include "partials/form_errors.html#form-errors" %}
-
 {% endblock content %}

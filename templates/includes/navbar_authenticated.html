@@ -3,7 +3,10 @@
 
     <div class="flex items-center text-white gap-x-3">
         <p class="text-3xl font-extrabold font-mono mr-5 hover:scale-105">Gurukul</p>
-        <a href="{% url 'users-dashboard' %}" class=" font-semibold hover:text-blue-400">Dashboard</a>
+        <a href="{% url 'users-dashboard' %}" hx-get="{% url 'users-dashboard' %}" hx-push-url="true"
+            hx-target="#page-container" hx-swap="innerHTML" class="font-semibold hover:text-blue-400">
+            Dashboard
+        </a>
     </div>
     <div class="relative flex items-center text-white" x-data="{ open: false }">
         <button @click="open = ! open" type="button" class="  flex text-sm rounded-full focus:ring-2">
@@ -15,14 +18,14 @@
             {% endif %}
         </button>
         <!-- Dropdown menu -->
-        <div  x-show="open" @click.outside="open = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
+        <div x-show="open"  x-transition @click.outside="open = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
             <div class="px-4 py-3 text-sm border-b">
                 <span class="block text-white">{{user.first_name}} {{user.last_name}}</span>
                 <span class="block text-gray-200">{{user.email}}</span>
             </div>
             <ul class="p-2 text-sm text-body font-medium">
-                <li>
-                    <a href="{% url 'users-profile' %}"
+                <li @click="open = false">
+                    <a href="{% url 'users-profile' %}" hx-get="{% url 'users-profile' %}" hx-push-url="true" hx-target="#page-container" hx-swap="innerHTML" 
                         class=" inline-flex items-center w-full p-2  text-gray-200 hover:bg-gray-700 hover:text-white hover:rounded-lg">View
                         Profile</a>
                 </li>

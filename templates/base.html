@@ -32,41 +32,29 @@
         {% block content %}
         {% endblock %}
     </main>
-    <!--Alerts-->
-    {% if messages %}
-    <div class="absolute right-0 bottom-0 z-50">
-        {% for message in messages %}
-        <div role="alert" class="alert alert-outline m-4 min-w-md max-w-lg opacity-100 transition-opacity duration-1000
-        {% if message.tags == 'error' %}
-        alert-error 
-        {% elif message.tags == 'info' %}
-        alert-info
-        {% elif message.tags == 'success' %}
-        alert-success
-        {% elif message.tags == 'warning' %}
-        alert-warning
-        {% endif %}">
-            <span>{{ message }}</span>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
+        {% include "partials/messages.html#messages" %}
     <!--Alert Timeout-->
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        function initAlerts(root = document) {
+            root.querySelectorAll(".alert").forEach(function (alert) {
+                if (alert.dataset.initialized) return; // if timer already initialezed return 
+                alert.dataset.initialized = "true";
 
-            document.querySelectorAll(".alert").forEach(function (alert) {
-                // Start a 4s timer to remove op-100 and add op-0
+                // Start a 3s timer 
                 setTimeout(function () {
-                    // After 4 seconds, wait for 1s more, then remove alert
-                    alert.classList.remove("opacity-100");
-                    alert.classList.add("opacity-0");
-                    setTimeout(function () {
-                        alert.remove();
-                    }, 1000);
-                }, 4000);
+                    // After 3s replace the opacity and remove the alert
+                    alert.classList.replace("opacity-100", "opacity-0");
+                    setTimeout(() => alert.remove(), 1000);
+                }, 3000);
             });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initAlerts();
+        });
+
+        document.body.addEventListener('htmx:afterSwap', function (event) {
+            initAlerts(event.target);
         });
     </script>
 
