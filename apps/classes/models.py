@@ -50,7 +50,7 @@ class Class(models.Model):
             raise ValidationError(f"A class named '{self.name}' already exists within {self.org.name}.")
 
         # When changing the name,we have to change the slug too
-    def save(self, **kwargs):
+    def save(self,*args, **kwargs):
         # Not calling self.full_clean(), since we will create using forms, 
         # if mentioned it will be called twice once in form.is_valid() and one in save.
         
@@ -59,7 +59,7 @@ class Class(models.Model):
             update_fields := kwargs.get("update_fields")
         ) is not None and "name" in update_fields:
             kwargs["update_fields"] = {"slug"}.union(update_fields)
-        super().save(**kwargs)
+        super().save(*args,**kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.org.name})"

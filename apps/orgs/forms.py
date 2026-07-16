@@ -1,19 +1,18 @@
 from django import forms
-from .models import Class,validate_org_structure,Organization
+from .models import validate_child_org,Organization
 from treebeard.forms import MoveNodeForm, movenodeform_factory
-from django.http import HttpResponse
-
-
-class CreateClassForm(forms.ModelForm):
-    class Meta:
-        model = Class
-        fields = ['name']
 
 class CreateOrgForm(forms.ModelForm):
+    name = forms.CharField(
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder':'name', 
+        'class':"font-bold w-25 rounded-md focus:outline-2 focus:outline-blue-500 focus:outline-offset-2",
+        "placeholder": 'name', 'autofocus': True })       
+    )
     class Meta:
         model = Organization
         fields = ['name']
-        
 
 # Create a get org form that will take a org slug, then check among the root_nodes check if that org
 # exists if yes, then check the membership of the user to the org.
@@ -32,7 +31,7 @@ class MoveOrganizationForm(MoveNodeForm):
         position = cleaned_data.get('treebeard_position') # either sorted-child or sorted-sibling
         
 
-        validate_org_structure(
+        validate_child_org(
             instance=self.instance, 
             ref_node=target_node, 
             position=position
@@ -44,5 +43,6 @@ class MoveOrganizationForm(MoveNodeForm):
 OrganizationForm = movenodeform_factory(
     Organization,
     form=MoveOrganizationForm,
-    exclude=[ 'is_active','created_at','created_by'] # handle these along with .move in views.
+    # Add pos to it since we are only adding/moving child
+    exclude=[ 'is_active','created_at','created_by'] # handle these along with .move in views. 
 )

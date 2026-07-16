@@ -1,8 +1,9 @@
 from django.contrib import admin
 
-from .models import Class, ClassMembership, Organization
+from .models import OrgConfig, Organization,OrgAdmin,OrgMembership
 
 # Register your models here.
 admin.site.register(Organization)
-admin.site.register(Class)
-admin.site.register(ClassMembership)
+admin.site.register(OrgMembership)
+admin.site.register(OrgAdmin)
+admin.site.register(OrgConfig)
