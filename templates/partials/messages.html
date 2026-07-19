@@ -1,7 +1,7 @@
 {% if messages %}
-<div class="absolute right-0 bottom-0 z-50">
+<div class="fixed bottom-1 right-1 z-50 flex flex-col gap-2">
     {% for message in messages %}
-    <div role="alert" class="alert alert-outline m-4 min-w-md max-w-lg opacity-100 transition-opacity duration-1000
+    <div role="alert" class="alert alert-outline text-wrap m-4 max-w-md lg:max-w-lg opacity-100 transition-opacity duration-1000
     {% if message.tags == 'error' %}
     alert-error 
     {% elif message.tags == 'info' %}

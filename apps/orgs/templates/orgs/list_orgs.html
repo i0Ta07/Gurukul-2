@@ -6,27 +6,29 @@
 {% block content %}
 
 <!--hx-boost allows anchor tags to use AJAX and hx-history tells which part of the page will be used for snapshot during navigations-->
-<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt x-data="{ formOpen: false }">
+<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt >
 
     {% partialdef view-org inline %}
+    <div class="flex flex-col flex-auto" x-data="{ formOpen: false }" >
         <!--Create Root org-->
-        {% if is_root %}
+        {% if root_org_view %}
         <div class="flex ml-auto">
-            <a href="#" class="base-button bg-blue-500 hover:bg-blue-700 ">
+            <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " @click="create_root_modal.showModal();"
+            hx-get="{% url 'create-root-org' %}" hx-target="#modal_container" hx-swap="innerHTML">
                 Create Root Organization
-            </a>
+            </button>
         </div>
         {% endif %}
 
         <!-- Action Buttons -->
         <div class="flex ml-auto gap-3">
-            {% if can_add_class %}
+            {% if class_view %}
                 <a href="#" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Create Class</a>
             {% endif %}
-            {% if can_add_child_org %}
-                <button id="show_child_org_btn" class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true"
-                hx-get="{% url 'create-child-org' org_path=current_org_path org_id=current_org_id %}" hx-target="#orgs-list" hx-swap="afterbegin" >
-                Create Organization</button>
+            {% if child_org_view %}
+                <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
+                hx-get="{% url 'create-child-org' org_path=current_org_path org_id=current_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
+                Create {{ node_label }}</button>
             {%endif %}
         </div>
 
@@ -58,56 +60,71 @@
             </ul>
         </div>
 
-        <!--Organizations-->
-        {% if orgs %}
-            <div class="flex flex-col">
+        <!--Main List View-->
+        <div class="flex flex-col flex-auto">
+            {% if root_org_view %}
+            <h1 class="px-1 my-2 md:text-4xl">Organizations</h1>
+            {% elif child_org_view %}
                 <div class="flex items-center px-1 my-2 md:text-4xl gap-x-2">
-                    <h1 >Organizations</h1>
-                    {% if role %}
-                    <div class="badge badge-soft badge-info mt-1">{{ role }}</div>
+                    <h1 class="px-1 my-2 md:text-4xl" >{{ node_label }}</h1>
+                    {% if org_role %}
+                    <div class="badge badge-soft badge-info mt-1">{{ org_role }}</div>
                     {% endif %}
                 </div>
-                <!--Orgs container-->
-                <div class="flex" id="orgs-list">
+            {% elif class_view %}
+                <h1 class="px-1 my-2 md:text-4xl">Classes</h1>
+            {% endif %}
+            <div class="flex flex-wrap" id="main-list">
+                {% if orgs %}
                     {% for org in orgs %}
                         {% partialdef org-row inline %}
-                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-6 gap-x-2 cursor-pointer">
+                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 gap-x-2 cursor-pointer">
                                 <a href="{% url 'view-orgs' org_path=org.path  %}" class="text-center">
-                                    <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Classroom Icon">
-                                    <label class="font-bold">{{ org.name }}</label>
+                                    <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Folder Icon">
+                                    <p class="font-bold">{{ org.name }}</p>
                                 </a>
-                                {% if is_root %}
+                                {% if root_org_view %}
                                     <div class="badge badge-soft badge-success">{{ org.role }}</div>
                                 {% endif %}
                             </div>
-                        {% include "partials/messages.html" %} <!--POST request send messages.-->
-                    {% endpartialdef org-row %}
+                            {% include "partials/messages.html" %} <!--POST request send messages.-->
+                        {% endpartialdef org-row %}
                     {% endfor %}
-                </div>
-            </div>
-        <!--Classes-->
-        {% elif classes %}
-        <h1 class="px-1 my-2 md:text-4xl">Classes</h1>
-        <div class="flex">
-            {% for class in classes %}
-                <div class="text-md md:text-lg py-3 px-6 gap-x-2 cursor-pointer">
-                    <a href="#" class="text-center">
-                        <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom Icon">
-                        <label class="font-bold">{{ class.name }}</label>
-                    </a>
-                </div>
-            {% endfor %}
-        </div> 
+                {% elif classes %}
+                    {% for class in classes %}
+                    <div class="text-md md:text-lg py-3 px-3 lg:px-6 gap-x-2 cursor-pointer">
+                        <a href="#" class="text-center">
+                            <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom Icon">
+                            <label class="font-bold">{{ class.name }}</label>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% endif %}
 
-        {% else %}
-            <div class="flex justify-center items-center flex-auto">
-                <span class="text-gray-500 font-semibold text-lg">It's empty down here </span>
             </div>
+            {% if not classes and not orgs %}
+                <div  class="flex flex-col flex-auto justify-center items-center" @child-org-created.window="$el.remove();"><!--Need bubble up, from child to parent-->
+                    <span class=" text-gray-500 font-semibold text-lg">It's empty down here</span>
+                </div>
+            {% endif  %}
+        </div>
+
+        {% if root_org_view %}
+            <dialog id="create_root_modal" class="modal modal-bottom sm:modal-middle"  @root-org-created="$el.close();" x-data @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
+                <div class="modal-box">
+                    <div id="modal_container"></div>
+                </div>                
+                <form method="dialog" class="modal-backdrop">
+                    <button>close</button>
+                </form>
+            </dialog>
         {% endif %}
-    {% endpartialdef %}
+    </div>
+    {% endpartialdef view-org %}
 </div>
+{% endblock content %}
 
 <!--Add form for org_add and root_add and class_id and HTMX loading of orgs and create forms and delete (require email). 
-Also add levels like department -> Section -> Subject  -->
-
-{% endblock content %}
+Also add levels like department -> Section -> Subject
+Add class and add admin and add teachers. Add delete orgs that requires email
+-->   

@@ -109,7 +109,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-MAX_DEPTH = 5
+MAX_DEPTH = 6
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases

@@ -14,8 +14,8 @@ from config.settings import MAX_DEPTH
 
 # ForeignKey field, child --> parent; Reverse(related_name), parent --> children
 class Organization(MP_Node):
-    name = models.CharField(max_length=20,validators=[RegexValidator(r'^[a-zA-Z0-9]*$', 'Only alphanumeric characters are allowed with no spaces.')])
-    slug = models.SlugField(max_length=20)
+    name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)])
+    slug = models.SlugField(max_length=50)
     # Used as related_name = user.created_orgs.all(); related_query_name = User.objects.filter(created_org__name = "SomeName")
     created_by = models.ForeignKey(
         User, 
@@ -49,15 +49,19 @@ class Organization(MP_Node):
 
 # Ensure that the node is a root node.
 class OrgConfig(models.Model):
-    class InstitutionType(models.TextChoices):
-        COLLEGE = "C", _("College")
-        SCHOOL = "S", _("School")
-        TUITION = "T", _("Tuition")
+    class OrganizationType(models.TextChoices):
+        COLLEGE = "CL", _("College")
+        SCHOOL = "SC", _("School")
+        TUITION = "TN", _("Tuition")
+        COACHING = "CG", _("Coaching")
+        OTHER = "OT", _("Other")
 
     DEFAULT_TEMPLATES = {
-        InstitutionType.COLLEGE: ("Department", "Program", "Year", "Semester", "Section",),
-        InstitutionType.SCHOOL: ("Grade","Section",),
-        InstitutionType.TUITION: ("Class","Batch",),
+        OrganizationType.COLLEGE: ("Departments", "Programs", "Year", "Semester", "Sections","Subjects"),
+        OrganizationType.SCHOOL: ("Grades","Sections","Subjects"),
+        OrganizationType.TUITION: ("Grades","Sessions","Batch","Subjects"), # morning session batch 1
+        OrganizationType.COACHING: ("Courses","Sessions", "Batch", "Subjects",),
+        OrganizationType.OTHER: (), # If other, user can create it's own. We give generic labels.
     }
 
     org = models.OneToOneField(
@@ -67,8 +71,8 @@ class OrgConfig(models.Model):
         primary_key=True,
     )
     type = models.CharField(
-        max_length=1,
-        choices=InstitutionType,
+        max_length=2,
+        choices=OrganizationType,
     )
     owner = models.ForeignKey(
         User,
@@ -79,16 +83,16 @@ class OrgConfig(models.Model):
 
     # bound to class rather than instace object, used to manage global attributes belonging strictly to the class namespace
     @classmethod
-    def get_template(cls, institution_type):
-        return cls.DEFAULT_TEMPLATES.get(institution_type, ())
+    def get_template(cls, organization_type):
+        return cls.DEFAULT_TEMPLATES.get(organization_type, ())
 
     def template(self):
         return self.get_template(self.type)
     
-    def clean(self):
-        super().clean()
-        if not self.org.is_root():
-            raise ValidationError('Configurations can only be created for root nodes.')
+    # def clean(self):
+    #     super().clean()
+    #     if self.org and not self.org.is_root():
+    #         raise ValidationError('Configurations can only be created for root nodes.')
     
     def __str__(self):
         return f" {self.org.name} {self.owner} ({self.get_type_display()})"
@@ -190,7 +194,6 @@ def _is_admin(org:Organization,teacher:User)-> bool:
 # in the root node we only have to validate the uniques sibling for else we have to additonally check if height < MAX_HEIGHT and classes exists
 # also we are always adding child node, not sibling. When move we will move inside a org as a child not a sibling.
 # node.move(ref_node= node1, pos="sorted-child")
-# reduce name size 
 
 def validate_root_org(instance:Organization):
         _validate_unique_siblings(instance = instance)
@@ -258,4 +261,4 @@ def _validate_unique_siblings(instance:Organization, parent_node:Organization = 
     slug = instance.slug or slugify(instance.name)
 
     if siblings.filter(slug=slug).exists():
-        raise ValidationError(f"An organization with the name '{instance.name}' already exists at this exact level.")
+        raise ValidationError(f"The root name must be unique.")

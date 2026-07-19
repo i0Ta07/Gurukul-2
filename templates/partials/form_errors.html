@@ -1,9 +1,15 @@
-{% if form.errors %}
-<div class="absolute right-0 bottom-0 z-50">
-    {% for _, value in form.errors.items %}
-    <div role="alert" class="alert alert-error alert-outline m-4 min-w-md max-w-lg opacity-100 transition-opacity duration-1000">
-    <span>{{ value }}</span>
+{% partialdef form-errors inline %}
+    {% if form.errors %}
+    <div class="fixed bottom-1 right-1 z-50 flex flex-col gap-2">
+        {% for _, value in form.errors.items %}
+        <div role="alert" class="alert alert-error alert-outline text-wrap m-4 max-w-md lg:max-w-lg opacity-100 transition-opacity duration-1000">
+        <span>{{ value }}</span>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
-{% endif %}
+    {% endif %}
+{% endpartialdef %}
+<!-- 
+use the partials if you have multiple forms with different names.like below 
+{% include "partials/form_errors.html#form-errors" with form=root_form %}
+-->

@@ -4,15 +4,15 @@ from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render,get_object_or_404
-from django.contrib.auth.decorators import login_required
 from apps.orgs.models import Organization,OrgMembership,OrgAdmin
-from django.http import HttpResponseNotAllowed,HttpResponse,Http404
-from apps.orgs.models import validate_child_org
+from apps.orgs.models import validate_child_org,validate_root_org
 from django.core.exceptions import ValidationError
-from apps.orgs.forms import CreateOrgForm
+from apps.orgs.forms import CreateOrgForm,CreateRootOrgForm,CreateOrgConfig
 from django.db.models import Exists,OuterRef
 from apps.users.models import User
 from enum import Enum
+from django.db import transaction
+from config.utils import create_message_and_redirect
 # Create your views here.
 # Call add_root()
 # filter returns a querySet
@@ -37,31 +37,6 @@ def _resolve_org_path(root_node: Organization, slugs) -> Organization:
 
     return current
 
-# def _build_breadcrumbs(node: Organization):
-#     """
-#     Returns:
-#     [
-#         {"name": "Harvard", "path": "/harvard"},
-#         {"name": "CSE", "path": "/harvard/CSE"},
-#         {"name": "2024", "path": "/harvard/CSE/2024"},
-#     ]
-#     get_ancestors returns from root. Therefore parts = [harvard] -> [harvard,CSE] -> [harvard,CSE,2024]
-#     which then get appended with the ancestor
-#     """
-#     breadcrumbs = []
-#     path = ""
-
-#     for ancestor in node.get_ancestors():
-#         path = f"{path}/{ancestor.slug}" if path else ancestor.slug
-#         breadcrumbs.append(
-#             {
-#                 "name": ancestor.name,
-#                 "path": path,
-#             }
-#         )
-
-#     return breadcrumbs
-
 def _build_breadcrumbs(org_path: str):
     breadcrumbs = []
     current_path = ""
@@ -74,14 +49,6 @@ def _build_breadcrumbs(org_path: str):
         })
 
     return breadcrumbs
-
-def _build_path(node:Organization):
-    parts = []
-    for ancestor in node.get_ancestors():
-        parts.append(ancestor.slug)
-
-    path = "/".join(parts)
-    return str(path)
 
 def _build_slug(objects,parent_path = ""):
     """
@@ -156,34 +123,41 @@ class ViewOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
                     for membership in memberships
                 ),
             ]
-            context = {"orgs": orgs,"is_root":True}
+            context = {"orgs": orgs,"root_org_view":True}
             if request.htmx:
                     return render(request, "orgs/list_orgs.html#view-org",context)
             return render(request, self.template_name, context)
         else:
             slugs = [slug for slug in org_path.strip("/").split("/") if slug]
             root_node = get_object_or_404(Organization.get_root_nodes().filter(), slug = slugs[0]) # Get root node
-            role = _validate_root_access(root = root_node,user= request.user) # Check if user has access to root node
-            if role:            
+            org_role = _validate_root_access(root = root_node,user= request.user) # Check if user has access to root node
+            if org_role:            
                 current_node = _resolve_org_path(root_node =root_node,slugs=slugs)
                 children = current_node.get_children().order_by("name")
+                template = root_node.config.template()
+                current_depth = current_node.get_depth()
+                if template:
+                    node_label = template[current_depth -1]
+                else:
+                    node_label = "Organization"
                 classes = current_node.classrooms.order_by('name')
                 context = {
-                    "role":role,
+                    "org_role":org_role,
                     "orgs":_build_slug(children,org_path),
                     "classes":_build_slug(classes,org_path),
                     "current_org_name": current_node.name,
                     "current_org_id": current_node.id,
                     "current_org_path":org_path,
                     "breadcrumbs": _build_breadcrumbs(org_path), 
-                    "can_add_child_org": not classes.exists(),
-                    "can_add_class": not children.exists(),
+                    "child_org_view": not classes.exists() and current_depth != len(template),
+                    "class_view": not children.exists()  and current_depth  == len(template),
+                    "node_label":node_label,
                 }
                 if request.htmx:
                     return render(request, "orgs/list_orgs.html#view-org",context)
                     
                 return render(request, self.template_name, context)
-            return HttpResponse(status=401)
+            return create_message_and_redirect(request,message="You are not part of this organization",url="users-dashboard",code="error")
 
 
 class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,View):
@@ -219,75 +193,62 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,View):
             "org":{ "name":org.name,"path":path}
         }
         messages.success(request,message="Organization created successfully.")
-        return render(request, "orgs/list_orgs.html#org-row",row_context)
+        response = render(request, "orgs/list_orgs.html#org-row",row_context)
+        response['HX-Trigger'] = 'child-org-created'
+        return response
 
+class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
+    template_name = "orgs/partials/create_root_and_config_org.html"
+    root_form = CreateRootOrgForm
+    config_form = CreateOrgConfig
 
-
-# build breadcrumb more efficiently
-# @login_required
-# def create_child_org(request, id, path):
-#     if request.method != "POST":
-#         return HttpResponseNotAllowed(["GET"])
-
-#     parent = get_object_or_404(Organization, pk=parent_id)
-
-#     # Load post data into the form
-#     form = CreateOrgForm(request.POST)
-
-#     if form.is_valid():
-#         org = form.save(commit=False)
-#         org.created_by = request.user
-#         try:
-#             validate_child_org(parent, org)
-#             parent.add_child(instance=org)
-#             path = _build_slug([org],parent_path)[0]['path']
-#             context = {
-#                 "org":{ "name":org.name,"path":path
-#                 }
-#             }
-#             return render(request, "orgs/org_detail.html#org-row",context)
-#         except ValidationError:
-#             return HttpResponse(status=400)
-#     return HttpResponse(status=400)
-
-
-
-
-# Validate that the user is teacher and he is a member of the root org, then only he can access the org childs.
-# Create a TeacherRequiedMixin in the config folder
-# def org_detail(request, org_path:str):
+    def get(self,request, *args, **kwargs):
+        root_form = self.root_form()
+        config_form = self.config_form()
+        return render(request, self.template_name, {"root_form":root_form,"config_form":config_form})
     
-    
-#     print
-#     try:
-#         current_node = _resolve_org_path(org_path)
-#     except Http404:
-#         return create_message_and_redirect(request,f"Invalid Path",'users-dashboard')
+    def post(self, request, *args, **kwargs):
+        def render_error():
+            response = render(
+                request,
+                self.template_name,
+                {
+                    "root_form": root_form,
+                    "config_form": config_form,
+                },
+            )
+            response["HX-Retarget"] = "#modal_container" # Change the target to inside modal from main-list if there is an error
+            response["HX-Reswap"] = "innerHTML" # Change the swap method to innerHTML from afterbegin inside the target container
+            return response
 
-#     child_orgs = (
-#         current_node.get_children().order_by("name")
-#     )
+        root_form = self.root_form(request.POST)
+        config_form = self.config_form(request.POST)
 
-#     classes = (
-#         current_node.classes.order_by("name")
-#     )
+        if not root_form.is_valid() or not config_form.is_valid():
+            return render_error()
+        
+        org = root_form.save(commit=False)
+        org.created_by = request.user
 
-#     # rule: org children and classes cannot coexist under the same node.
-#     # So in practice one of these will be empty.
-#     show_orgs = child_orgs.exists()
-#     show_classes = not show_orgs
+        try:
+            validate_root_org(instance=org)
+        except ValidationError as e:
+            root_form.add_error(field=None,error=e.message)
+            return render_error()
+        
+        org_config = config_form.save(commit=False)
+        org_config.org = org
+        org_config.owner = request.user
 
-#     return render(
-#         request,
-#         "orgs/org_detail.html",
-#         {
-#             "current_node": current_node,
-#             "breadcrumbs": _build_breadcrumbs(current_node),
-#             "child_orgs": _build_slug(child_orgs,org_path),
-#             "classes": _build_slug(classes,org_path),
-#             "show_orgs": show_orgs,
-#             "show_classes": show_classes,
-#             "can_add_org": not classes.exists(),
-#             "can_add_class": not child_orgs.exists(),
-#         },
-#     )
+        with transaction.atomic(): # either both root and config are created or none
+            Organization.add_root(instance = org)
+            org_config.save()
+
+        messages.success(request,"Organization created successfully")
+        response = render(request,"orgs/list_orgs.html#org-row", {
+            "org":{"name":org.name, "path":f"{org.slug}","role":UserRole.OWNER.value},
+            "root_org_view":True,
+            }
+        )
+        response['HX-Trigger'] = 'root-org-created'
+        return response

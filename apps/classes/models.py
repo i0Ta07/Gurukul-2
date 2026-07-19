@@ -5,11 +5,11 @@ from apps.users.models import User
 from apps.orgs.models import Organization
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-
+from django.core.validators import RegexValidator
 
 class Class(models.Model):
-    name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100)
+    name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)])
+    slug = models.SlugField(max_length=50)
     code = models.UUIDField(unique=True,default=uuid.uuid4) # Callable, not the actual instance with (),if uuid4(), same uuid for every class
     members = models.ManyToManyField(
         User,

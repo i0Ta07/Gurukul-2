@@ -18,7 +18,7 @@ from .forms import (
     UpdateUserDetailsForm,
 )
 
-from django.http import HttpResponseNotAllowed
+from django.views.decorators.http import require_GET
 
 # Mixins are used only with Class based views, writtern first in order.
 from django.contrib.messages.views import SuccessMessageMixin
@@ -382,14 +382,13 @@ def logout_user_from_all_devices(request, user):
     # Clear the cookie/session for the current request context
     logout(request)
 
+@require_GET
 def CompleteEmailUpdate(request,token):
     """
     Extract the user_id from unsafe link. Use it to retrieve the salt
     If tampered, the salt = old_email will be incorrect, and during .unsign(),
     we will get a bad singature. Hence, the request will be invalidated.
     """
-    if request.method != 'GET':
-        return HttpResponseNotAllowed(["GET"])
 
     try:
         signed_uidb64 = token

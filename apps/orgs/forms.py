@@ -1,18 +1,48 @@
 from django import forms
-from .models import validate_child_org,Organization
+from .models import OrgConfig, Organization
+from django.utils.translation import gettext_lazy as _
+
+from .models import validate_child_org
 from treebeard.forms import MoveNodeForm, movenodeform_factory
 
 class CreateOrgForm(forms.ModelForm):
     name = forms.CharField(
-        max_length=20,
+        max_length=50,
         required=True,
         widget=forms.TextInput(attrs={'placeholder':'name', 
-        'class':"font-bold w-25 rounded-md focus:outline-2 focus:outline-blue-500 focus:outline-offset-2",
+        'class':"form-input w-25",
         "placeholder": 'name', 'autofocus': True })       
     )
     class Meta:
         model = Organization
         fields = ['name']
+
+class CreateRootOrgForm(forms.ModelForm):
+    name = forms.CharField(
+        max_length=50,
+        label=_('Name'),
+        required=True,
+        widget=forms.TextInput(attrs={
+        'class':"form-input",
+        "placeholder": 'Must be unique', 'autofocus': True })       
+    )
+    class Meta:
+        model = Organization
+        fields = ['name']
+
+class CreateOrgConfig(forms.ModelForm):
+    type = forms.ChoiceField(
+        choices= OrgConfig.OrganizationType,
+        label=_("Type"),
+        required=True,
+        widget=forms.RadioSelect(attrs={
+        'class': ' outline-none'}),
+    )
+    class Meta:
+        model = OrgConfig
+        fields = ['type']
+
+
 
 # Create a get org form that will take a org slug, then check among the root_nodes check if that org
 # exists if yes, then check the membership of the user to the org.
