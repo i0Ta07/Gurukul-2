@@ -8,8 +8,8 @@ Dashboard
 <div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
     {% partialdef dashboard inline %}
     <div class="flex flex-col gap-y-3">
-    <h1>Welcome to Dashboard page</h1>
-    <a href="{% url 'view-orgs'  %}" class="base-button w-25 bg-blue-500 hover:bg-blue-700">View Orgs</a>
+        <h1>Welcome to Dashboard page</h1>
+        <a href="{% url 'view-root-orgs'  %}" class="base-button w-25 bg-blue-500 hover:bg-blue-700">View Orgs</a>
     </div>
     {% endpartialdef %}    
 </div>

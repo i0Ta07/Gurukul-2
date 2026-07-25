@@ -17,7 +17,7 @@ from apps.orgs.utils import (
     )
 
 class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
-    template_name = "orgs/list_orgs.html"
+    template_name = "orgs/view_orgs_and_classrooms.html"
 
     def get(self, request, *args, **kwargs):
             created_orgs = Organization.get_root_nodes().filter(config__owner = request.user)
@@ -42,12 +42,12 @@ class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
             ]
             context = {"orgs": orgs,"root_org_view":True}
             if request.htmx:
-                    return render(request, "orgs/list_orgs.html#view-org",context)
+                    return render(request, "orgs/view_orgs_and_classrooms.html#view-org",context)
             return render(request, self.template_name, context)
 
 # should only show the TLD orgs the user has created
 class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
-    template_name = "orgs/list_orgs.html"
+    template_name = "orgs/view_orgs_and_classrooms.html"
 
     def get(self, request, *args, **kwargs):
         org_path = kwargs.get("org_path")
@@ -77,7 +77,7 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
                 "node_label":node_label,
             }
             if request.htmx:
-                return render(request, "orgs/list_orgs.html#view-org",context)
+                return render(request, "orgs/view_orgs_and_classrooms.html#view-org",context)
                 
             return render(request, self.template_name, context)
         return create_message_and_redirect(request,message="You are not part of this organization",url="users-dashboard",code="error")
@@ -116,7 +116,7 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
             "org":{ "name":org.name,"path":path}
         }
         messages.success(request,message="Organization created successfully.")
-        response = render(request, "orgs/list_orgs.html#org-row",row_context)
+        response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
         response['HX-Trigger'] = 'child-org-created'
         return response
 
@@ -168,7 +168,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
             org_config.save()
 
         messages.success(request,"Organization created successfully")
-        response = render(request,"orgs/list_orgs.html#org-row", {
+        response = render(request,"orgs/view_orgs_and_classrooms.html#org-row", {
             "org":{"name":org.name, "path":f"{org.slug}","role":UserRole.OWNER.value},
             "root_org_view":True,
             }

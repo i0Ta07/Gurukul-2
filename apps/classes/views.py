@@ -50,7 +50,7 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
             "classroom":{ "name":classroom.name,"path":path}
         }
         messages.success(request,message="Classroom created successfully.")
-        response = render(request, "orgs/list_orgs.html#classroom-row",row_context)
+        response = render(request, "orgs/view_orgs_and_classrooms.html#classroom-row",row_context)
         response['HX-Trigger'] = 'classroom-created'
         return response
 

@@ -1,7 +1,6 @@
-
 from config.utils import create_message_and_redirect
 from django.contrib import messages
-from django.shortcuts import render,redirect
+from django.shortcuts import render
 from django.views import View
 from django.db import IntegrityError
 # Django reads your views.py file before it reads your urls.py file. It doesn't know your URL names yet. 
@@ -18,30 +17,18 @@ from .forms import (
     UpdateUserDetailsForm,
 )
 
-from django.views.decorators.http import require_GET
-
+from config.utils import logout_user_from_all_devices,send_email
 # Mixins are used only with Class based views, writtern first in order.
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 
-from django.contrib.sites.shortcuts import get_current_site
-import secrets
-
-from django.template.loader import render_to_string
-from .models import User
-
-# Base 64 encoding 
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-
-from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
-
-# Session
-from .models import CustomSession
-from django.contrib.auth import logout
-
+from apps.users.utils import (
+    get_changeEmail_key,get_register_token_key,
+    get_token,encode_user_id,sign_str,unsign_str,
+    decode_user_id
+)
+from apps.users.models import User
 from django.contrib.auth.views import (
     LoginView,
     PasswordResetView,
@@ -49,57 +36,25 @@ from django.contrib.auth.views import (
     PasswordChangeView,
 )
 
-from .tasks import send_email_task
 from .mixins import AnonymousRequiredMixin
 
 # Views seperate the design from backend. Also it is convention to create another folder of same app 
 # name inside templates to specify the exact page. another home.html will be picked if that app is 
 # specified above users app, if we only did home.html
 
-def home(request):
-    if request.user.is_authenticated:
-        return redirect('users-dashboard')
-    return render(request, 'users/home.html')
+class Home(AnonymousRequiredMixin,View):
+    template_name = "users/home.html"
 
-@login_required 
-def dashboard(request):
-    if request.htmx:
-        return render(request,'users/dashboard.html#dashboard')
-    return render(request,'users/dashboard.html')
+    def get(self,request, *args, **kwargs,):
+        return render(request,self.template_name,)
 
-def send_email(request,email_template_name,html_email_template_name,subject,receiver,token):
-    """
-    Adds the send_email task to redis task queue for async compatibility. Celery worker takes the async task from the 
-     message broker queue i.e. Redis and finishes them. Function is used to send reset or register emails asynchronously.
-    """
-    
-    current_site = get_current_site(request)
-    domain = current_site.domain
-    protocol = 'https' if request.is_secure() else 'http'
-    
-    extra_email_context = {
-        'domain':domain,
-        'token':token,
-        'protocol':protocol,
-    }
-    
-    text_content = render_to_string(
-        email_template_name,
-        context=extra_email_context,
-    )
+class Dashboard(LoginRequiredMixin,View):
+    template_name = 'users/dashboard.html'
 
-    html_content = render_to_string(
-        html_email_template_name,
-        context=extra_email_context,
-    )
-
-    send_email_task.delay(subject,text_content,receiver,html_content)
-
-def get_register_token_key(token):
-    return f'register:token:{token}'
-
-def get_token():
-    return secrets.token_hex(32)
+    def get(self,request, *args, **kwargs,):
+        if request.htmx:
+            return render(request,'users/dashboard.html#dashboard')
+        return render(request,self.template_name)
 
 class RegisterEmailView(AnonymousRequiredMixin,View):
     """
@@ -141,7 +96,6 @@ class RegisterEmailView(AnonymousRequiredMixin,View):
         cache.set(key = key, value= value,timeout=300) # TTL = 5 minutes
 
         return create_message_and_redirect(request=request,message='Verification link will be sent to you shortly. Kindly verify it to proceed.',url='users-home',code='success')
-
 
 class CompleteRegistrationView(View):
     """
@@ -250,39 +204,6 @@ class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
 
         return super().dispatch(request, *args, **kwargs)    
 
-def encode_user_id(user_id: int) -> str:
-    """Converts an integer user_id to a URL-safe base64 string."""
-    return urlsafe_base64_encode(force_bytes(user_id))
-
-def decode_user_id(encoded_id: str) -> int:
-    """Decodes a URL-safe base64 string back to an integer user_id."""
-    return int(force_str(urlsafe_base64_decode(encoded_id)))
-
-# Use the old email as salt
-def get_signer(salt):
-    """
-    Same as django, we will use a changing field to invalidate the link after one use, such as email. 
-    When changing email we will use the old email as salt.
-    """
-    return TimestampSigner(salt=salt)
-
-def sign_str(unsigned:str,salt:str):
-    signer = get_signer(salt=salt)
-    value = signer.sign(unsigned)
-    return value
-
-def unsign_str(signed:str,salt:str,max_age= 300):
-    signer = get_signer(salt=salt)
-    try:
-        value = signer.unsign(signed,max_age=max_age)
-    except (SignatureExpired, BadSignature):
-        return False
-    return value
-
-def get_changeEmail_key(user_id):
-    return f'change_email:user:{user_id}'
-
-
 # Always follow early fail architecture and avoid nesting.
 class UpdateProfile(LoginRequiredMixin,View):
     """
@@ -370,58 +291,42 @@ class UpdateProfile(LoginRequiredMixin,View):
                 code="success",
             )
 
+class CompleteEmailUpdate(View):
+    def get(self,request, *args, **kwargs):
+        try:
+            signed_uidb64 = kwargs['token']
+            # The token format is value:timestamp:signature (or value:signature)
+            uidb64 = signed_uidb64.split(':')[0]
+            user_id = decode_user_id(uidb64)
+            user = User.objects.get(id=user_id) # Fetch the user corresponding to the one given in the link.
+        except (IndexError, ValueError, TypeError, User.DoesNotExist):
+            return create_message_and_redirect(request=request,message='Invalid or corrupted link.',url="users-home",code='error')
 
-
-def logout_user_from_all_devices(request, user):
-    """
-    Instantly deletes all active sessions for the user at the database level.
-    """
-    # Flush all sessions stored in database for the current user
-    CustomSession.objects.filter(user_id=user.id).delete()
-    
-    # Clear the cookie/session for the current request context
-    logout(request)
-
-@require_GET
-def CompleteEmailUpdate(request,token):
-    """
-    Extract the user_id from unsafe link. Use it to retrieve the salt
-    If tampered, the salt = old_email will be incorrect, and during .unsign(),
-    we will get a bad singature. Hence, the request will be invalidated.
-    """
-
-    try:
-        signed_uidb64 = token
-        # The token format is value:timestamp:signature (or value:signature)
-        uidb64 = signed_uidb64.split(':')[0]
-        user_id = decode_user_id(uidb64)
-        user = User.objects.get(id=user_id) # Fetch the user corresponding to the one given in the link.
-    except (IndexError, ValueError, TypeError, User.DoesNotExist):
-        return create_message_and_redirect(request=request,message='Invalid or corrupted link.',url="users-home",code='error')
-
-    unsigned_uidb64 = unsign_str(signed=signed_uidb64, salt=user.email) # Use the link to unsign the token
-    
-    # If they tampered with the ID or the signature, this fails.
-    if not unsigned_uidb64:
-        return create_message_and_redirect(request=request,message='Invalid or corrupted link.',url="users-home",code='error')
+        unsigned_uidb64 = unsign_str(signed=signed_uidb64, salt=user.email) # Use the link to unsign the token
         
-    key = get_changeEmail_key(user_id=user.id)
-    data = cache.get(key)
-    
-    if not data:
-        return create_message_and_redirect(request=request,message='Link has been expired.',url="users-home",code='error')
+        # If they tampered with the ID or the signature, this fails.
+        if not unsigned_uidb64:
+            return create_message_and_redirect(request=request,message='Invalid or corrupted link.',url="users-home",code='error')
+            
+        key = get_changeEmail_key(user_id=user.id)
+        data = cache.get(key)
+        
+        if not data:
+            return create_message_and_redirect(request=request,message='Link has been expired.',url="users-home",code='error')
 
-    new_email = data['new_email']
+        new_email = data['new_email']
 
-    try:
-        user.email = new_email
-        user.save()
-    except IntegrityError: # Throws IntegrityError if race conditions are met.
-        return create_message_and_redirect(request=request,message='Email is already in use by another account.',url="users-home",code='error')
+        try:
+            user.email = new_email
+            user.save()
+        except IntegrityError: # Throws IntegrityError if race conditions are met.
+            return create_message_and_redirect(request=request,message='Email is already in use by another account.',url="users-home",code='error')
 
-    cache.delete(key)
-    
-    logout_user_from_all_devices(request=request, user=user)
-    
-    return create_message_and_redirect(request,message='Email updated successfully. Please log in again.',url='login',code='success')
-    
+        cache.delete(key)
+        
+        logout_user_from_all_devices(request=request, user=user)
+
+        messages.success(request,message='Email updated successfully. Please log in again.')
+        
+        return create_message_and_redirect(request,message='Email updated successfully. Please log in again.',url='login',code='success')
+        
