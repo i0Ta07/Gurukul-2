@@ -1,110 +1,27 @@
 
-from config.mixins import TeacherRequiredMixin
+from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OwnerAdminRequired
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render,get_object_or_404
-from apps.orgs.models import Organization,OrgMembership,OrgAdmin
-from apps.orgs.models import validate_child_org,validate_root_org
-from django.core.exceptions import ValidationError
-from apps.orgs.forms import CreateOrgForm,CreateRootOrgForm,CreateOrgConfig
-from django.db.models import Exists,OuterRef
+from apps.orgs.models import OrgInvitation, Organization
 from apps.users.models import User
-from enum import Enum
+from django.core.exceptions import ValidationError
+from apps.orgs.forms import CreateChildOrgForm,CreateRootOrgForm,CreateOrgConfig,SendInvitation
 from django.db import transaction
 from config.utils import create_message_and_redirect
-# Create your views here.
-# Call add_root()
-# filter returns a querySet
-
-
-# OMG,this function is pure beauty.
-def _resolve_org_path(root_node: Organization, slugs) -> Organization:
-    """
-    Resolve a slug path like: harvard/cse/2024 into the matching Organization node.
-    It resolves the URL, level by level. First it retrieves the root node at slugs[0] -> harvard among all root nodes.
-    Then it goes folder by folder matching the path. If current = harvard.get_childern() has cse then current = cse
-    then current = cse.get_children() has 2024 then current = 2024. We got the last node. 
-    
-    Suppose we have two paths like harvard/cse/2024 and harvard/mechanical/2024. Since , it goes folder by, it reaches
-    the exact path. If suppose we have harvard/biochem and it does not exist, it will return HTTP404 since current.get_children(), slug = slug
-    does not have biochem 
-    """
-
-    current = root_node
-    for slug in slugs[1:]:
-        current = get_object_or_404(current.get_children(), slug=slug)
-
-    return current
-
-def _build_breadcrumbs(org_path: str):
-    breadcrumbs = []
-    current_path = ""
-
-    for slug in org_path.strip("/").split("/")[0:-1]:
-        current_path += f"/{slug}"
-        breadcrumbs.append({
-            "name": slug.upper(),
-            "path": current_path,
-        })
-
-    return breadcrumbs
-
-def _build_slug(objects,parent_path = ""):
-    """
-    Build paths for a list of objects, based on parent_path. 
-    Adds the current object slug at the end of parent path.
-    Can work with both child orgs and classes.
-    """
-    return [
-        {
-            "name": obj.name,
-            "path": f"{parent_path}/{obj.slug}" if parent_path else f"{obj.slug}", # org_path always vips/vsit not vips/vsit/
-        }
-        for obj in objects
-    ]
-
-
-class UserRole(str, Enum):
-    OWNER = "Owner"
-    ADMIN = "Admin"
-    TEACHER = "Teacher"
-
-def _validate_root_access(root:Organization,user:User):
-    """
-    Check if the user belong to this root org, it yes return the role [Admin,Teacher,Owner] else return None
-    """
-    if Organization.get_root_nodes().filter(id = root.id, config__owner = user).exists():
-        return UserRole.OWNER.value
-    membership = (
-        OrgMembership.objects.filter(org=root, teacher=user).annotate(
-            has_admin=Exists(
-                OrgAdmin.objects.filter(membership=OuterRef("id"))
-            )
-        ).first()
+from apps.orgs.utils import (
+    UserRole,
+    validate_root_access,validate_child_org,validate_root_org,get_memberships,
+    build_breadcrumbs,build_slug,resolve_org_path,get_emails_from_excel
     )
-    if membership:
-        return UserRole.ADMIN.value if membership.has_admin else UserRole.TEACHER.value
-    return None
 
-    
-# should only show the TLD orgs the user has created
-class ViewOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
+class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
     template_name = "orgs/list_orgs.html"
-    http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        org_path = kwargs.get("org_path")
-        if not org_path: # If there is no org_path that means that we are at / and extract the created and membership orgs for the user.
             created_orgs = Organization.get_root_nodes().filter(config__owner = request.user)
-            memberships = (
-                OrgMembership.objects.filter(teacher=request.user).select_related("org").annotate(
-                    has_admin=Exists(
-                        OrgAdmin.objects.filter(membership=OuterRef("id")) # whether this membership.id exists in OrgAdmin membership field
-                    )
-                )
-            )
-
+            memberships = get_memberships(user = request.user)
             orgs = [
                 *(
                     {
@@ -127,42 +44,48 @@ class ViewOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
             if request.htmx:
                     return render(request, "orgs/list_orgs.html#view-org",context)
             return render(request, self.template_name, context)
-        else:
-            slugs = [slug for slug in org_path.strip("/").split("/") if slug]
-            root_node = get_object_or_404(Organization.get_root_nodes().filter(), slug = slugs[0]) # Get root node
-            org_role = _validate_root_access(root = root_node,user= request.user) # Check if user has access to root node
-            if org_role:            
-                current_node = _resolve_org_path(root_node =root_node,slugs=slugs)
-                children = current_node.get_children().order_by("name")
-                template = root_node.config.template()
-                current_depth = current_node.get_depth()
-                if template:
-                    node_label = template[current_depth -1]
-                else:
-                    node_label = "Organization"
-                classes = current_node.classrooms.order_by('name')
-                context = {
-                    "org_role":org_role,
-                    "orgs":_build_slug(children,org_path),
-                    "classes":_build_slug(classes,org_path),
-                    "current_org_name": current_node.name,
-                    "current_org_id": current_node.id,
-                    "current_org_path":org_path,
-                    "breadcrumbs": _build_breadcrumbs(org_path), 
-                    "child_org_view": not classes.exists() and current_depth != len(template),
-                    "class_view": not children.exists()  and current_depth  == len(template),
-                    "node_label":node_label,
-                }
-                if request.htmx:
-                    return render(request, "orgs/list_orgs.html#view-org",context)
-                    
-                return render(request, self.template_name, context)
-            return create_message_and_redirect(request,message="You are not part of this organization",url="users-dashboard",code="error")
+
+# should only show the TLD orgs the user has created
+class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
+    template_name = "orgs/list_orgs.html"
+
+    def get(self, request, *args, **kwargs):
+        org_path = kwargs.get("org_path")
+        slugs = [slug for slug in org_path.strip("/").split("/") if slug]
+        root_node = get_object_or_404(Organization.get_root_nodes(), slug = slugs[0]) # Get root node
+        org_role = validate_root_access(root = root_node,user= request.user) # Check if user has access to root node
+        if org_role:            
+            current_node = resolve_org_path(root_node =root_node,slugs=slugs)
+            children = current_node.get_children().order_by("name")
+            template = root_node.config.template()
+            current_depth = current_node.get_depth()
+            if template:
+                node_label = template[current_depth -1]
+            else:
+                node_label = "Organization"
+            classrooms = current_node.classrooms.order_by('name')
+            context = {
+                "org_role":org_role,
+                "orgs":build_slug(children,org_path),
+                "classrooms":build_slug(classrooms,org_path),
+                "current_org_name": current_node.name,
+                "current_org_id": current_node.id,
+                "current_org_path":org_path,
+                "breadcrumbs": build_breadcrumbs(org_path), 
+                "child_org_view": not classrooms.exists() and current_depth != len(template),
+                "classroom_view": not children.exists()  and current_depth  == len(template),
+                "node_label":node_label,
+            }
+            if request.htmx:
+                return render(request, "orgs/list_orgs.html#view-org",context)
+                
+            return render(request, self.template_name, context)
+        return create_message_and_redirect(request,message="You are not part of this organization",url="users-dashboard",code="error")
 
 
-class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,View):
+class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     template_name = "orgs/partials/create_child_org.html"
-    form_class = CreateOrgForm
+    form_class = CreateChildOrgForm
 
     def get(self,request, *args, **kwargs):
         form = self.form_class()
@@ -252,3 +175,74 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
         )
         response['HX-Trigger'] = 'root-org-created'
         return response
+
+class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+    template_name = "orgs/send_invitations.html"
+    form_class = SendInvitation
+
+    def get(self,request,*args, **kwargs):
+        form = self.form_class()
+        context = {'form':form,"org_id":kwargs['org_id']}
+        if request.htmx:
+            return render(request,template_name="orgs/send_invitations.html#send-invitations",context=context)
+        return render(request,template_name=self.template_name,context=context)       
+
+    def post(self,request, *args, **kwargs):
+        form = self.form_class(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form,"org_id":kwargs['org_id']})
+        # If email is provided
+        email = form.cleaned_data['email']
+        org_id = kwargs['org_id']
+        org = Organization.objects.get(pk= org_id).get_root()
+        if email:
+            try:
+                user = User.objects.get(email = email)
+            except User.DoesNotExist:
+                form.add_error("email","No such user exists. Kindly recheck the email.")
+                return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form,"org_id":kwargs['org_id']})
+            invitation = OrgInvitation(to_user=user,from_user=request.user,org=org,)
+            try:
+                invitation.full_clean()   
+                invitation.save()
+            except ValidationError as e:
+                form.add_error(None,e)
+                return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form,"org_id":kwargs['org_id']})
+
+            messages.success(request,"Request sent successfully")
+            # Render a fresh form
+            return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':self.form_class(),"org_id":kwargs['org_id']})
+        else:
+            file =  form.cleaned_data['file']
+            data = get_emails_from_excel(file)
+            response = render(request,template_name="orgs/send_invitations.html#render-emails-from-files",context={"data":data,"org_id":kwargs['org_id']})
+            response['HX-Retarget'] = '#file_email_container'
+            return response
+
+class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+    def post(self,request, *args, **kwargs):
+        org = Organization.objects.get(pk=  kwargs['org_id']).get_root()        
+        email_ids = set(request.POST.getlist("emails"))
+        users = (
+            User.objects
+            .filter(email__in=email_ids)
+            .exclude(pk=request.user.pk) # 1. user is not inviting himself.
+            .exclude(org_membership__org=org) # 2. requested user are not part of the org.
+            .exclude(received_invitation__org=org) # 3. If there is already an invitation
+            .distinct()
+        )
+        created_invitations = OrgInvitation.objects.bulk_create(
+            [
+                OrgInvitation(
+                    to_user=user,
+                    from_user=request.user,
+                    org=org,
+                )
+                for user in users
+            ],
+            ignore_conflicts=True,
+        )
+        messages.success(request,f"Sent {len(created_invitations)} invitations.")
+        return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':SendInvitation(),"org_id":kwargs['org_id']})
+
+        

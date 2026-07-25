@@ -5,10 +5,9 @@ from django.core.validators import RegexValidator
 from django.db import models
 from apps.users.models import User
 # Sligify and unique slug names among siblings and max_depth, implement them in form clean()
-# Make sure at the leaf there are only classes, no orgs
+# Make sure at the leaf there are only classrooms, no orgs
 from django.utils.text import slugify
 from treebeard.mp_tree import MP_Node
-from config.settings import MAX_DEPTH
 
 ## Upadate certain fields in django
 
@@ -97,8 +96,16 @@ class OrgConfig(models.Model):
     def __str__(self):
         return f" {self.org.name} {self.owner} ({self.get_type_display()})"
 
+def is_admin(org:Organization,teacher:User)-> bool:
+    """
+    Given an org and teacher, it returns whether the teacher is an admin inside an org.
+    """
+    return org.memberships.filter(
+        admin__isnull = False,
+        teacher = teacher
+    ).exists()
 
-# We will create a orgmembership, for only root orgs. Only teacher can be a part of org. Students will only see classes
+# We will create a orgmembership, for only root orgs. Only teacher can be a part of org. Students will only see classrooms
 # While accessing any org or it's child we will check if there is Orgmembership between the root and user if yes -> PERMITTED
 # Also give option to create this using a .csv file. You have to manually add teachers to the organization.
 class OrgMembership(models.Model):
@@ -136,13 +143,14 @@ class OrgMembership(models.Model):
         if self.teacher == self.org.config.owner:
             raise ValidationError('Owners cannot have memberships.')
         
-        if self.created_by != self.org.config.owner and not _is_admin(self.org,self.created_by):
+        if self.created_by != self.org.config.owner and not is_admin(self.org,self.created_by):
             raise ValidationError('Only the owner and admins can add teachers.')
         
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["teacher", "org"], name="unique_org_membership"
+                fields=["teacher", "org"], name="unique_org_membership",
+                violation_error_message = "Teacher is already a member of this organization.",
             )
         ]
 
@@ -179,86 +187,51 @@ class OrgAdmin(models.Model):
         if not self.membership.org.is_root():
             raise ValidationError('Admins can only be created with root level orgs.')
         
-        if self.created_by != self.membership.org.config.owner and not _is_admin(org=self.membership.org,teacher=self.created_by):
+        if self.created_by != self.membership.org.config.owner and not is_admin(org=self.membership.org,teacher=self.created_by):
             raise ValidationError("Only owners and admins can create admins.")
     
-def _is_admin(org:Organization,teacher:User)-> bool:
-    """
-    Given an org and teacher, it returns whether the teacher is an admin inside an org.
-    """
-    return org.memberships.filter(
-        admin__isnull = False,
-        teacher = teacher
-    ).exists()
+class OrgInvitation(models.Model):
+    to_user =  models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="received_invitations",
+        related_query_name="received_invitation"
+    )
+    from_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sent_invitations",
+        related_query_name="sent_invitation"
+    )
+    org = models.ForeignKey(
+        Organization, 
+        on_delete=models.CASCADE, 
+        related_name="invitations", 
+        related_query_name="invitation"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-# in the root node we only have to validate the uniques sibling for else we have to additonally check if height < MAX_HEIGHT and classes exists
-# also we are always adding child node, not sibling. When move we will move inside a org as a child not a sibling.
-# node.move(ref_node= node1, pos="sorted-child")
-
-def validate_root_org(instance:Organization):
-        _validate_unique_siblings(instance = instance)
-
-def validate_child_org(parent_node: Organization, instance: Organization):
-    """
-    parent_node: we can only move and create inside a org as a child, not a sibling.
-    instance: when move -> existing_node; when create: new_node
-    position: always child.
-    Can be used with create root/child orgs and move child orgs.
-    """
-
-    target_depth = parent_node.depth + 1
-
-    # --- RULE 1: Maximum Depth Limit ---
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["to_user","org"], name="unique_invitation",
+                violation_error_message = "You already sent an invitation to this user",
+            )
+        ]
     
-    _validate_depth(target_depth = target_depth,instance = instance)
-
-
-    # ---RULE 2: Classes at leaf nodes ---
-    
-    if parent_node.classrooms.exists():
-        raise ValidationError(f'Organization and classes cannot be in same folder.')
-
-    # --- RULE 3: Scoped Sibling Uniqueness &  ---
-    _validate_unique_siblings(parent_node = parent_node,instance= instance)
-
-# p1.add_sibling(pos = "sibling",p2)
-
-def _validate_depth(target_depth:int, instance:Organization):
-    """
-    Validate the depth of the instance, given it's expected depth i.e. target depth and instance itself.
-    Handle both create and move.
-    """
-    # New Node Creation Validation 
-    if not instance.pk:
-        if target_depth > MAX_DEPTH:
-            raise ValidationError(f"Nesting limit exceeded! Maximum allowed depth is {MAX_DEPTH}. This would be level {target_depth}.")
-    else:
-    # Moving an existing node (must account for the height of its children)
-        descendants = instance.get_descendants()
-        if descendants.exists():
-            max_descendant_depth = descendants.order_by('-depth').first().depth
-            subtree_height = max_descendant_depth - instance.depth
-        else:
-            subtree_height = 0
-
-        if (target_depth + subtree_height) > MAX_DEPTH:
-            raise ValidationError(f"Cannot move here. This branch is {subtree_height + 1} levels tall, which would push nested organizations past the {MAX_DEPTH}-level limit.")
-
-def _validate_unique_siblings(instance:Organization, parent_node:Organization = None ):
-    """
-    Validate that siblings have unique name either during move or new node creation.
-    For root orgs, we only provide the instance.
-    """
-    if parent_node:
-        siblings = parent_node.get_children()
-    else:
-        siblings = Organization.get_root_nodes()
-   
-    # When moving, siblings also contains the current node, so exclude that.
-    if instance.pk:
-        siblings = siblings.exclude(pk=instance.pk)
-
-    slug = instance.slug or slugify(instance.name)
-
-    if siblings.filter(slug=slug).exists():
-        raise ValidationError(f"The root name must be unique.")
+    def clean(self):
+        super().clean()
+        if not self.org.is_root():
+            raise ValidationError('You can only invite teachers to root organizations.')
+        
+        if self.org.memberships.filter(teacher=self.to_user).exists():
+            raise ValidationError('User is already the part of this organization')
+        
+        if self.to_user == self.from_user:
+            raise ValidationError("You cannot invite yourself.")
+        
+        if self.org.config.owner != self.from_user and not is_admin(org = self.org, teacher=self.from_user):
+            raise ValidationError("You dont have permission to send invitations.")
+        
+    def __str__(self):
+        return f"{self.to_user}({self.org})"

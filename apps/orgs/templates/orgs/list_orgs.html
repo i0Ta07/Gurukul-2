@@ -21,30 +21,35 @@
         {% endif %}
 
         <!-- Action Buttons -->
-        <div class="flex ml-auto gap-3">
-            {% if class_view %}
-                <a href="#" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Create Class</a>
-            {% endif %}
-            {% if child_org_view %}
-                <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
-                hx-get="{% url 'create-child-org' org_path=current_org_path org_id=current_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
-                Create {{ node_label }}</button>
+            {% if classroom_view %}
+            <div class="flex ml-auto">
+                <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @classroom-created.window="formOpen = false"
+                hx-get="{% url 'create-classroom' org_path=current_org_path org_id=current_org_id %}" hx-target="#main-list" hx-swap="afterbegin">
+                Create Classroom</button>
+            </div>
+            {% elif child_org_view %}
+                <div class="flex justify-between">
+                    <a href="{% url 'send-invitation' org_id=current_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Add Teachers</a>
+
+                    <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
+                    hx-get="{% url 'create-child-org' org_path=current_org_path org_id=current_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
+                    Create {{ node_label }}</button>
+                </div>
             {%endif %}
-        </div>
 
         <!--Breadcrumb-->
         <div class="breadcrumbs text-sm md:text-lg mt-3">
             <ul>
                 <li>
-                    <a href="{% url 'view-orgs' %}">
-                        <img class="size-5" src="{% static 'orgs/icons/svg/home-icon.svg' %}" alt="Home Icon">
+                    <a href="{% url 'view-root-orgs' %}">
+                        <img class="size-5" src="{% static 'orgs/icons/svg/home.svg' %}" alt="Home Icon">
                         Home
                     </a>
                 </li>
                 {% if breadcrumbs %}
                     {% for node in breadcrumbs %}
                         <li>
-                            <a href="{% url 'view-orgs' org_path=node.path %}">
+                            <a href="{% url 'view-child-orgs' org_path=node.path %}">
                                 <img class="size-5" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization Icon">
                                 {{ node.name }}
                             </a>
@@ -71,7 +76,7 @@
                     <div class="badge badge-soft badge-info mt-1">{{ org_role }}</div>
                     {% endif %}
                 </div>
-            {% elif class_view %}
+            {% elif classroom_view %}
                 <h1 class="px-1 my-2 md:text-4xl">Classes</h1>
             {% endif %}
             <div class="flex flex-wrap" id="main-list">
@@ -79,8 +84,8 @@
                     {% for org in orgs %}
                         {% partialdef org-row inline %}
                             <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 gap-x-2 cursor-pointer">
-                                <a href="{% url 'view-orgs' org_path=org.path  %}" class="text-center">
-                                    <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Folder Icon">
+                                <a href="{% url 'view-child-orgs' org_path=org.path  %}" class="text-center">
+                                    <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Folder">
                                     <p class="font-bold">{{ org.name }}</p>
                                 </a>
                                 {% if root_org_view %}
@@ -90,19 +95,22 @@
                             {% include "partials/messages.html" %} <!--POST request send messages.-->
                         {% endpartialdef org-row %}
                     {% endfor %}
-                {% elif classes %}
-                    {% for class in classes %}
-                    <div class="text-md md:text-lg py-3 px-3 lg:px-6 gap-x-2 cursor-pointer">
-                        <a href="#" class="text-center">
-                            <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom Icon">
-                            <label class="font-bold">{{ class.name }}</label>
-                        </a>
-                    </div>
+                {% elif classrooms %}
+                    {% for classroom in classrooms %}
+                        {% partialdef classroom-row inline %}
+                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 cursor-pointer">
+                                <a href="{% url 'view-classroom' classroom_path=classroom.path  %}" class="text-center">
+                                    <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom">
+                                    <label class="font-bold">{{ classroom.name }}</label>
+                                </a>
+                            </div>
+                            {% include "partials/messages.html" %} 
+                        {% endpartialdef classroom-row %}
                     {% endfor %}
                 {% endif %}
 
             </div>
-            {% if not classes and not orgs %}
+            {% if not classrooms and not orgs %}
                 <div  class="flex flex-col flex-auto justify-center items-center" @child-org-created.window="$el.remove();"><!--Need bubble up, from child to parent-->
                     <span class=" text-gray-500 font-semibold text-lg">It's empty down here</span>
                 </div>

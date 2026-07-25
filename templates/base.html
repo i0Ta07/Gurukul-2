@@ -20,7 +20,7 @@
 
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 
-    <main class="flex flex-col min-h-screen bg-black">
+    <main class="flex flex-col min-h-screen md:h-dvh bg-black">
 
         {% if request.user.is_authenticated %}
             {% include 'includes/navbar_authenticated.html' %}

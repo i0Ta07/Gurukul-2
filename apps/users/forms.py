@@ -6,6 +6,9 @@ from django.contrib.auth.forms import UserCreationForm
 from phonenumber_field.formfields import SplitPhoneNumberField
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import ValidationError
+from config.validators import validate_file_mimetype
+from django.template.defaultfilters import filesizeformat
 
 
 
@@ -168,9 +171,8 @@ class UpdateUserDetailsForm(forms.ModelForm):
         'class': 'scheme-dark form-input'}),
         required=False
     )
-    profile_photo = forms.ImageField(widget=forms.FileInput(attrs={'class': 
-    "cursor-pointer text-sm text-gray-200 p-1 rounded-2xl border border-neutral-700 file:bg-slate-600  hover:file:bg-slate-800 file:rounded-2xl file:text-white file:mr-4 file:px-2 file:py-1 file:font-semibold "
-    }),required=False)
+    profile_photo = forms.ImageField(widget=forms.FileInput(attrs={'class': "file-input"}),
+        required=False,validators=[validate_file_mimetype(allowed_mime_types=['image/png', 'image/jpeg'])])
 
     bio = forms.CharField(max_length=100,strip=True,label=_('Bio'),required=False,widget=forms.Textarea(attrs={'placeholder':'About you',
     'class': 'form-input h-25'}))
@@ -181,6 +183,13 @@ class UpdateUserDetailsForm(forms.ModelForm):
         if not phone:
             return None
         return phone
+    
+    def clean_profile_photo(self):
+        profile_photo = self.cleaned_data.get('profile_photo')
+        max_size = 1048576
+        if profile_photo and profile_photo.size > max_size :
+            raise ValidationError(f"File size cannot exceed {filesizeformat(max_size)}. Current size: {filesizeformat(profile_photo.size)}")        
+        return profile_photo
     
     class Meta:
         model = User

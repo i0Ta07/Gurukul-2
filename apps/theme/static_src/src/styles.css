@@ -24,7 +24,7 @@ show (like focus/hover state). Rings are just box shadows */
 }
 
 @utility form-input {
-  @apply px-3 py-2.5 text-sm  rounded-md w-full
+  @apply px-3 py-2.5 text-sm rounded-md w-full
   outline-1 -outline-offset-1  focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600
   text-slate-50 bg-black outline-neutral-700 transition-all
   disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-900
@@ -33,6 +33,11 @@ show (like focus/hover state). Rings are just box shadows */
 @utility form-label {
   @apply font-medium inline-block text-slate-50
 }
+
+@utility file-input {
+ @apply cursor-pointer text-sm text-gray-200 p-1 rounded-2xl border border-neutral-700 file:rounded-2xl file:mr-4 file:px-2 file:py-1 file:font-semibold file:bg-blue-500  hover:file:bg-blue-700 w-fit
+}
+
 /* The Base Button: Structure, typography, spacing, and transition */
 @utility base-button {
   @apply w-full rounded-md px-3.5 py-2 text-sm  font-semibold cursor-pointer tracking-wide 
@@ -55,5 +60,5 @@ This is the child of main base.html flex flex-col div. The div contains two chil
 or grow based on remaining height. If full, it will take the whole height of the page and place itself in center (justify-center, items-center) */
     
 @utility page-container {
-  @apply flex flex-col py-4 px-4 md:px-8 flex-auto 
+  @apply flex flex-col py-4 px-4 md:px-8 flex-auto  min-h-0
 }
