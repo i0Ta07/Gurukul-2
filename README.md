@@ -3,6 +3,7 @@
 ## To start the application run each command in different terminal
 
 ```Python
+# django
 python manage.py runserver
 
 # Start tailwind watcher
@@ -10,6 +11,9 @@ python manage.py tailwind start
 
 # Celery worker
 celery -A config worker -P threads -E -l info
+
+# Start Celery Beat
+celery -A config beat -l INFO 
 ```
 
 ### To check for updates for tailwind npm packages and update them use
@@ -30,6 +34,7 @@ python manage.py tailwind update
 * Change from bootstrap to  tailwind CDN to django_tailwind for responsive designs
 * Use Alpine for frontend UI
 * Render a new form using hx-get on button click and submit it using hx-post.
+* Created a cron-job that deletes the expired invitations using django-celery-beat.
 
 ## Workings
 
@@ -57,7 +62,11 @@ Create a empty modal at the end of the page. Click a button which will make a hx
 
 ### Authorization
 
-Current authorization allows the user to access any part of an organization if he has access to the root organization.
+Current authorization allows the user to access any part of an organization if he has access to the root organization. But he can only add teachers or admin if he is the owner or an admin. User can create a classroom if he is a member of the organization and a teacher. Here member means owner, admin and teacher.
+
+### Delete Invitations
+
+Added `django-celery-beat` and then migrate. Defined a cron job and attached the given task(delete_expired_invitations) to it using the admin panel.
 
 ## Rules
 
@@ -72,6 +81,8 @@ Current authorization allows the user to access any part of an organization if h
 * Decide whether to keep the bio, phone and DOB. Since this is not a social website we will not need show profiles of user. We may add a chat feature for teachers in a organization. For that we will need a username. Even if chat is added we dont need to show bio, phone and DOB.
 
 * To remove title from individual pages, since we have to update the title in every htmx request seperately. We can just use **Gurukul** as a title for every page.
+
+* Should the password reset form use celery to send emails?
 
 ## Remember
 

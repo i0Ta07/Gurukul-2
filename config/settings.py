@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "tailwind",
     'social_django',
     "django_htmx",
+    'django_celery_beat',
 
     'apps.classes.apps.ClassesConfig',
     'apps.users.apps.UsersConfig',
@@ -228,6 +229,11 @@ USE_TZ = True
 
 TIME_ZONE = 'Asia/Kolkata'
 
+CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_ENABLE_UTC = True
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
