@@ -7,18 +7,12 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 
-class Class(models.Model):
+class Classroom(models.Model):
     name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)])
     slug = models.SlugField(max_length=50)
     code = models.UUIDField(unique=True,default=uuid.uuid4) # Callable, not the actual instance with (),if uuid4(), same uuid for every class
-    members = models.ManyToManyField(
-        User,
-        through="ClassMembership",
-        related_name="classrooms",
-        related_query_name="classroom",
-    )
     # Links directly to one specific node in the tree
-    org = models.ForeignKey(
+    parent_org = models.ForeignKey(
         Organization, 
         on_delete=models.CASCADE, 
         related_name="classrooms", 
@@ -32,24 +26,7 @@ class Class(models.Model):
         related_query_name='owned_classroom'
     )
 
-    # Classes cannot be created at root_level since they need a org to connect to.
-    def clean(self):
-        super().clean()
-
-        if self.org.get_children().exists():
-            raise ValidationError('Classes cannot be created in the same folder in which orgs exist.')
-
-        self.slug = slugify(self.name)
-
-        # If the class lies within the same org with the same slug name
-        duplicate_classes = Class.objects.filter(org = self.org, slug = self.slug)
-        if self.pk:
-            duplicate_classes  = duplicate_classes.exclude(pk= self.pk)
-
-        if duplicate_classes.exists():
-            raise ValidationError(f"A class named '{self.name}' already exists within {self.org.name}.")
-
-        # When changing the name,we have to change the slug too
+    # When changing the name,we have to change the slug too
     def save(self,*args, **kwargs):
         # Not calling self.full_clean(), since we will create using forms, 
         # if mentioned it will be called twice once in form.is_valid() and one in save.
@@ -62,12 +39,12 @@ class Class(models.Model):
         super().save(*args,**kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.org.name})"
+        return f"{self.name} ({self.parent_org.name})"
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['org', 'slug'], 
+                fields=['parent_org', 'slug'], 
                 name='unique_class_name_inside_org' # Create composite key, the two fields have to unique together
             )
         ]
@@ -88,7 +65,7 @@ class ClassMembership(models.Model):
         related_query_name='classroom_membership'
     )
     classroom = models.ForeignKey(
-        Class, 
+        Classroom, 
         on_delete=models.CASCADE, 
         related_name="memberships", 
         related_query_name="membership"
