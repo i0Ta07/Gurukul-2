@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create Admins{% endblock %}
+
+{% block content %}
+
+<div class="page-container" id="page-container" hx-history-elt>
+    {% partialdef view-invitations inline %}
+        <div class="flex flex-col items-center p-5 gap-5" x-data="{ counter: {{ count }} }">
+            {% if pending_invitations %}
+            <h1>Invitations (<span x-text="counter"></span>)</h1>
+            {% for invitation in pending_invitations %}
+            <div class="bordered-card flex flex-col md:flex-row justify-between gap-3 max-w-6xl" >
+                <h3 class="md:text-xl">
+                    Sent by <span class="font-bold text-blue-500">{{ invitation.from_user.first_name }} {{ invitation.from_user.last_name }}</span>
+                    to join  <span class="font-bold text-green-600">{{ invitation.org.name }}</span> at {{ invitation.created_at }}
+                    </h3>
+                    <form hx-post="{% url 'create-org-members' invitation_id=invitation.id %}" hx-swap="innerHTML" @invitation-removed="$el.closest('div').remove(); counter --; "
+                        hx-target="#message-container" class="flex gap-x-3">
+                        {% csrf_token %}
+                        <button type="submit" name="action" value="accept" class="base-button bg-blue-500 hover:bg-blue-700 ">Accept</button>
+                        <button type="submit" name="action" value="reject" class="base-button bg-red-500 hover:bg-red-700">Reject</button>
+                    </form>
+                </div>
+            {% endfor %}
+            {% endif %}    
+        </div>
+        {% if not pending_invitations %}
+            <div class="flex flex-col justify-center items-center flex-auto">
+                <p class="font-semibold text-gray-500">No pending Invitations</p>
+            </div>
+            {% endif %}
+        <div id="message-container"></div>
+    {% endpartialdef view-invitations %}
+</div>
+
+{% endblock content %}

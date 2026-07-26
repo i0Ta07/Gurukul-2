@@ -28,9 +28,12 @@
                 Create Classroom</button>
             </div>
             {% elif child_org_view %}
-                <div class="flex justify-between">
-                    <a href="{% url 'send-invitation' org_id=current_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Add Teachers</a>
-
+                <div class="flex justify-between gap-x-3">
+                    <!--When we create view-config and move these button there, there is no need to extract root from node.-->
+                    <div class="flex gap-x-3">
+                        <a href="{% url 'send-invitation' org_id=current_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Add Teachers</a>
+                        <a href="{% url 'create-admin' org_id=current_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Create Admins</a>
+                    </div>
                     <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
                     hx-get="{% url 'create-child-org' org_path=current_org_path org_id=current_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
                     Create {{ node_label }}</button>
@@ -123,6 +126,7 @@
                     <div id="modal_container"></div>
                 </div>                
                 <form method="dialog" class="modal-backdrop">
+                    {% csrf_token %}
                     <button>close</button>
                 </form>
             </dialog>

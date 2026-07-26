@@ -1,13 +1,14 @@
+from django.http import HttpResponseBadRequest
 
 from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OwnerAdminRequired
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render,get_object_or_404
-from apps.orgs.models import OrgInvitation, Organization
+from apps.orgs.models import OrgAdmin, OrgInvitation, OrgMembership, Organization
 from apps.users.models import User
 from django.core.exceptions import ValidationError
-from apps.orgs.forms import CreateChildOrgForm,CreateRootOrgForm,CreateOrgConfig,SendInvitation
+from apps.orgs.forms import CreateChildOrgForm,CreateRootOrgForm,CreateOrgConfigForm,SendInvitationForm,CreateAdminForm
 from django.db import transaction
 from config.utils import create_message_and_redirect
 from apps.orgs.utils import (
@@ -82,7 +83,6 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
             return render(request, self.template_name, context)
         return create_message_and_redirect(request,message="You are not part of this organization",url="users-dashboard",code="error")
 
-
 class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     template_name = "orgs/partials/create_child_org.html"
     form_class = CreateChildOrgForm
@@ -123,7 +123,7 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
     template_name = "orgs/partials/create_root_and_config_org.html"
     root_form = CreateRootOrgForm
-    config_form = CreateOrgConfig
+    config_form = CreateOrgConfigForm
 
     def get(self,request, *args, **kwargs):
         root_form = self.root_form()
@@ -178,7 +178,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
 
 class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
     template_name = "orgs/send_invitations.html"
-    form_class = SendInvitation
+    form_class = SendInvitationForm
 
     def get(self,request,*args, **kwargs):
         form = self.form_class()
@@ -243,6 +243,70 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequ
             ignore_conflicts=True,
         )
         messages.success(request,f"Sent {len(created_invitations)} invitations.")
-        return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':SendInvitation(),"org_id":kwargs['org_id']})
+        return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':SendInvitationForm(),"org_id":kwargs['org_id']})
 
+class ViewInvitations(LoginRequiredMixin,TeacherRequiredMixin,View):
+    template_name = "orgs/view_invitations.html"
+
+    def get(self,request, *args, **kwargs):
+        pending_invitations = OrgInvitation.objects.filter(to_user = request.user).order_by('-created_at')
+        context = {"pending_invitations":pending_invitations,"count":len(pending_invitations)}
+        if request.htmx:
+            return render(request,template_name="orgs/view_invitations.html#view-invitations",context=context)
+        return render(request,template_name=self.template_name,context=context)
+
+    def post(self,request, *args, **kwargs):
+        inv_id = kwargs['invitation_id']
+        inv_obj = get_object_or_404(OrgInvitation,pk=inv_id)
+        action = request.POST.get("action")
+
+        if action == "accept":
+            membership = OrgMembership(org = inv_obj.org, teacher = inv_obj.to_user, created_by = inv_obj.from_user)
+            try:
+                membership.full_clean()
+            except ValidationError as e:
+                messages.error(request,e)
+                return render(request,"partials/messages.html")
+            membership.save()
+            messages.success(request,f"You are now part of {membership.org.name}.")
+        elif action == "reject":
+            messages.warning(request,f"Request from {inv_obj.from_user.first_name} {inv_obj.from_user.last_name} to join {inv_obj.org.name} has been rejected.")
+        else:
+            return HttpResponseBadRequest("Invalid action")
         
+        inv_obj.delete()
+        response = render(request,"partials/messages.html")
+        response['HX-Trigger'] = "invitation-removed"
+        return response
+        
+class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+    template_name = "orgs/create_admin.html"
+    form_class = CreateAdminForm
+
+    def get(self,request, *args, **kwargs):
+        root_org = get_object_or_404(Organization,pk=kwargs['org_id']).get_root()
+        form = self.form_class(root_org= root_org)
+        context = {'form':form,"org_name":root_org.name,"org_id":root_org.id}
+        if request.htmx:
+            return render(request,template_name="orgs/create_admin.html#create-admin",context=context)
+        return render(request,template_name=self.template_name,context=context)
+    
+    def post(self,request, *args, **kwargs):
+        root_org = get_object_or_404(Organization,pk=kwargs['org_id']).get_root()
+        form = self.form_class(request.POST,root_org= root_org)
+        error_context = {'form':form,"org_name":root_org.name,"org_id":root_org.id}
+
+        if not form.is_valid():
+            return render(request,template_name="orgs/create_admin.html#create-admin",context = error_context)
+        membership_obj = form.cleaned_data['users']
+        instance =  OrgAdmin(membership = membership_obj,created_by = request.user)
+        try:
+            instance.full_clean()
+        except ValidationError as e:
+            form.add_error(None,e)
+            return render(request,template_name="orgs/create_admin.html#create-admin",context = error_context)
+        instance.save()
+        messages.success(request,"Admin created successfully")
+        context = {'form':self.form_class(root_org = root_org),"org_name":root_org.name,"org_id":root_org.id}
+        return render(request,template_name="orgs/create_admin.html#create-admin",context = context)
+

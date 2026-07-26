@@ -9,14 +9,17 @@
         </a>
     </div>
     <div class="relative flex items-center text-white" x-data="{ open: false }">
-        <button @click="open = ! open" type="button" class="  flex text-sm rounded-full focus:ring-2">
-            {% if user.profile_photo %}
-            <img class="w-10 h-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">
-            {% else %}
-            <img class="w-10 h-10 p-1 rounded-full" src="{% static 'users/images/default_profile.png' %}"
-                alt="Default profile">
-            {% endif %}
-        </button>
+        <div class="flex items-center justify-center gap-x-3">
+            <a href="{% url 'view-invitations' %}" hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true"><img class="size-10 p-1" src="{% static 'icons/svg/invitations.svg' %}" alt="Invitations"></a>
+            <button @click="open = ! open" type="button" class="  flex text-sm rounded-full focus:ring-2">
+                {% if user.profile_photo %}
+                <img class="size-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">
+                {% else %}
+                <img class="size-10 p-1 rounded-full" src="{% static 'images/default_profile.png' %}"
+                    alt="Default profile">
+                {% endif %}
+            </button>
+        </div>
         <!-- Dropdown menu -->
         <div x-show="open" x-cloak  x-transition @click.outside="open = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
             <div class="px-4 py-3 text-sm border-b">

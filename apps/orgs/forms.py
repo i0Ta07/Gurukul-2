@@ -1,11 +1,12 @@
 from django import forms
-from .models import OrgConfig, Organization,OrgInvitation
+from .models import  OrgConfig, Organization, OrgMembership
 from django.utils.translation import gettext_lazy as _
 from apps.orgs.utils import validate_child_org
 from treebeard.forms import MoveNodeForm, movenodeform_factory
 from django.template.defaultfilters import filesizeformat
 from django.core.exceptions import ValidationError
 from config.validators import validate_file_mimetype
+from django.forms import ModelChoiceField
 
 class CreateChildOrgForm(forms.ModelForm):
     name = forms.CharField(
@@ -32,7 +33,7 @@ class CreateRootOrgForm(forms.ModelForm):
         model = Organization
         fields = ['name']
 
-class CreateOrgConfig(forms.ModelForm):
+class CreateOrgConfigForm(forms.ModelForm):
     type = forms.ChoiceField(
         choices= OrgConfig.OrganizationType,
         label=_("Type"),
@@ -44,7 +45,7 @@ class CreateOrgConfig(forms.ModelForm):
         model = OrgConfig
         fields = ['type']
 
-class SendInvitation(forms.Form):
+class SendInvitationForm(forms.Form):
 
     email = forms.EmailField(
         required=False,
@@ -78,7 +79,25 @@ class SendInvitation(forms.Form):
         if not file and not email:
             raise ValidationError("Both fields cannot be empty.")
         
+class MembershipModelChoiceField(ModelChoiceField):
+    def label_from_instance(self, obj):
+        return f"{obj.teacher.first_name} {obj.teacher.last_name} ({obj.teacher.email})"
+    
+class CreateAdminForm(forms.Form):
+    users = MembershipModelChoiceField(
+        empty_label="Select user",
+        queryset=OrgMembership.objects.none(),
+        widget=forms.Select(attrs={'class': ' form-input'}),
+    )
 
+    def __init__(self, *args, **kwargs):
+        root_org = kwargs.pop("root_org")
+        super().__init__(*args, **kwargs)
+        self.fields["users"].queryset = (
+            OrgMembership.objects
+            .filter(org=root_org)
+            .filter(admin__isnull=True)
+        )
 
 # Create a get org form that will take a org slug, then check among the root_nodes check if that org
 # exists if yes, then check the membership of the user to the org.

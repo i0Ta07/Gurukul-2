@@ -84,6 +84,8 @@ Added `django-celery-beat` and then migrate. Defined a cron job and attached the
 
 * Should the password reset form use celery to send emails?
 
+* There are repeated business checks inside the Model's clean methods that are already checked in the View. Should be removed?
+
 ## Remember
 
 * Use the custom CSS attributes such as form-label, form-input, base-button, hyperlink, bordered card and page-container.
@@ -95,3 +97,13 @@ Added `django-celery-beat` and then migrate. Defined a cron job and attached the
 * We have to render both request.htmx and request(if the user directly access the page).
 
 * Model.objects.create save the object in the DB, use Model(kwargs) to create instance, then full_clean() and then save.
+
+## For Production
+
+* Setup tailwind.
+
+* Download alpine offline.
+
+* Setup python-magic for linux in pyproject.toml.
+
+* Set DEBUG = False and handle static directories.
