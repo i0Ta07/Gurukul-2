@@ -90,6 +90,8 @@ Added `django-celery-beat` and then migrate. Defined a cron job and attached the
 
 * During a htmx POST request and returning the partial from the backend view that includes form, form.errors and some messages (success or business logic) only, you have to include both the form-erorrs and message partails in the container that is being swapped in the POST request. Refer: profile.html
 
-* Use `class="page-container" id="page-container"`, since we are swapping the page-container for HTMX get on each page, to move between different pages partials. Make sure the view render both the reload and request.htmx. Always push URL to change the URL.
+* Use `class="page-container" id="page-container"`, since we are swapping the page-container for HTMX get requests on each page, to move between different pages partials. Make sure the view render both the reload and request.htmx. Always push URL to change the URL.
 
 * We have to render both request.htmx and request(if the user directly access the page).
+
+* Model.objects.create save the object in the DB, use Model(kwargs) to create instance, then full_clean() and then save.

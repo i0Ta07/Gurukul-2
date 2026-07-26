@@ -1,8 +1,8 @@
 {% partialdef form-errors inline %}
     {% if form.errors %}
-    <div class="fixed bottom-1 right-1 z-50 flex flex-col gap-2">
+    <div class="fixed bottom-1 right-1 z-50 flex flex-col gap-2 m-4">
         {% for _, value in form.errors.items %}
-        <div role="alert" class="alert alert-error alert-outline text-wrap m-4 max-w-md lg:max-w-lg opacity-100 transition-opacity duration-1000">
+        <div role="alert" class="alert alert-error alert-outline text-wrap max-w-md lg:max-w-lg opacity-100 transition-opacity duration-1000">
         <span>{{ value }}</span>
         </div>
         {% endfor %}
