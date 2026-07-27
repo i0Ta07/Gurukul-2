@@ -29,11 +29,7 @@
             </div>
             {% elif child_org_view %}
                 <div class="flex justify-between gap-x-3">
-                    <!--When we create view-config and move these button there, there is no need to extract root from node.-->
-                    <div class="flex gap-x-3">
-                        <a href="{% url 'send-invitation' org_id=current_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Add Teachers</a>
-                        <a href="{% url 'create-admin' org_id=current_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">Create Admins</a>
-                    </div>
+                    <a href="{% url 'view-root-config' org_id=current_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">View Config</a>
                     <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
                     hx-get="{% url 'create-child-org' org_path=current_org_path org_id=current_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
                     Create {{ node_label }}</button>
@@ -71,14 +67,9 @@
         <!--Main List View-->
         <div class="flex flex-col flex-auto">
             {% if root_org_view %}
-            <h1 class="px-1 my-2 md:text-4xl">Organizations</h1>
+                <h1 class="px-1 my-2 md:text-4xl">Organizations</h1>
             {% elif child_org_view %}
-                <div class="flex items-center px-1 my-2 md:text-4xl gap-x-2">
-                    <h1 class="px-1 my-2 md:text-4xl" >{{ node_label }}</h1>
-                    {% if org_role %}
-                    <div class="badge badge-soft badge-info mt-1">{{ org_role }}</div>
-                    {% endif %}
-                </div>
+                <h1 class="px-1 my-2 md:text-4xl" >{{ node_label }}</h1>
             {% elif classroom_view %}
                 <h1 class="px-1 my-2 md:text-4xl">Classes</h1>
             {% endif %}

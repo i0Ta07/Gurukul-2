@@ -68,6 +68,16 @@ Current authorization allows the user to access any part of an organization if h
 
 Added `django-celery-beat` and then migrate. Defined a cron job and attached the given task(delete_expired_invitations) to it using the admin panel.
 
+> Most of the organization views requires the root org_id, therefore after extracting the root_id from given current org_id using `self.get_root_org` defined in RootOrganization mixin (Both Permission mixin inherits from this), we send the root_id to the frontend. There will be no less but the lookup will be fast as compared to going down the tree.
+
+### Scrollbar
+
+Inside `base.html` we have `min-h-screen md:h-dvh`. For devices larger than `md`, `h-dvh` sets a strict, explicit height that dynamically adjusts with the browser's viewport (for example, when the mobile address bar expands or collapses). Because the height is fixed to the viewport, the scrollable area can sometimes become very small, making the scrollbar frustrating to use.
+
+This is where `min-h-screen` helps. It sets a static minimum height equal to the viewport, ensuring the element is at least the height of the screen while still allowing it to grow if its content overflows.
+
+For scrollable containers, however, you should define an explicit height (for example, `h-[200px]`) to create a predictable scroll area. This ensures the scrollbar has enough space to be usable.
+
 ## Rules
 
 * Classes cannot co-exist with organization. They must be present at the leaf node.

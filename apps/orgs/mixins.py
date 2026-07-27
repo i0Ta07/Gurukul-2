@@ -8,7 +8,7 @@ class TeacherRequiredMixin:
     """Mixin that requires the user to be a teacher to access a page."""
     def dispatch(self, request, *args, **kwargs):
         if request.user.user_type != User.UserType.TEACHER:
-            return create_message_and_redirect(request,"Students are not allowed to perform this action.","users-dashboard","warning",)
+            return create_message_and_redirect(request,"Only Teachers can perform this action.","users-dashboard","warning",)
 
         return super().dispatch(request, *args, **kwargs)   
 
@@ -28,7 +28,7 @@ class OwnerAdminRequired(RootOrganizationMixin):
     def dispatch(self, request, *args, **kwargs):
         root = self.get_root_org()
         if not is_owner_or_admin(root=root,user=request.user):
-            return create_message_and_redirect(request,message="Only admins and owner can add teachers to the organization",
+            return create_message_and_redirect(request,message="Only admins and owner can perform this action.",
                 url="users-dashboard",code="error")
 
         return super().dispatch(request, *args, **kwargs)    

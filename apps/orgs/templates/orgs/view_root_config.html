@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Organization{% endblock %}
+
+{% block content %}
+
+<div class="page-container" id="page-container" hx-history-elt>
+    {% partialdef view-root-config inline %}
+        <div class="flex flex-col p-2 md:p-5 gap-5 min-h-0 flex-auto">
+            <h1 class="text-center text-2xl md:text-4xl">{{root_org_name}}</h1>
+            <div class="bg-blue-500 p-3 flex justify-between items-center rounded-2xl">
+                <h1 class="text-lg md:text-3xl">Owner</h1>
+                <a href="#" class="w-fit base-button bg-red-500 hover:bg-red-700 ">Transfer Ownership</a>
+            </div>
+            
+            <span class="md:text-xl font-bold px-5">{{ owner.first_name }} {{ owner.last_name }}</span>
+            <div class="flex flex-col md:flex-row flex-auto min-h-0 gap-3 ">
+                <div class="flex flex-col flex-auto min-h-0 gap-3 h-75 md:h-full">
+                    <div class="bg-blue-500 p-3 flex justify-between items-center rounded-2xl">
+                        <h1 class="text-lg md:text-3xl">Admins</h1>
+                        <div class="flex gap-3">
+                            <a href="{% url 'create-admin' org_id=root_org_id %}" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 ">Create</a>
+                            <a href="#" class="w-fit base-button bg-red-500 hover:bg-red-700 ">Revoke</a>
+                        </div>
+                    </div>
+                    <div class="overflow-y-auto flex-auto min-h-0">
+                        <div class="px-5">
+                            {% for admin in admins %}
+                                <span class="md:text-xl font-bold">{{ admin.first_name }} {{ admin.last_name }}</span>
+                            {% empty %}
+                                <span class="md:text-xl font-semibold text-gray-400">Organization does have any admins yet.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col flex-auto min-h-0 gap-3 h-75 md:h-full">
+                    <div class="bg-blue-500 p-3 flex justify-between items-center rounded-2xl">
+                        <h1 class="text-lg md:text-3xl">Teachers</h1>
+                        <div class="flex gap-3">
+                            <a href="{% url 'send-invitation' org_id=root_org_id %}" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 ">Invite</a>
+                            <a href="#" class="w-fit base-button bg-red-500 hover:bg-red-700 ">Remove</a>
+                        </div>
+                    </div>
+                    <div class="overflow-y-auto flex-auto min-h-0">
+                        <div class="px-5">
+                            {% for teacher in teachers %}
+                                <span class="md:text-xl font-bold">{{ teacher.first_name }} {{ teacher.last_name }}</span>
+                            {% empty %}
+                                <span class="md:text-xl font-semibold text-gray-400">Organization does have any teachers yet.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    {% endpartialdef view-root-config %}
+</div>
+
+{% endblock content %}

@@ -2,12 +2,14 @@ from django.urls import path
 from apps.orgs.views import (
     ViewChildOrgs, CreateChildOrg,CreateRootOrgAndConfig,
     SendInvitations,SendBulkInvitations,ViewRootOrgs,
-    CreateAdmins,ViewInvitations
+    CreateAdmins,ViewInvitations,ViewRootOrgConfig
 )
 
 urlpatterns = [
     path("", ViewRootOrgs.as_view(), name="view-root-orgs"),
     path("create/root/",CreateRootOrgAndConfig.as_view(),name='create-root-org'),
+
+    path("view/root/<int:org_id>/",ViewRootOrgConfig.as_view(),name='view-root-config'),
 
     path("invite/teacher/<int:org_id>/",SendInvitations.as_view(),name='send-invitation'),
     path("invite/teachers/<int:org_id>/",SendBulkInvitations.as_view(),name='send-bulk-invitaions'),
