@@ -10,7 +10,7 @@
         <h1 class="text-xl md:text-3xl">Create Admins ({{ org_name }})</h1>
         <form hx-post="{% url 'create-admin' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" class="flex flex-col items-center gap-3 w-full max-w-2xl">
             {% csrf_token %}
-            {{ form.users }}
+            {{ form.teachers }}
             <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit">Submit</button>
         </form>
         {% include "partials/messages.html" %}

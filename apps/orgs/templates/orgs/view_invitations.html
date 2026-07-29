@@ -12,7 +12,7 @@
             {% for invitation in pending_invitations %}
             <div class="bordered-card flex flex-col md:flex-row justify-between gap-3 max-w-6xl" >
                 <h3 class="md:text-xl">
-                    Sent by <span class="font-bold text-blue-500">{{ invitation.from_user.first_name }} {{ invitation.from_user.last_name }}</span>
+                    Sent by <span class="font-bold text-blue-500">{{ invitation.from_user.get_full_name }}</span>
                     to join  <span class="font-bold text-green-600">{{ invitation.org.name }}</span> at {{ invitation.created_at }}
                     </h3>
                     <form hx-post="{% url 'create-org-members' invitation_id=invitation.id %}" hx-swap="innerHTML" @invitation-removed="$el.closest('div').remove(); counter --; "

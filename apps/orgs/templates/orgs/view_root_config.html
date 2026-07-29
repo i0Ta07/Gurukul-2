@@ -13,7 +13,7 @@
                 <a href="#" class="w-fit base-button bg-red-500 hover:bg-red-700 ">Transfer Ownership</a>
             </div>
             
-            <span class="md:text-xl font-bold px-5">{{ owner.first_name }} {{ owner.last_name }}</span>
+            <span class="md:text-xl font-bold px-5">{{ owner.get_full_name }}</span>
             <div class="flex flex-col md:flex-row flex-auto min-h-0 gap-3 ">
                 <div class="flex flex-col flex-auto min-h-0 gap-3 h-75 md:h-full">
                     <div class="bg-blue-500 p-3 flex justify-between items-center rounded-2xl">
@@ -26,7 +26,7 @@
                     <div class="overflow-y-auto flex-auto min-h-0">
                         <div class="px-5">
                             {% for admin in admins %}
-                                <span class="md:text-xl font-bold">{{ admin.first_name }} {{ admin.last_name }}</span>
+                                <span class="md:text-xl font-bold">{{ admin.get_full_name }}</span>
                             {% empty %}
                                 <span class="md:text-xl font-semibold text-gray-400">Organization does have any admins yet.</span>
                             {% endfor %}
@@ -44,7 +44,7 @@
                     <div class="overflow-y-auto flex-auto min-h-0">
                         <div class="px-5">
                             {% for teacher in teachers %}
-                                <span class="md:text-xl font-bold">{{ teacher.first_name }} {{ teacher.last_name }}</span>
+                                <span class="md:text-xl font-bold">{{ teacher.get_full_name }}</span>
                             {% empty %}
                                 <span class="md:text-xl font-semibold text-gray-400">Organization does have any teachers yet.</span>
                             {% endfor %}

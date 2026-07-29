@@ -23,7 +23,7 @@
         <!-- Dropdown menu -->
         <div x-show="open" x-cloak  x-transition @click.outside="open = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
             <div class="px-4 py-3 text-sm border-b">
-                <span class="block text-white">{{user.first_name}} {{user.last_name}}</span>
+                <span class="block text-white">{{user.get_full_name}}</span>
                 <span class="block text-gray-200">{{user.email}}</span>
             </div>
             <ul class="p-2 text-sm text-body font-medium">

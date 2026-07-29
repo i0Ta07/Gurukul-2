@@ -53,14 +53,12 @@ class OrgConfig(models.Model):
         SCHOOL = "SC", _("School")
         TUITION = "TN", _("Tuition")
         COACHING = "CG", _("Coaching")
-        OTHER = "OT", _("Other")
 
     DEFAULT_TEMPLATES = {
         OrganizationType.COLLEGE: ("Departments", "Programs", "Year", "Semester", "Sections","Subjects"),
         OrganizationType.SCHOOL: ("Grades","Sections","Subjects"),
         OrganizationType.TUITION: ("Grades","Sessions","Batch","Subjects"), # morning session batch 1
         OrganizationType.COACHING: ("Courses","Sessions", "Batch", "Subjects",),
-        OrganizationType.OTHER: (), # If other, user can create it's own. We give generic labels.
     }
 
     org = models.OneToOneField(
@@ -130,7 +128,7 @@ class OrgMembership(models.Model):
     )
 
     def __str__(self):
-        return f"{self.teacher.first_name} {self.teacher.last_name} ({self.org.name})"
+        return f"{self.teacher.get_full_name()} ({self.org.name})"
     
     def clean(self):
         super().clean()
@@ -178,7 +176,7 @@ class OrgAdmin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f" {self.membership.teacher.first_name} {self.membership.teacher.last_name} ({self.membership.org.name})"
+        return f" {self.membership.teacher.get_full_name()} ({self.membership.org.name})"
     
         
     def clean(self):

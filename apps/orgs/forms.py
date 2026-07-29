@@ -81,11 +81,11 @@ class SendInvitationForm(forms.Form):
         
 class MembershipModelChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
-        return f"{obj.teacher.first_name} {obj.teacher.last_name} ({obj.teacher.email})"
+        return f"{obj.teacher.get_full_name()} ({obj.teacher.email})"
     
 class CreateAdminForm(forms.Form):
-    users = MembershipModelChoiceField(
-        empty_label="Select user",
+    teachers = MembershipModelChoiceField(
+        empty_label="Select Teacher",
         queryset=OrgMembership.objects.none(),
         widget=forms.Select(attrs={'class': ' form-input'}),
     )
@@ -93,7 +93,7 @@ class CreateAdminForm(forms.Form):
     def __init__(self, *args, **kwargs):
         root_org = kwargs.pop("root_org")
         super().__init__(*args, **kwargs)
-        self.fields["users"].queryset = (
+        self.fields["teachers"].queryset = (
             OrgMembership.objects
             .filter(org=root_org)
             .filter(admin__isnull=True)

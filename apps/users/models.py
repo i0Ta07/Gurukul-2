@@ -85,7 +85,7 @@ class User(AbstractUser):
     objects = UserManager()
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.user_type})"
+        return f"{self.get_full_name()} ({self.user_type})"
     
     def save(self, *args, **kwargs):
         # we use self.pk to check if the object is created or modified. Modified objects 
