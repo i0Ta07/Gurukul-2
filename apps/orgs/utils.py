@@ -1,3 +1,4 @@
+from apps.classes.models import Classroom
 from apps.orgs.models import Organization,OrgMembership,OrgAdmin
 from apps.users.models import User
 from django.db.models import Exists,OuterRef
@@ -8,6 +9,8 @@ from django.utils.text import slugify
 from django.shortcuts import get_object_or_404
 from openpyxl import load_workbook
 from django.core.validators import EmailValidator
+from collections.abc import Iterable
+from django.db.models.query import QuerySet
 
 class UserRole(str, Enum):
     OWNER = "Owner"
@@ -35,6 +38,12 @@ def validate_root_access(root:Organization,user:User):
 def is_owner_or_admin(root:Organization,user:User):
     role = validate_root_access(root=root,user=user)
     if role in [UserRole.OWNER.value, UserRole.ADMIN.value]:
+        return True
+    return False
+
+def is_owner(root:Organization,user:User):
+    role = validate_root_access(root=root,user=user)
+    if role == UserRole.OWNER.value:
         return True
     return False
 
@@ -149,23 +158,44 @@ def build_breadcrumbs(org_path: str):
 
     return breadcrumbs
 
-def build_slug(objects,parent_path = ""):
-    """
-    Build paths for a list of objects, based on parent_path. 
-    Adds the current object slug at the end of parent path.
-    Can work with both child orgs and classrooms.
-    """
-    return [
-        {
-            "name": obj.name,
-            "path": f"{parent_path}/{obj.slug}" if parent_path else f"{obj.slug}", # org_path always vips/vsit not vips/vsit/
-        }
-        for obj in objects
-    ]
+def _serialize_many(instance, serializer):
+    if isinstance(instance, Iterable) and not isinstance(instance, (str, bytes)):
+        return [serializer(obj) for obj in instance]
+    return serializer(instance)
 
-def get_memberships(user:User):
-    """Returns the memberships objects with is_admin annotations, to check if there is an admin for that membership."""
-    return OrgMembership.objects.filter(teacher=user).select_related("org").annotate(
+def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iterable[Classroom],
+        parent_path:str = "",role: UserRole | None = None):
+    """
+    Pass role when displaying root orgs only. This can work with both child orgs and classrooms.
+    """
+    def serialize(obj):
+        data = {
+            "name":obj.name,
+            "id":obj.id,
+            "path": f"{parent_path}/{obj.slug}" if parent_path else obj.slug,
+        }
+
+        if role is not None:
+            data["role"] = role.value
+        return data
+    
+    return _serialize_many(instance,serialize)
+
+def build_membership_slug(instance: OrgMembership | Iterable[OrgMembership]):
+    def serialize(membership):
+        data = {
+            "name": membership.org.name,
+            "path": f"{membership.org.slug}",
+            "role": UserRole.ADMIN.value if membership.has_admin else UserRole.TEACHER.value,
+            "id":membership.org.id,
+        }
+        return data
+
+    return _serialize_many(instance,serialize)
+
+def annotate_memberships(queryset: QuerySet[OrgMembership]):
+    """Annotate has_admin attribute to each OrgMembership object in the queryset."""
+    return queryset.annotate(
             has_admin=Exists(
                 OrgAdmin.objects.filter(membership=OuterRef("id")) # whether this membership.id exists in OrgAdmin membership field
                 )

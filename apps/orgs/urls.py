@@ -2,7 +2,8 @@ from django.urls import path
 from apps.orgs.views import (
     ViewChildOrgs, CreateChildOrg,CreateRootOrgAndConfig,
     SendInvitations,SendBulkInvitations,ViewRootOrgs,
-    CreateAdmins,ViewInvitations,ViewRootOrgConfig
+    CreateAdmins,ViewInvitations,ViewRootOrgConfig,
+    ViewOrgDetails,DeleteChildOrg,DeleteRootOrg
 )
 
 urlpatterns = [
@@ -18,6 +19,12 @@ urlpatterns = [
 
     path("invitations/",ViewInvitations.as_view(),name='view-invitations'),
     path("invitations/<int:invitation_id>/",ViewInvitations.as_view(),name='create-org-members'),
+
+    path("view/details/<int:org_id>/",ViewOrgDetails.as_view(), name='view-org-details'),
+
+    path("delete/<int:org_id>/",DeleteRootOrg.as_view(),name='delete-root-org'),
+    path("delete/<path:parent_path>/<int:org_id>/",DeleteChildOrg.as_view(),name='delete-child-org'),
+    
 
 
     # path("edit/org/<int:org_id>/", edit_org, name="org-edit"),

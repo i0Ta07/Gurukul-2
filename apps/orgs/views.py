@@ -1,6 +1,5 @@
-from django.http import HttpResponseBadRequest
-
-from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OwnerAdminRequired
+from django.http import HttpResponse, HttpResponseBadRequest
+from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OwnerAdminRequired,OwnerRequired
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,8 +12,9 @@ from django.db import transaction
 from config.utils import create_message_and_redirect
 from apps.orgs.utils import (
     UserRole,
-    validate_root_access,validate_child_org,validate_root_org,get_memberships,
-    build_breadcrumbs,build_slug,resolve_org_path,get_emails_from_excel
+    validate_root_access,validate_child_org,validate_root_org,
+    build_breadcrumbs,build_slug,resolve_org_path,get_emails_from_excel,
+    build_membership_slug,annotate_memberships
     )
 
 class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
@@ -22,24 +22,12 @@ class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
 
     def get(self, request, *args, **kwargs):
             created_orgs = Organization.get_root_nodes().filter(config__owner = request.user)
-            memberships = get_memberships(user = request.user)
+            memberships = annotate_memberships(
+                OrgMembership.objects.filter(teacher= request.user).select_related("org")
+            )
             orgs = [
-                *(
-                    {
-                        "name": org.name,
-                        "path": f"{org.slug}",
-                        "role": UserRole.OWNER.value,
-                    }
-                    for org in created_orgs
-                ),
-                *(
-                    {
-                        "name": membership.org.name,
-                        "path": f"{membership.org.slug}",
-                        "role": UserRole.ADMIN.value if membership.has_admin else UserRole.TEACHER.value,
-                    }
-                    for membership in memberships
-                ),
+                *build_slug(instance= created_orgs,role=UserRole.OWNER),
+                *build_membership_slug(instance=memberships),
             ]
             context = {"orgs": orgs,"root_org_view":True}
             if request.htmx:
@@ -60,18 +48,15 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
             children = current_node.get_children().order_by("name")
             template = root_node.config.template()
             current_depth = current_node.get_depth()
-            if template:
-                node_label = template[current_depth -1]
-            else:
-                node_label = "Organization"
+            node_label = template[current_depth -1]
             classrooms = current_node.classrooms.order_by('name')
             context = {
                 "org_role":org_role,
                 "orgs":build_slug(children,org_path),
                 "classrooms":build_slug(classrooms,org_path),
                 "current_org_name": current_node.name,
-                "current_org_id": current_node.id,
-                "current_org_path":org_path,
+                "parent_org_id": current_node.id,
+                "parent_org_path":org_path,
                 "breadcrumbs": build_breadcrumbs(org_path), 
                 "child_org_view": not classrooms.exists() and current_depth != len(template),
                 "classroom_view": not children.exists()  and current_depth  == len(template),
@@ -89,21 +74,19 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,
 
     def get(self,request, *args, **kwargs):
         form = self.form_class()
-        return render(request, self.template_name, {"form":form,"org_id":kwargs['org_id'],"org_path":kwargs['org_path']})
+        return render(request, self.template_name, {"form":form,**kwargs,})
 
     
     def post(self, request, *args, **kwargs):
         parent_id = kwargs['org_id']
-        parent_path = kwargs['org_path']
-
         parent = get_object_or_404(Organization, pk=parent_id)
 
         # Load post data into the form
         form = self.form_class(request.POST)
-        form_context = {"form":form,"org_id":kwargs['org_id'],"org_path":kwargs['org_path']}
+        form_context = {"form":form,**kwargs,}
         if not form.is_valid():
             return render(request, self.template_name,form_context)
-        org = Organization(**form.cleaned_data)
+        org = form.save(commit=False) # need id of the created obj, henc form.save(commit = False), not Organization(**cleaned_data)
         org.created_by = request.user
         try:
             validate_child_org(parent_node = parent, instance=org)
@@ -111,9 +94,8 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,
             form.add_error(field=None,error=e.message)
             return render(request, self.template_name,form_context)
         parent.add_child(instance=org)
-        path = f"{parent_path}/{org.slug}" if parent_path else org.slug
         row_context = {
-            "org":{ "name":org.name,"path":path}
+            "org":build_slug(instance=org,parent_path=kwargs['org_path']),"parent_org_path":kwargs['org_path']
         }
         messages.success(request,message="Organization created successfully.")
         response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
@@ -150,7 +132,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
         if not root_form.is_valid() or not config_form.is_valid():
             return render_error()
         
-        org = root_form.save(commit=False)
+        org = root_form.save(commit=False) # Need commit= False because we need id in building slug
         org.created_by = request.user
 
         try:
@@ -159,7 +141,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
             root_form.add_error(field=None,error=e.message)
             return render_error()
         
-        org_config = config_form.save(commit=False)
+        org_config = config_form.save(commit=False)  # Need commit= False to later save.
         org_config.org = org
         org_config.owner = request.user
 
@@ -169,7 +151,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
 
         messages.success(request,"Organization created successfully")
         response = render(request,"orgs/view_orgs_and_classrooms.html#org-row", {
-            "org":{"name":org.name, "path":f"{org.slug}","role":UserRole.OWNER.value},
+            "org": build_slug(instance= org, role= UserRole.OWNER),
             "root_org_view":True,
             }
         )
@@ -182,17 +164,15 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired
 
     def get(self,request,*args, **kwargs):
         form = self.form_class()
-        root_org = self.get_root_org() 
-        context = {'form':form,"org_id":root_org.id}
+        context = {'form':form, **kwargs}
         if request.htmx:
             return render(request,template_name="orgs/send_invitations.html#send-invitations",context=context)
         return render(request,template_name=self.template_name,context=context)       
 
     def post(self,request, *args, **kwargs):
         form = self.form_class(request.POST, request.FILES)
-        root_org = self.get_root_org() 
         if not form.is_valid():
-            return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form,"org_id":root_org.id})
+            return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form, **kwargs})
         # If email is provided
         email = form.cleaned_data['email']
         
@@ -201,22 +181,23 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired
                 user = User.objects.get(email = email)
             except User.DoesNotExist:
                 form.add_error("email","No such user exists. Kindly recheck the email.")
-                return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form,"org_id":root_org.id})
+                return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form, **kwargs})
+            root_org = self.get_root_org()
             invitation = OrgInvitation(to_user=user,from_user=request.user,org=root_org,)
             try:
                 invitation.full_clean()   
                 invitation.save()
             except ValidationError as e:
                 form.add_error(None,e)
-                return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form,"org_id":root_org.id})
+                return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form, **kwargs})
 
             messages.success(request,"Request sent successfully")
             # Render a fresh form
-            return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':self.form_class(),"org_id":root_org.id})
+            return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':self.form_class(), **kwargs})
         else:
             file =  form.cleaned_data['file']
             data = get_emails_from_excel(file)
-            response = render(request,template_name="orgs/send_invitations.html#render-emails-from-files",context={"data":data,"org_id":root_org.id})
+            response = render(request,template_name="orgs/send_invitations.html#render-emails-from-files",context={"data":data, **kwargs})
             response['HX-Retarget'] = '#file_email_container'
             return response
 
@@ -228,7 +209,7 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequ
             User.objects
             .filter(email__in=email_ids)
             .exclude(pk=request.user.pk) # 1. user is not inviting himself.
-            .exclude(org_membership__org=root_org) # 2. requested user are not part of the org.
+            .exclude(org_membership__org=root_org) # 2. requested user are not already part of the org.
             .exclude(received_invitation__org=root_org) # 3. If there is already an invitation
             .distinct()
         )
@@ -240,11 +221,10 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequ
                     org=root_org,
                 )
                 for user in users
-            ],
-            ignore_conflicts=True,
+            ]
         )
         messages.success(request,f"Sent {len(created_invitations)} invitations.")
-        return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':SendInvitationForm(),"org_id":root_org.id})
+        return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':SendInvitationForm(),**kwargs})
 
 class ViewInvitations(LoginRequiredMixin,TeacherRequiredMixin,View):
     template_name = "orgs/view_invitations.html"
@@ -271,7 +251,7 @@ class ViewInvitations(LoginRequiredMixin,TeacherRequiredMixin,View):
             membership.save()
             messages.success(request,f"You are now part of {membership.org.name}.")
         elif action == "reject":
-            messages.warning(request,f"Request from {inv_obj.from_user.first_name} {inv_obj.from_user.last_name} to join {inv_obj.org.name} has been rejected.")
+            messages.warning(request,f"Request from {inv_obj.from_user.get_full_name()} to join {inv_obj.org.name} has been rejected.")
         else:
             return HttpResponseBadRequest("Invalid action")
         
@@ -287,7 +267,7 @@ class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,Vi
     def get(self,request, *args, **kwargs):
         root_org = self.get_root_org()
         form = self.form_class(root_org= root_org)
-        context = {'form':form,"org_name":root_org.name,"org_id":root_org.id}
+        context = {'form':form,"org_name":root_org.name,**kwargs}
         if request.htmx:
             return render(request,template_name="orgs/create_admin.html#create-admin",context=context)
         return render(request,template_name=self.template_name,context=context)
@@ -295,12 +275,12 @@ class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,Vi
     def post(self,request, *args, **kwargs):
         root_org = self.get_root_org()
         form = self.form_class(request.POST,root_org= root_org)
-        error_context = {'form':form,"org_name":root_org.name,"org_id":root_org.id}
+        error_context = {'form':form,"org_name":root_org.name,**kwargs}
 
         if not form.is_valid():
             return render(request,template_name="orgs/create_admin.html#create-admin",context = error_context)
-        membership_obj = form.cleaned_data['users']
-        instance =  OrgAdmin(membership = membership_obj,created_by = request.user)
+        membership_obj = form.cleaned_data['teachers']
+        instance = OrgAdmin(membership = membership_obj,created_by = request.user)
         try:
             instance.full_clean()
         except ValidationError as e:
@@ -308,7 +288,8 @@ class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,Vi
             return render(request,template_name="orgs/create_admin.html#create-admin",context = error_context)
         instance.save()
         messages.success(request,"Admin created successfully")
-        context = {'form':self.form_class(root_org = root_org),"org_name":root_org.name,"org_id":root_org.id}
+        # Render fresh form
+        context = {'form':self.form_class(root_org = root_org),"org_name":root_org.name,**kwargs}
         return render(request,template_name="orgs/create_admin.html#create-admin",context = context)
 
 class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
@@ -317,21 +298,43 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
     def get(self,request, *args, **kwargs):
         root_org = self.get_root_org()
         owner = root_org.config.owner
-        memberships = (
-            OrgMembership.objects
-            .filter(org=root_org)
-            .select_related("admin")
-        )
+        memberships = OrgMembership.objects.filter(org=root_org)
 
-        admins,teachers = [],[]
+        admins = [
+            m.teacher
+            for m in memberships.filter(admin__isnull=False)
+        ]
 
-        for membership in memberships:
-            try:
-                membership.admin
-                admins.append(membership.teacher)
-            except OrgAdmin.DoesNotExist:
-                teachers.append(membership.teacher)
+        teachers = [
+            m.teacher
+            for m in memberships.filter(admin__isnull=True)
+        ]
+
         context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id}
         if request.htmx:
             return render(request,template_name="orgs/view_root_config.html#view-root-config",context=context)
         return render(request,self.template_name,context)
+
+class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+    pass # Implement mail system here and replace full_name
+
+class DeleteChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+    template_name = 'orgs/partials/delete_child_org.html'
+    def get(self,request,*args,**kwargs):
+        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        return render(request, self.template_name, {"org_name":org.name,**kwargs})
+
+    def post(self,request,*args,**kwargs):
+        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        org.delete()
+        response = HttpResponse("", status=200)
+        response['HX-Trigger'] = 'child-org-deleted'
+        return response
+
+
+class ViewOrgDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
+    template_name = 'orgs/partials/view_org_details.html'
+    def get(self,request,*args,**kwargs):
+        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        return render(request,self.template_name,{'org':org})
+        

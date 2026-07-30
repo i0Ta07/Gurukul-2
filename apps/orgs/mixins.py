@@ -1,6 +1,6 @@
 from apps.orgs.models import Organization,OrgMembership
 from apps.users.models import User
-from apps.orgs.utils import is_owner_or_admin
+from apps.orgs.utils import is_owner_or_admin,is_owner
 from django.shortcuts import get_object_or_404
 from config.utils import create_message_and_redirect
 
@@ -32,7 +32,15 @@ class OwnerAdminRequired(RootOrganizationMixin):
                 url="users-dashboard",code="error")
 
         return super().dispatch(request, *args, **kwargs)    
-    
+
+class OwnerRequired(RootOrganizationMixin):
+    """Mixin that requires the user to be a owner or admin to access any view of the org using org_id given in the request."""
+    def dispatch(self, request, *args, **kwargs):
+        root = self.get_root_org()
+        if not is_owner(root=root,user=request.user):
+            return create_message_and_redirect(request,message="Only owner can perform this action.",url="users-dashboard",code="error")
+        return super().dispatch(request, *args, **kwargs)   
+        
 class OrgMembershipRequiredMixin(RootOrganizationMixin):
     """Mixin that requires the user to be the member of the given organization given by org_id to perform some task."""
     def dispatch(self, request, *args, **kwargs):

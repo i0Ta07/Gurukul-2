@@ -78,6 +78,10 @@ This is where `min-h-screen` helps. It sets a static minimum height equal to the
 
 For scrollable containers, however, you should define an explicit height (for example, `h-[200px]`) to create a predictable scroll area. This ensures the scrollbar has enough space to be usable.
 
+### Delete Child Organization
+
+When the user selects the delete button from the dropdown, send a GET request to show the modal. If pressed yes, hx-target="#org{{ org_id }}" hx-swap="delete" and return HttpResponse("",status=200). This will delete the organization from the frontend.
+
 ## Rules
 
 * Classes cannot co-exist with organization. They must be present at the leaf node.

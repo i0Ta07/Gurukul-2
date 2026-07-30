@@ -1,0 +1,9 @@
+<form hx-post="{% url 'delete-child-org' parent_path=parent_path org_id=org_id %}" hx-target="#org-{{ org_id }}" hx-swap="delete">
+    <div class="flex flex-col p-3 gap-3">
+        <h1 class="text-2xl text-center">Are you sure you want to delete {{ org_name }} ?</h1>
+        <div class="flex justify-between gap-3">
+            <button class="base-button bg-red-500 hover:bg-red-700 w-50" type="submit">Yes</button>
+            <button class="base-button bg-blue-500 hover:bg-blue-700 w-50" type="button" @click="template_modal.close();">No</button>
+        </div>
+    </div>
+</form>
