@@ -4,7 +4,6 @@ from typing import Literal
 from django.http import HttpResponse
 from django.urls import reverse
 from django.template.loader import render_to_string
-from django.contrib.sites.shortcuts import get_current_site
 from config.tasks import send_email_task
 
 # Session
@@ -23,30 +22,20 @@ def create_message_and_redirect(request, message: str, url: str, code: Literal['
 
     return redirect(target)
 
-def send_email(request,email_template_name,html_email_template_name,subject,receiver,token):
+def send_email(email_template_name,html_email_template_name,subject,receiver,context):
     """
     Adds the send_email task to redis task queue for async compatibility. Celery worker takes the async task from the 
      message broker queue i.e. Redis and finishes them. Function is used to send reset or register emails asynchronously.
     """
     
-    current_site = get_current_site(request)
-    domain = current_site.domain
-    protocol = 'https' if request.is_secure() else 'http'
-    
-    extra_email_context = {
-        'domain':domain,
-        'token':token,
-        'protocol':protocol,
-    }
-    
     text_content = render_to_string(
         email_template_name,
-        context=extra_email_context,
+        context=context,
     )
 
     html_content = render_to_string(
         html_email_template_name,
-        context=extra_email_context,
+        context=context,
     )
 
     send_email_task.delay(subject,text_content,receiver,html_content)

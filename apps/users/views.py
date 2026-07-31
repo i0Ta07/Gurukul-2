@@ -25,8 +25,8 @@ from django.core.cache import cache
 
 from apps.users.utils import (
     get_changeEmail_key,get_register_token_key,
-    get_token,encode_user_id,sign_str,unsign_str,
-    decode_user_id
+    get_hex_token,encode_user_id,sign_str,unsign_str,
+    decode_user_id,get_website_context
 )
 from apps.users.models import User
 from django.contrib.auth.views import (
@@ -77,15 +77,15 @@ class RegisterEmailView(AnonymousRequiredMixin,View):
         if User.objects.filter(email=email).exists():
             return create_message_and_redirect(request=request,message='Account already exists. Kindly login', url='login',code='error')
         # Generate token 
-        token = get_token()
+        token = get_hex_token()
         # Send email
         send_email(
-            request=request,
             email_template_name="users/register/verify_email.txt",
             html_email_template_name="users/register/verify_email.html",
             subject="Verify your email address",
             receiver= email,
-            token = token
+            token = token,
+            context=get_website_context(request,token=token)
         )
         # Save token in Redis after sending the email.
         value = {
@@ -275,12 +275,11 @@ class UpdateProfile(LoginRequiredMixin,View):
         signed_uid = sign_str(unsigned=uidb64, salt=old_email)
 
         send_email(
-            request=request,
             email_template_name="users/profile/change_email.txt",
             html_email_template_name="users/profile/change_email.html",
             subject="Verify Email Address",
             receiver=new_email,
-            token=signed_uid,
+            context= {**get_website_context(request,token=signed_uid),"user_full_name":request.user.get_full_name()}
         )
         key = get_changeEmail_key(request.user.id)
         cache.set(key=key, value={"new_email": new_email}, timeout=300)

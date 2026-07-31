@@ -1,6 +1,7 @@
 
 import secrets
 from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
+from django.contrib.sites.shortcuts import get_current_site
 
 # Base 64 encoding 
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -9,9 +10,9 @@ from django.utils.encoding import force_bytes, force_str
 def get_register_token_key(token):
     return f'register:token:{token}'
 
-def get_token():
+def get_hex_token(length:int = 32):
     "Generates a 32 hexa-decimal token"
-    return secrets.token_hex(32)
+    return secrets.token_hex(length)
 
 def encode_user_id(user_id: int) -> str:
     """Converts an integer user_id to a URL-safe base64 string."""
@@ -45,6 +46,12 @@ def unsign_str(signed:str,salt:str,max_age= 300):
 def get_changeEmail_key(user_id):
     return f'change_email:user:{user_id}'
 
+def get_website_context(request,token:str):
+    return  {
+        'domain':get_current_site(request).domain,
+        'token':token,
+        'protocol':'https' if request.is_secure() else 'http'
+    }
 
 
 

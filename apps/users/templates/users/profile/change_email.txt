@@ -1,7 +1,7 @@
 {% autoescape off %}
 Email Change Verification
 
-Hi,
+Hi, {{ user_full_name }}
 
 We received a request to change the email address for your Gurukul account to this address. Kindly verify this email to complete the update.
 
