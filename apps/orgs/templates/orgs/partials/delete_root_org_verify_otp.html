@@ -1,0 +1,26 @@
+<form hx-post="{% url 'delete-root-org' org_id=org_id %}" hx-target="#org-{{ org_id }}" hx-swap="delete" hx-indicator="#loading"
+    @otp-verified="template_modal.close(); ">
+    {% csrf_token %}
+    <div class="flex flex-col gap-3 items-center">
+        <h1>Delete {{ org_name }}</h1>
+        <p>Enter the OTP sent to your email.</p>
+        <label class="otp">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <input type="text" autocomplete="one-time-code" name="otp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required />
+        </label>
+        <div class="flex gap-3">
+            <button class="base-button bg-red-500 hover:bg-red-700 w-50" type="submit" >Confirm Delete</button>
+            <button class="base-button bg-blue-500 hover:bg-blue-700 w-50" type="reset" >Reset</button>
+        </div>
+        
+        <div class="h-10">
+            <span class="loading loading-spinner loading-xl htmx-indicator ml-auto" id="loading"></span>
+            {% include "partials/messages.html" %}
+        </div>
+    </div>
+</form>

@@ -6,7 +6,7 @@
 {% block content %}
 
 <!--hx-boost allows anchor tags to use AJAX and hx-history tells which part of the page will be used for snapshot during navigations-->
-<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt >
+<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
 
     {% partialdef view-org inline %}
     <div class="flex flex-col flex-auto" x-data="{ formOpen: false }" >
@@ -67,7 +67,7 @@
         <!--Main List View-->
         <div class="flex flex-col flex-auto">
             {% if root_org_view %}
-                <h1 class="px-1 my-2 md:text-4xl">Organizations</h1>
+                <h1 class="px-1 my-2 md:text-4xl">Root Organizations</h1>
             {% elif child_org_view %}
                 <h1 class="px-1 my-2 md:text-4xl" >{{ node_label }}</h1>
             {% elif classroom_view %}
@@ -86,11 +86,13 @@
                                             <li @click="open = false">
                                                 <a href="{% url 'view-org-details' org_id=org.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" @click="template_modal.showModal();">Details</a>
                                             </li>
+                                            {% if root_org_view and org.role == 'Owner' or child_org_view and org_role == 'Admin' or child_org_view and org_role == 'Owner' %}
                                             <li @click="open = false">
                                                 <button hx-get="{% if root_org_view %}{% url 'delete-root-org' org_id=org.id %}{% else %}{% url 'delete-child-org' parent_path=parent_org_path org_id=org.id %}{% endif %}" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-700 hover:text-white hover:rounded-lg"
                                                 @click="template_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Delete</button>
-                                            </li>                                            
+                                            </li>  
+                                            {% endif %}                                          
                                         </ul>
                                     </div>
                                 </div>
@@ -127,12 +129,14 @@
             {% endif  %}
         </div>
 
-        <dialog id="template_modal" class="modal modal-bottom sm:modal-middle" @root-org-created="$el.close();" @child-org-deleted="$el.close();" x-data @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
+        <dialog id="template_modal" class="modal modal-bottom sm:modal-middle" @root-org-created="$el.close();" x-data @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
             <div class="modal-box">
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                </form>
                 <div id="modal_container"></div>
             </div>                
             <form method="dialog" class="modal-backdrop">
-                {% csrf_token %}
                 <button>close</button>
             </form>
         </dialog>

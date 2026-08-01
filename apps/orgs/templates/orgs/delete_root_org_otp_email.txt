@@ -1,0 +1,17 @@
+{% autoescape off %}
+Hi {{ user_full_name }},
+
+We received a request to delete the organization "{{ org_name }}".
+
+To confirm this action, please use the following One-Time Password (OTP):
+
+{{ otp }}
+
+This OTP is valid for 5 minutes.
+
+If you didn't request to delete this organization, you can safely ignore this email. No changes will be made without OTP verification.
+
+Best regards,
+
+Team Gurukul
+{% endautoescape %}

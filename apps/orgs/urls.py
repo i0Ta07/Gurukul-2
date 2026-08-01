@@ -3,7 +3,7 @@ from apps.orgs.views import (
     ViewChildOrgs, CreateChildOrg,CreateRootOrgAndConfig,
     SendInvitations,SendBulkInvitations,ViewRootOrgs,
     CreateAdmins,ViewInvitations,ViewRootOrgConfig,
-    ViewOrgDetails,DeleteChildOrg,DeleteRootOrg
+    ViewOrgDetails,DeleteChildOrg,DeleteRootOrg,DeleteRootOrgSendOTP
 )
 
 urlpatterns = [
@@ -23,9 +23,8 @@ urlpatterns = [
     path("view/details/<int:org_id>/",ViewOrgDetails.as_view(), name='view-org-details'),
 
     path("delete/<int:org_id>/",DeleteRootOrg.as_view(),name='delete-root-org'),
+    path("delete/verify-otp/<int:org_id>/",DeleteRootOrgSendOTP.as_view(),name='delete-root-org-verify-otp'),
     path("delete/<path:parent_path>/<int:org_id>/",DeleteChildOrg.as_view(),name='delete-child-org'),
-    
-
 
     # path("edit/org/<int:org_id>/", edit_org, name="org-edit"),
     

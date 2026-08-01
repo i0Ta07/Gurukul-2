@@ -11,14 +11,14 @@ from openpyxl import load_workbook
 from django.core.validators import EmailValidator
 from collections.abc import Iterable
 from django.db.models.query import QuerySet
+import secrets
 
 class UserRole(str, Enum):
     OWNER = "Owner"
     ADMIN = "Admin"
     TEACHER = "Teacher"
 
-
-def validate_root_access(root:Organization,user:User):
+def get_user_role(root:Organization,user:User):
     """
     Check if the user belong to this root org, it yes return the role [Admin,Teacher,Owner] else return None
     """
@@ -36,13 +36,13 @@ def validate_root_access(root:Organization,user:User):
     return None
 
 def is_owner_or_admin(root:Organization,user:User):
-    role = validate_root_access(root=root,user=user)
+    role = get_user_role(root=root,user=user)
     if role in [UserRole.OWNER.value, UserRole.ADMIN.value]:
         return True
     return False
 
 def is_owner(root:Organization,user:User):
-    role = validate_root_access(root=root,user=user)
+    role = get_user_role(root=root,user=user)
     if role == UserRole.OWNER.value:
         return True
     return False
@@ -273,4 +273,11 @@ def get_emails_from_excel(file):
         'header_used': False,
     }
                 
+def generate_numeric_otp(length=6):
+    """Generates a secure, unpredictable numeric string"""
+    digits = "0123456789"
+    otp = "".join(secrets.choice(digits) for _ in range(length))
+    return otp
 
+def delete_root_org_otp_key(user_id:int,org_id:int):
+    return f"otp:delete_root:{org_id}:{user_id}"

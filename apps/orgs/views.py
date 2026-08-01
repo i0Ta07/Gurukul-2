@@ -12,10 +12,14 @@ from django.db import transaction
 from config.utils import create_message_and_redirect
 from apps.orgs.utils import (
     UserRole,
-    validate_root_access,validate_child_org,validate_root_org,
+    get_user_role,validate_child_org,validate_root_org,
     build_breadcrumbs,build_slug,resolve_org_path,get_emails_from_excel,
-    build_membership_slug,annotate_memberships
+    build_membership_slug,annotate_memberships,generate_numeric_otp,
+    delete_root_org_otp_key
     )
+from django.core.cache import cache
+from django.contrib.auth.hashers import make_password,check_password
+from config.utils import send_email
 
 class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
     template_name = "orgs/view_orgs_and_classrooms.html"
@@ -42,7 +46,7 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
         org_path = kwargs.get("org_path")
         slugs = [slug for slug in org_path.strip("/").split("/") if slug]
         root_node = get_object_or_404(Organization.get_root_nodes(), slug = slugs[0]) # Get root node
-        org_role = validate_root_access(root = root_node,user= request.user) # Check if user has access to root node
+        org_role = get_user_role(root = root_node,user= request.user) # Check if user has access to root node
         if org_role:            
             current_node = resolve_org_path(root_node =root_node,slugs=slugs)
             children = current_node.get_children().order_by("name")
@@ -309,27 +313,85 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
             m.teacher
             for m in memberships.filter(admin__isnull=True)
         ]
+        role = get_user_role(root=root_org,user= request.user)
 
-        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id}
+        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"role":role}
         if request.htmx:
             return render(request,template_name="orgs/view_root_config.html#view-root-config",context=context)
         return render(request,self.template_name,context)
 
+class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+    def post(self,request, *args, **kwargs,):
+        """User selected Yes on confirmation modal. Generate OTP, send it and save it in redis."""
+        root_org =self.get_root_org()
+        key= delete_root_org_otp_key(user_id=request.user.id,org_id=root_org.id)
+        if cache.get(key=key):
+            messages.success(request,"An OTP has already been sent to your registered email.")
+            return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"org_name":root_org.name,**kwargs})             
+        otp = generate_numeric_otp(length=6)
+        hash = make_password(otp,salt=str(request.user.last_login))
+        cache.set(
+            key=key,
+            value={
+                "hash":hash,
+                "attempts":0
+            },
+            timeout=300
+        )
+        owner = root_org.config.owner
+        send_email(
+            email_template_name="orgs/delete_root_org_otp_email.txt",
+            html_email_template_name="orgs/delete_root_org_otp_email.html",
+            subject=f"Request for Deletion: {root_org.name}",
+            receiver=owner.email,
+            context={"otp":otp,"org_name":root_org.name,"user_full_name":owner.get_full_name()}
+        )
+        return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"org_name":root_org.name,**kwargs})        
+
 class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
-    pass # Implement mail system here and replace full_name
+    def get(self,request,*args,**kwargs):
+        """Show confirmation modal"""
+        root_org = self.get_root_org()
+        return render(request, 'orgs/partials/delete_root_org.html', {"org_name":root_org.name,**kwargs})
+
+    def post(self,request,*args,**kwargs):
+        """Hanlde OTP submission"""
+        root_org = self.get_root_org()
+        key = delete_root_org_otp_key(user_id=request.user.id, org_id=root_org.id)
+        data = cache.get(key)
+        if not data:
+            return create_message_and_redirect(request,"OTP expired",url='users-dashboard',code="error")
+        data['attempts'] += 1
+
+        if check_password(password=request.POST.get("otp"),encoded=data['hash']):
+            cache.delete(key)
+            root_org.delete()
+            response = HttpResponse("", status=200)
+            response['HX-Trigger'] = "otp-verified" # Close the modal
+            return response
+        elif data['attempts'] >= 3:
+            cache.delete(key)
+            return create_message_and_redirect(request,"Maximum 3 attempts. Try again later.",url='users-dashboard',code="error")
+        else:
+            messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
+            cache.set(key=key,value=data)
+            # Render the same form again.
+            response = render(request,'orgs/partials/delete_root_org_verify_otp.html',context={"org_name":root_org.name,**kwargs})
+            # With different target and swap.
+            response["HX-Retarget"] = "#modal_container"
+            response["HX-Reswap"] = "innerHTML"
+            return response
+            
 
 class DeleteChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
-    template_name = 'orgs/partials/delete_child_org.html'
     def get(self,request,*args,**kwargs):
         org = get_object_or_404(Organization,pk=kwargs['org_id'])
-        return render(request, self.template_name, {"org_name":org.name,**kwargs})
+        return render(request, 'orgs/partials/delete_child_org.html', {"org_name":org.name,**kwargs})
 
     def post(self,request,*args,**kwargs):
         org = get_object_or_404(Organization,pk=kwargs['org_id'])
         org.delete()
-        response = HttpResponse("", status=200)
-        response['HX-Trigger'] = 'child-org-deleted'
-        return response
+        return  HttpResponse("", status=200)
 
 
 class ViewOrgDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):

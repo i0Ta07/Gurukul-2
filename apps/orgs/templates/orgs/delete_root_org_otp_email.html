@@ -1,0 +1,71 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Organization Deletion Verification</title>
+</head>
+
+<body style="margin:0;padding:40px;background-color:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                    style="background:#ffffff;border-radius:8px;padding:40px;margin:0 auto;">
+                    <tr>
+                        <td>
+                            <h2 style="margin-top:0;color:#333; font-size:large;">
+                                Organization Deletion Verification
+                            </h2>
+
+                            <p>
+                                Hi, <strong>{{ user_full_name }}</strong>
+                            </p>
+
+                            <p>
+                                A request has been received to delete the organization
+                                <strong>{{ org_name }}</strong>.
+                            </p>
+
+                            <p>
+                                To proceed with this action, please use the One-Time Password (OTP) below:
+                            </p>
+
+                            <div style="text-align:center;margin:35px 0;">
+                                <div style="display:inline-block;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:18px 36px;">
+                                    <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#3B82F6;">
+                                        {{ otp }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p style="text-align:center;font-size:14px;color:#666;">
+                                This OTP will expire in <strong>5 minutes</strong>.
+                            </p>
+
+                            <hr style="border:none;border-top:1px solid #dddddd;margin:30px 0;">
+
+                            <p style="font-size:14px;color:#666;">
+                                If you initiated this request, enter the OTP to confirm the deletion of your organization.
+                            </p>
+
+                            <p style="font-size:14px;color:#666;">
+                                If you did not request to delete <strong>{{ org_name }}</strong>, please ignore this email.
+                                No changes will be made without OTP verification.
+                            </p>
+
+                            <p style="margin-top:30px;">
+                                Best regards,<br>
+                                <strong>Team Gurukul</strong>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>
+{% endautoescape %}

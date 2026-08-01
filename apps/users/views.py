@@ -84,7 +84,6 @@ class RegisterEmailView(AnonymousRequiredMixin,View):
             html_email_template_name="users/register/verify_email.html",
             subject="Verify your email address",
             receiver= email,
-            token = token,
             context=get_website_context(request,token=token)
         )
         # Save token in Redis after sending the email.
