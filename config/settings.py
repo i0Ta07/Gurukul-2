@@ -136,7 +136,7 @@ CACHES = {
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
-        'TIMEOUT':300
+        'TIMEOUT':300 # 5 minutes default TTL
     }
 }
 
@@ -254,3 +254,5 @@ STATICFILES_DIRS = [
 
 # All static files are gathered using command collectstatic into STATIC_ROOT for deployment.
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+EMAIL_EXPIRY_DURATION = 900 # 15 minutes

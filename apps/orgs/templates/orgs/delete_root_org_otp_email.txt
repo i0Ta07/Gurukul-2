@@ -7,7 +7,7 @@ To confirm this action, please use the following One-Time Password (OTP):
 
 {{ otp }}
 
-This OTP is valid for 5 minutes.
+This OTP is valid for 15 minutes.
 
 If you didn't request to delete this organization, you can safely ignore this email. No changes will be made without OTP verification.
 

@@ -38,7 +38,7 @@ When the user selects the delete button from the dropdown, send a GET request to
 
 ### Delete Root Organization
 
-When the owner clicks the delete button and we show a confirmation. IF pressed Yes, we send a POST request to /verify-otp that generates a 6 digits numeric OTP using `secrets`. This OTP's hash is created using the make_password from `django.contrib.auth.hashers` with the salt = user's last login. We save the hash and attempts in redis with 5 minutes TTL and send the email to the user. the delete-root-org GET request shows the confirmation modal and it's POST request handles the OTP submission. We check if the OTP does not expire, if not we use `check_password` to verify the OTP. If incorrect `data['attampts] += 1`. Max attempts are 3 and then redirect.
+When the owner clicks the delete button and we show a confirmation. IF pressed Yes, we send a POST request to /verify-otp that generates a 6 digits numeric OTP using `secrets`. This OTP's hash is created using the make_password from `django.contrib.auth.hashers` with the salt = user's last login. We save the hash and attempts in redis with 15 minutes TTL and send the email to the user. the delete-root-org GET request shows the confirmation modal and it's POST request handles the OTP submission. We check if the OTP does not expire, if not we use `check_password` to verify the OTP. If incorrect `data['attampts] += 1`. Max attempts are 3 and then redirect.
 
 > There should be a cooldown period that will be implemented later like one user can have 3 emails sent to him in an hour to do a specific task.
 

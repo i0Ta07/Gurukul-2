@@ -20,6 +20,7 @@ from apps.orgs.utils import (
 from django.core.cache import cache
 from django.contrib.auth.hashers import make_password,check_password
 from config.utils import send_email
+from config.settings import EMAIL_EXPIRY_DURATION
 
 class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
     template_name = "orgs/view_orgs_and_classrooms.html"
@@ -98,8 +99,9 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,
             form.add_error(field=None,error=e.message)
             return render(request, self.template_name,form_context)
         parent.add_child(instance=org)
+        org_path = kwargs['org_path']
         row_context = {
-            "org":build_slug(instance=org,parent_path=kwargs['org_path']),"parent_org_path":kwargs['org_path']
+            "org":build_slug(instance=org,parent_path=org_path),"parent_org_path":org_path
         }
         messages.success(request,message="Organization created successfully.")
         response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
@@ -336,7 +338,7 @@ class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired
                 "hash":hash,
                 "attempts":0
             },
-            timeout=300
+            timeout=EMAIL_EXPIRY_DURATION
         )
         owner = root_org.config.owner
         send_email(
@@ -374,14 +376,13 @@ class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
             return create_message_and_redirect(request,"Maximum 3 attempts. Try again later.",url='users-dashboard',code="error")
         else:
             messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
-            cache.set(key=key,value=data)
+            cache.set(key=key,value=data,timeout=300)
             # Render the same form again.
             response = render(request,'orgs/partials/delete_root_org_verify_otp.html',context={"org_name":root_org.name,**kwargs})
             # With different target and swap.
             response["HX-Retarget"] = "#modal_container"
             response["HX-Reswap"] = "innerHTML"
             return response
-            
 
 class DeleteChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
     def get(self,request,*args,**kwargs):
@@ -391,8 +392,7 @@ class DeleteChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,
     def post(self,request,*args,**kwargs):
         org = get_object_or_404(Organization,pk=kwargs['org_id'])
         org.delete()
-        return  HttpResponse("", status=200)
-
+        return HttpResponse("", status=200)
 
 class ViewOrgDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     template_name = 'orgs/partials/view_org_details.html'
