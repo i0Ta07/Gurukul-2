@@ -70,6 +70,8 @@ python manage.py tailwind update
 
 * Model.objects.create save the object in the DB, use Model(kwargs) to create instance, then full_clean() and then save.
 
+* No need to add `{% csrf_token %}` on **HTMX post requests**, since we added `<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>` inside our base.html, we only have specify csrf token on normal django POST forms. If you are adding a fallback method="post" method then you have to specify `{% csrf_token %}`.
+
 ## For Production
 
 * Setup tailwind.

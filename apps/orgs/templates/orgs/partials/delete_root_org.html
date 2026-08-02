@@ -1,5 +1,4 @@
 <form hx-post="{% url 'delete-root-org-verify-otp' org_id=org_id %}" hx-target="this" hx-swap="outerHTML"  hx-indicator="#loading"  @submit="body.remove();">
-    {% csrf_token %}
     <div class="htmx-indicator flex flex-col flex-auto items-center" id="loading">
         <span class="loading loading-spinner loading-xl"></span>
     </div>

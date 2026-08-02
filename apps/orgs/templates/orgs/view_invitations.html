@@ -17,7 +17,6 @@
                     </h3>
                     <form hx-post="{% url 'create-org-members' invitation_id=invitation.id %}" hx-swap="innerHTML" @invitation-removed="$el.closest('div').remove(); counter --; "
                         hx-target="#message-container" class="flex gap-x-3">
-                        {% csrf_token %}
                         <button type="submit" name="action" value="accept" class="base-button bg-blue-500 hover:bg-blue-700 ">Accept</button>
                         <button type="submit" name="action" value="reject" class="base-button bg-red-500 hover:bg-red-700">Reject</button>
                     </form>
