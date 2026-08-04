@@ -1,5 +1,5 @@
 <form hx-post="{% url 'delete-root-org' org_id=org_id %}" hx-target="#org-{{ org_id }}" hx-swap="delete" hx-indicator="#loading"
-    @otp-verified="template_modal.close(); ">
+    @otp-verified="org_modal.close(); ">
     <div class="flex flex-col gap-3 items-center">
         <h1>Delete {{ org_name }}</h1>
         <p>Enter the OTP sent to your email.</p>
