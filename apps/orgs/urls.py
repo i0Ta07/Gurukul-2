@@ -3,7 +3,8 @@ from apps.orgs.views import (
     ViewChildOrgs, CreateChildOrg,CreateRootOrgAndConfig,
     SendInvitations,SendBulkInvitations,ViewRootOrgs,
     CreateAdmins,ViewInvitations,ViewRootOrgConfig,
-    ViewOrgDetails,DeleteChildOrg,DeleteRootOrg,DeleteRootOrgSendOTP
+    ViewOrgDetails,DeleteChildOrg,DeleteRootOrg,DeleteRootOrgSendOTP,
+    RevokeOrgMembership,RevokeOrgAdmin,RenameChildOrg,RenameRootOrg
 )
 
 urlpatterns = [
@@ -26,6 +27,11 @@ urlpatterns = [
     path("delete/verify-otp/<int:org_id>/",DeleteRootOrgSendOTP.as_view(),name='delete-root-org-verify-otp'),
     path("delete/<path:parent_path>/<int:org_id>/",DeleteChildOrg.as_view(),name='delete-child-org'),
 
+    path("revoke/membership/<int:org_id>/<int:teacher_id>/",RevokeOrgMembership.as_view(),name='revoke-org-membership'),
+    path("revoke/admin/<int:org_id>/<int:admin_id>/",RevokeOrgAdmin.as_view(),name='revoke-org-admin'),
+
+    path("rename/<int:org_id>/",RenameChildOrg.as_view(),name='rename-child-org'),
+    path("rename/root/<int:org_id>/",RenameRootOrg.as_view(),name='rename-root-org'),
     # path("edit/org/<int:org_id>/", edit_org, name="org-edit"),
     
     # Catches them all, has to be last

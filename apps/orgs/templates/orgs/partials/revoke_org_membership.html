@@ -1,0 +1,9 @@
+<form hx-post="{% url 'revoke-org-membership' org_id=org_id teacher_id=teacher_id %}" hx-target="#teacher-{{ teacher_id }}" hx-swap="delete" >
+    <div class="flex flex-col p-3 gap-3" id="body">
+        <h1 class="text-2xl text-center">Are you sure you want to revoke {{ teacher_name }}'s membership ?</h1>
+        <div class="flex justify-between gap-3">
+            <button class="base-button bg-red-500 hover:bg-red-700 w-50" type="submit" @click="org_modal.close();">Yes</button>
+            <button class="base-button bg-blue-500 hover:bg-blue-700 w-50" type="button" @click="org_modal.close();">No</button>
+        </div>
+    </div>
+</form>

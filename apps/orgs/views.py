@@ -316,8 +316,14 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
             for m in memberships.filter(admin__isnull=True)
         ]
         role = get_user_role(root=root_org,user= request.user)
+        is_admin_or_owner,is_owner = False,False
 
-        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"role":role}
+        if role == 'Owner':
+            is_owner = True
+        if role in ['Admin','Owner']:
+            is_admin_or_owner = True
+
+        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"is_admin_or_owner":is_admin_or_owner,"is_owner":is_owner}
         if request.htmx:
             return render(request,template_name="orgs/view_root_config.html#view-root-config",context=context)
         return render(request,self.template_name,context)
@@ -399,4 +405,47 @@ class ViewOrgDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
     def get(self,request,*args,**kwargs):
         org = get_object_or_404(Organization,pk=kwargs['org_id'])
         return render(request,self.template_name,{'org':org})
-        
+
+class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+    def get(self,request,*args, **kwargs):
+        first_name, last_name = get_object_or_404(
+            User.objects.values_list("first_name", "last_name"), # Return first_name and last_name inside a tuple, rather than whole user instance.
+            pk=kwargs["teacher_id"], 
+        )
+        teacher_name = f"{first_name} {last_name}"
+        return render(request,template_name="orgs/partials/revoke_org_membership.html",context={**kwargs,"teacher_name":teacher_name})
+
+    
+    def post(self,request,*args, **kwargs):
+        root_org = self.get_root_org()
+        # In DB, a ForeignKey field like teacher is stored as a teacher_id column containing the primary key of the related User,
+        #  so in OrgMembership table we have something like org_id, teacher_id
+        mem_obj = get_object_or_404(OrgMembership,teacher_id = kwargs['teacher_id'],org = root_org) 
+        mem_obj.delete()
+        return HttpResponse("", status=200)
+
+
+class RevokeOrgAdmin(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+    def get(self, request, *args, **kwargs):
+        first_name, last_name = get_object_or_404(
+            User.objects.values_list('first_name','last_name'),
+            pk=kwargs['admin_id']
+        )
+        admin_name = f"{first_name} {last_name}"
+        return render(request,"orgs/partials/revoke_org_admin.html",{**kwargs,"admin_name":admin_name})
+
+    def post(self,request,*args, **kwargs):
+        root_org = self.get_root_org()
+        admin_obj = get_object_or_404(
+            OrgAdmin,
+            membership__teacher_id=kwargs["admin_id"],
+            membership__org=root_org,
+        )
+        admin_obj.delete()
+        return HttpResponse("", status=200)
+
+class RenameChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+    pass
+
+class RenameRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+    pass

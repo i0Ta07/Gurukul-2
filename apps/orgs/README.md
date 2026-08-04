@@ -45,3 +45,11 @@ When the owner clicks the delete button and we show a confirmation. IF pressed Y
 ## To do
 
 * Add Rename to orgs and classrooms.
+
+## Remember
+
+* Inside the database, a `ForeignKey` field is stored as the primary key of the related model in the table of the model that defines the foreign key. For example, the `OrgMembership` model has two foreign key fields: `org` and `teacher`. In the `OrgMembership` table, these are stored as `org_id` and `teacher_id`, which contain the primary keys (`id`) of the corresponding `Organization` and `User` records.
+
+This is why filtering with `teacher_id=5` is more direct than `teacher__id=5`: the `teacher_id` value already exists in the `OrgMembership` table, so Django can filter on that column without traversing the relationship using joins.
+
+* @click, x-show, x-model, x-bind and all other Alpine dependent components will only work if one of the ancestors contain x-data.

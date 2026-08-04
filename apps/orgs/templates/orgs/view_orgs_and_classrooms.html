@@ -13,7 +13,7 @@
         <!--Create Root org-->
         {% if root_org_view %}
         <div class="flex ml-auto">
-            <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " @click="template_modal.showModal();"
+            <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " @click="org_modal.showModal();"
             hx-get="{% url 'create-root-org' %}" hx-target="#modal_container" hx-swap="innerHTML">
                 Create Root Organization
             </button>
@@ -84,14 +84,21 @@
                                     <div x-show="open" x-cloak  x-transition @click.outside="open = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg  bg-slate-950" >
                                         <ul class="p-2 text-sm text-body font-medium">
                                             <li @click="open = false">
-                                                <a href="{% url 'view-org-details' org_id=org.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" @click="template_modal.showModal();">Details</a>
+                                                <a href="{% url 'view-org-details' org_id=org.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
+                                                class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
+                                                @click="org_modal.showModal();">Details</a>
                                             </li>
                                             {% if root_org_view and org.role == 'Owner' or child_org_view and org_role == 'Admin' or child_org_view and org_role == 'Owner' %}
                                             <li @click="open = false">
+                                                <button hx-get="#" 
+                                                class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg"
+                                                @click="org_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Rename</button>
+                                            </li>  
+                                            <li @click="open = false">
                                                 <button hx-get="{% if root_org_view %}{% url 'delete-root-org' org_id=org.id %}{% else %}{% url 'delete-child-org' parent_path=parent_org_path org_id=org.id %}{% endif %}" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-700 hover:text-white hover:rounded-lg"
-                                                @click="template_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Delete</button>
-                                            </li>  
+                                                @click="org_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Delete</button>
+                                            </li>
                                             {% endif %}                                          
                                         </ul>
                                     </div>
@@ -128,8 +135,8 @@
                 </div>
             {% endif  %}
         </div>
-
-        <dialog id="template_modal" class="modal modal-bottom sm:modal-middle" @root-org-created="$el.close();" x-data @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
+        {% partialdef org-modal inline %}
+        <dialog id="org_modal" class="modal modal-bottom sm:modal-middle" @root-org-created="$el.close();" @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
             <div class="modal-box">
                 <form method="dialog">
                     <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
@@ -140,6 +147,7 @@
                 <button>close</button>
             </form>
         </dialog>
+        {% endpartialdef org-modal %}
     </div>
     {% endpartialdef view-org %}
 </div>
