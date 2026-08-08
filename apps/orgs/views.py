@@ -351,7 +351,7 @@ class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired
             email_template_name="orgs/delete_root_org_otp_email.txt",
             html_email_template_name="orgs/delete_root_org_otp_email.html",
             subject=f"Request for Deletion: {root_org.name}",
-            receiver=owner.email,
+            receiver=[owner.email],
             context={"otp":otp,"org_name":root_org.name,"user_full_name":owner.get_full_name()}
         )
         return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"org_name":root_org.name,**kwargs})        

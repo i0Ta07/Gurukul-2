@@ -15,6 +15,7 @@ from .forms import (
     RegisterEmailForm,
     CompleteRegistrationForm,
     UpdateUserDetailsForm,
+    ResetPasswordForm
 )
 from config.settings import EMAIL_EXPIRY_DURATION
 
@@ -84,7 +85,7 @@ class RegisterEmailView(AnonymousRequiredMixin,View):
             email_template_name="users/register/verify_email.txt",
             html_email_template_name="users/register/verify_email.html",
             subject="Verify your email address",
-            receiver= email,
+            receiver= [email],
             context=get_website_context(request,token=token)
         )
         # Save token in Redis after sending the email.
@@ -178,19 +179,23 @@ class ResetPasswordView(AnonymousRequiredMixin,SuccessMessageMixin, PasswordRese
     So that when the linked is clicked, it becomes invalidated after one use automatically. For verification same 
     token is generated again and compared with the given token from the url.
     """
+    form_class = ResetPasswordForm
     template_name = 'users/password/reset_password.html'
     email_template_name = 'users/password/password_reset_email.txt'
     html_email_template_name = 'users/password/password_reset_email.html'
     subject_template_name = 'users/password/password_reset_subject.txt'
-    success_message = "Check your email for a password reset link. If you don't receive it, please verify you are using the correct login method. Note that accounts created via OAuth (Google/Github) do not require a password."
+    success_message = (
+        "Check your email for a password reset link. "
+        "If you don't receive it, please verify you are using "
+        "the correct login method. Note that accounts created "
+        "via OAuth (Google/Github) do not require a password."
+    )
     success_url = reverse_lazy('login')
 
 class ResetPasswordConfirmView(SuccessMessageMixin, PasswordResetConfirmView):
     template_name = 'users/password/password_reset_confirm.html'
     success_message = "Your password has been reset."
     success_url = reverse_lazy('login')
-    post_reset_login = True
-    post_reset_login_backend = 'django.contrib.auth.backends.ModelBackend'
 
 class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
     success_url = reverse_lazy('users-dashboard')
@@ -278,7 +283,7 @@ class UpdateProfile(LoginRequiredMixin,View):
             email_template_name="users/profile/change_email.txt",
             html_email_template_name="users/profile/change_email.html",
             subject="Verify Email Address",
-            receiver=new_email,
+            receiver=[new_email],
             context= {**get_website_context(request,token=signed_uid),"user_full_name":request.user.get_full_name()}
         )
         key = get_changeEmail_key(request.user.id)

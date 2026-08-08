@@ -34,27 +34,32 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+]
+
+THIRD_PARTY_APPS = [
     'phonenumber_field',
     'treebeard',
     "tailwind",
     'social_django',
     "django_htmx",
     'django_celery_beat',
+]
 
+PROJECT_APPS = [
     'apps.classes.apps.ClassesConfig',
     'apps.users.apps.UsersConfig',
     'apps.orgs.apps.OrgsConfig',
     'apps.theme.apps.ThemeConfig',
-
 ]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2', # Oauth Github
@@ -208,7 +213,7 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_PORT = 587
 
-PASSWORD_RESET_TIMEOUT = 3600  # Valid for 1 hour
+PASSWORD_RESET_TIMEOUT = 900  # Valid for 15 min
 
 EMAIL_HOST_USER = os.getenv('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')

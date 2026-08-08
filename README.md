@@ -35,6 +35,7 @@ python manage.py tailwind update
 * Use Alpine for frontend UI
 * Render a new form using hx-get on button click and submit it using hx-post.
 * Created a cron-job that deletes the expired invitations using django-celery-beat.
+* Changed sync PasswordReset email to async.
 
 ## Rules
 
@@ -53,8 +54,6 @@ python manage.py tailwind update
 * Decide whether to keep the bio, phone and DOB. Since this is not a social website we will not need show profiles of user. We may add a chat feature for teachers in a organization. For that we will need a username. Even if chat is added we dont need to show bio, phone and DOB.
 
 * To remove title from individual pages, since we have to update the title in every htmx request seperately. We can just use **Gurukul** as a title for every page.
-
-* Should the password reset form use celery to send emails?
 
 * There are repeated business checks inside the Model's clean methods that are already checked in the View. Should be removed?
 

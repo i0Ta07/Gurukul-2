@@ -22,23 +22,26 @@ def create_message_and_redirect(request, message: str, url: str, code: Literal['
 
     return redirect(target)
 
-def send_email(email_template_name,html_email_template_name,subject,receiver,context):
+
+def send_email(email_template_name:str,subject:str, receiver:list[str], context:dict,html_email_template_name:str = None):
     """
     Adds the send_email task to redis task queue for async compatibility. Celery worker takes the async task from the 
-     message broker queue i.e. Redis and finishes them. Function is used to send reset or register emails asynchronously.
+    message broker queue i.e. Redis and finishes them. Function is used to send reset or register emails asynchronously.
     """
-    
     text_content = render_to_string(
         email_template_name,
         context=context,
     )
 
-    html_content = render_to_string(
-        html_email_template_name,
-        context=context,
-    )
+    html_content = None
 
-    send_email_task.delay(subject,text_content,receiver,html_content)
+    if html_email_template_name:
+        html_content = render_to_string(
+            html_email_template_name,
+            context=context,
+        )
+
+    send_email_task.delay(subject, text_content, receiver, html_content,)
 
 def logout_user_from_all_devices(request, user):
     """

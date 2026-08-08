@@ -9,7 +9,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from config.validators import validate_file_mimetype
 from django.template.defaultfilters import filesizeformat
-
+from django.contrib.auth.forms import PasswordResetForm
+from django.template.loader import render_to_string
+from config.utils import send_email
 
 
 class LoginForm(AuthenticationForm):
@@ -102,6 +104,7 @@ class CompleteRegistrationForm(UserCreationForm):
             'password1', 'password2',
         ]
 
+
 class BootstrapSplitPhoneNumberField(SplitPhoneNumberField):
     def prefix_field(self):
         field = super().prefix_field()
@@ -118,7 +121,7 @@ class BootstrapSplitPhoneNumberField(SplitPhoneNumberField):
             'placeholder': '10 digit number',
         })
         return field
-    
+
 
 class UpdateUserDetailsForm(forms.ModelForm):
     
@@ -196,3 +199,17 @@ class UpdateUserDetailsForm(forms.ModelForm):
         fields = ['first_name','last_name','email','user_type','phone_number','date_of_birth','profile_photo','bio']
 
 
+class ResetPasswordForm(PasswordResetForm):
+    def send_mail(self, subject_template_name, email_template_name, context, from_email, to_email, html_email_template_name = None):
+        subject = render_to_string(subject_template_name, context)
+
+        # Email subject *must not* contain newlines
+        subject = "".join(subject.splitlines())
+
+        send_email(
+            email_template_name=email_template_name,
+            html_email_template_name=html_email_template_name,
+            subject=subject,
+            receiver=[to_email],
+            context=context
+        )
