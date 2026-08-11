@@ -1,0 +1,19 @@
+{% load static %}
+<form hx-post="{% if root_org_view %}{% url 'rename-root-org' org_id=org_id %}{% elif child_org_view %}{% url 'rename-child-org' parent_org_path=parent_org_path org_id=org_id %}{% endif %}"
+    hx-target="#org-{{ org_id }}" hx-swap="outerHTML" @org-renamed="org_modal.close();">
+    <div class="flex flex-col gap-1 items-center justify-center">
+        <div class="flex gap-3 justify-center items-center text-md md:text-lg py-3 px-6 w-full">
+            <p class="form-label">{{ form.name.label }}</p>
+            <div class="w-full">
+                {{ form.name }}
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-50">Rename</button>
+            <button type="button" class="base-button bg-red-500 hover:bg-red-700 w-50" @click="org_modal.close();">Cancel</button>
+        </div>
+    </div>
+    <div class="h-15">
+        {% include "partials/form_errors.html" %}
+    </div>
+</form>

@@ -7,7 +7,7 @@
 <div class="page-container" id="page-container" hx-history-elt>
     {% partialdef create-admin inline %}
     <div class="flex flex-col items-center p-5 gap-5">
-        <h1 class="text-xl md:text-3xl">Create Admins ({{ org_name }})</h1>
+        <h1 class="text-xl md:text-3xl">Create Admins ({{ root_org_name }})</h1>
         <form hx-post="{% url 'create-admin' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" class="flex flex-col items-center gap-3 w-full max-w-2xl">
             {{ form.teachers }}
             <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit">Submit</button>

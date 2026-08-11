@@ -46,6 +46,10 @@ When the owner clicks the delete button and we show a confirmation. IF pressed Y
 
 * Add Rename to orgs and classrooms.
 
+* Change `org_path` to `parent_org_path` and `org_id` to `parent_org_id`. Some `org_id` remain `org_id`, only those of parent will change.
+
+* In several views we could get specific attributes from the object instead of the whole instance.
+
 ## Remember
 
 * Inside the database, a `ForeignKey` field is stored as the primary key of the related model in the table of the model that defines the foreign key. For example, the `OrgMembership` model has two foreign key fields: `org` and `teacher`. In the `OrgMembership` table, these are stored as `org_id` and `teacher_id`, which contain the primary keys (`id`) of the corresponding `Organization` and `User` records.

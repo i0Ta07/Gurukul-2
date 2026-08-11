@@ -1,6 +1,6 @@
 from apps.orgs.models import Organization,OrgMembership
 from apps.users.models import User
-from apps.orgs.utils import is_owner_or_admin,is_owner
+from apps.orgs.utils import UserRole, is_owner_or_admin,is_owner
 from django.shortcuts import get_object_or_404
 from config.utils import create_message_and_redirect
 
@@ -27,9 +27,11 @@ class OwnerAdminRequired(RootOrganizationMixin):
     """Mixin that requires the user to be a owner or admin to access any view of the org using org_id given in the request."""
     def dispatch(self, request, *args, **kwargs):
         root = self.get_root_org()
-        if not is_owner_or_admin(root=root,user=request.user):
+        role = is_owner_or_admin(root=root,user=request.user)
+        if not role:
             return create_message_and_redirect(request,message="Only admins and owner can perform this action.",
                 url="users-dashboard",code="error")
+        self.role = role
 
         return super().dispatch(request, *args, **kwargs)    
 
@@ -37,17 +39,25 @@ class OwnerRequired(RootOrganizationMixin):
     """Mixin that requires the user to be a owner or admin to access any view of the org using org_id given in the request."""
     def dispatch(self, request, *args, **kwargs):
         root = self.get_root_org()
-        if not is_owner(root=root,user=request.user):
+        role = is_owner(root=root,user=request.user)
+        if not role:
             return create_message_and_redirect(request,message="Only owner can perform this action.",url="users-dashboard",code="error")
+        self.role = role
+        
         return super().dispatch(request, *args, **kwargs)   
         
 class OrgMembershipRequiredMixin(RootOrganizationMixin):
     """Mixin that requires the user to be the member of the given organization given by org_id to perform some task."""
     def dispatch(self, request, *args, **kwargs):
         root = self.get_root_org()
-        if not is_owner_or_admin(root=root,user=request.user):
-            if not OrgMembership.objects.filter(org=root, teacher=request.user).exists():
+        role  = is_owner_or_admin(root=root,user=request.user)
+        if not role:
+            membership_exists = OrgMembership.objects.filter(org=root, teacher=request.user).exists()
+            if not membership_exists:
                 return create_message_and_redirect(request,"Only owners or members of this organization can perform this action.",
                     "users-dashboard","warning",)
+            role = UserRole.TEACHER.value
+            
+        self.role = role
 
         return super().dispatch(request, *args, **kwargs) 

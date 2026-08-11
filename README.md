@@ -49,6 +49,22 @@ python manage.py tailwind update
 
 * Add guardrails to email like max 3 attempts, resend button and cooldown periods.
 
+* Add honcho to run multiple commands more easily. Create two honcho files with and without celery.
+
+```Python
+
+web: python manage.py runserver
+tailwind: python manage.py tailwind start
+
+web: python manage.py runserver
+tailwind: python manage.py tailwind start
+worker: celery -A config worker -P threads -E -l info
+beat: celery -A config beat -l INFO
+
+honcho start -f Procfile.dev
+honcho start -f Procfile.redis
+```
+
 ## Pending decisons
 
 * Decide whether to keep the bio, phone and DOB. Since this is not a social website we will not need show profiles of user. We may add a chat feature for teachers in a organization. For that we will need a username. Even if chat is added we dont need to show bio, phone and DOB.

@@ -1,7 +1,7 @@
 {% autoescape off %}
 Hi {{ user_full_name }},
 
-We received a request to delete the organization "{{ org_name }}".
+We received a request to delete the organization "{{ root_org_name }}".
 
 To confirm this action, please use the following One-Time Password (OTP):
 
@@ -9,7 +9,7 @@ To confirm this action, please use the following One-Time Password (OTP):
 
 This OTP is valid for 15 minutes.
 
-If you didn't request to delete this organization, you can safely ignore this email. No changes will be made without OTP verification.
+If you didn't request to delete this "{{ root_org_name }}", you can safely ignore this email. No changes will be made without OTP verification.
 
 Best regards,
 

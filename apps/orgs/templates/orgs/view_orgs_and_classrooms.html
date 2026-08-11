@@ -32,12 +32,12 @@
                     <a href="{% url 'view-root-config' org_id=parent_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">View Config</a>
                     <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
                     hx-get="{% url 'create-child-org' org_path=parent_org_path org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
-                    Create {{ node_label }}</button>
+                    Create {{ label }}</button>
                 </div>
             {%endif %}
 
         <!--Breadcrumb-->
-        <div class="breadcrumbs text-sm md:text-lg mt-3">
+        <div class="breadcrumbs text-sm mt-3 md:text-lg">
             <ul>
                 <li>
                     <a href="{% url 'view-root-orgs' %}">
@@ -48,17 +48,17 @@
                 {% if breadcrumbs %}
                     {% for node in breadcrumbs %}
                         <li>
-                            <a href="{% url 'view-child-orgs' org_path=node.path %}">
-                                <img class="size-5" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization Icon">
+                            <a href="{% url 'view-child-orgs' org_path=node.path org_id=node.id %}">
+                                <img class="size-5" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization">
                                 {{ node.name }}
                             </a>
                         </li>
                     {% endfor %}
                 {% endif %}
-                {% if current_org_name %}
+                {% if parent_org_name %}
                     <li>
-                        <img class="size-5 mr-2" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Current Organization Icon">
-                        {{ current_org_name }}
+                        <img class="size-5 mr-2" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization ">
+                        {{ parent_org_name }}
                     </li>
                 {% endif %}
             </ul>
@@ -66,13 +66,24 @@
 
         <!--Main List View-->
         <div class="flex flex-col flex-auto">
-            {% if root_org_view %}
-                <h1 class="px-1 my-2 md:text-4xl">Root Organizations</h1>
-            {% elif child_org_view %}
-                <h1 class="px-1 my-2 md:text-4xl" >{{ node_label }}</h1>
-            {% elif classroom_view %}
-                <h1 class="px-1 my-2 md:text-4xl">Classes</h1>
-            {% endif %}
+            <div class="flex justify-between items-center">
+                <h1 class="px-1 my-2 md:text-4xl">
+                    {% if root_org_view %}
+                        Root Organizations
+                    {% elif classroom_view %}
+                        Classes
+                    {% else %}
+                        {{ label }}
+                    {% endif %}
+                </h1>
+
+                {% if child_org_view or classroom_view %}
+                    <div class="badge badge-outline badge-error badge-xl">
+                        {{ role }}
+                    </div>
+                {% endif %}
+            </div>
+                
             <div class="flex flex-wrap" id="main-list">
                 {% if orgs %}
                     {% for org in orgs %}
@@ -88,14 +99,14 @@
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
                                                 @click="org_modal.showModal();">Details</a>
                                             </li>
-                                            {% if root_org_view and org.role == 'Owner' or child_org_view and org_role == 'Admin' or child_org_view and org_role == 'Owner' %}
+                                            {% if root_org_view and org.role == 'Owner' or child_org_view and role == 'Admin' or child_org_view and role == 'Owner' %}
                                             <li @click="open = false">
-                                                <button hx-get="#" 
-                                                class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg"
-                                                @click="org_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Rename</button>
+                                                <button hx-get="{% if root_org_view %}{% url 'rename-root-org' org_id=org.id %}{% elif child_org_view %}{% url 'rename-child-org' parent_org_path=parent_org_path org_id=org.id %}{% endif %}" 
+                                                class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg"  hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML"
+                                                @click="org_modal.showModal();">Rename</button>
                                             </li>  
                                             <li @click="open = false">
-                                                <button hx-get="{% if root_org_view %}{% url 'delete-root-org' org_id=org.id %}{% else %}{% url 'delete-child-org' parent_path=parent_org_path org_id=org.id %}{% endif %}" 
+                                                <button hx-get="{% if root_org_view %}{% url 'delete-root-org' org_id=org.id %}{% elif child_org_view %}{% url 'delete-child-org' parent_org_path=parent_org_path org_id=org.id %}{% endif %}" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-700 hover:text-white hover:rounded-lg"
                                                 @click="org_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Delete</button>
                                             </li>
@@ -103,7 +114,7 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <a href="{% url 'view-child-orgs' org_path=org.path  %}" class="text-center">
+                                <a href="{% url 'view-child-orgs' org_path=org.path org_id=org.id  %}" class="text-center">
                                     <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Folder">
                                     <p class="font-bold min-w-20">{{ org.name }}</p>
                                 </a>
@@ -136,7 +147,7 @@
             {% endif  %}
         </div>
         {% partialdef org-modal inline %}
-        <dialog id="org_modal" class="modal modal-bottom sm:modal-middle" @root-org-created="$el.close();" @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
+        <dialog id="org_modal" class="modal modal-bottom sm:modal-middle" @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
             <div class="modal-box">
                 <form method="dialog">
                     <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>

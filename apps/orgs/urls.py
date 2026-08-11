@@ -4,7 +4,7 @@ from apps.orgs.views import (
     SendInvitations,SendBulkInvitations,ViewRootOrgs,
     CreateAdmins,ViewInvitations,ViewRootOrgConfig,
     ViewOrgDetails,DeleteChildOrg,DeleteRootOrg,DeleteRootOrgSendOTP,
-    RevokeOrgMembership,RevokeOrgAdmin,RenameChildOrg,RenameRootOrg
+    RevokeOrgMembership,RevokeOrgAdmin,RenameOrg
 )
 
 urlpatterns = [
@@ -25,16 +25,18 @@ urlpatterns = [
 
     path("delete/<int:org_id>/",DeleteRootOrg.as_view(),name='delete-root-org'),
     path("delete/verify-otp/<int:org_id>/",DeleteRootOrgSendOTP.as_view(),name='delete-root-org-verify-otp'),
-    path("delete/<path:parent_path>/<int:org_id>/",DeleteChildOrg.as_view(),name='delete-child-org'),
+    path("delete/<path:parent_org_path>/<int:org_id>/",DeleteChildOrg.as_view(),name='delete-child-org'),
 
     path("revoke/membership/<int:org_id>/<int:teacher_id>/",RevokeOrgMembership.as_view(),name='revoke-org-membership'),
     path("revoke/admin/<int:org_id>/<int:admin_id>/",RevokeOrgAdmin.as_view(),name='revoke-org-admin'),
 
-    path("rename/<int:org_id>/",RenameChildOrg.as_view(),name='rename-child-org'),
-    path("rename/root/<int:org_id>/",RenameRootOrg.as_view(),name='rename-root-org'),
+    # Should be first
+    path("rename/root/<int:org_id>/",RenameOrg.as_view(),name='rename-root-org'),
+    path("rename/<path:parent_org_path>/<int:org_id>/",RenameOrg.as_view(),name='rename-child-org'),
+
     # path("edit/org/<int:org_id>/", edit_org, name="org-edit"),
     
     # Catches them all, has to be last
     path("create/<path:org_path>/<int:org_id>/", CreateChildOrg.as_view(), name="create-child-org"),
-    path("<path:org_path>/", ViewChildOrgs.as_view(), name="view-child-orgs"),
+    path("<path:org_path>/<int:org_id>", ViewChildOrgs.as_view(), name="view-child-orgs"),
 ]

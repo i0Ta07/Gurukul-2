@@ -2,9 +2,11 @@
 <form hx-post="{% url 'create-child-org' org_path=org_path org_id=org_id %}" hx-target="this"
     hx-swap="outerHTML" @click.outside="formOpen = false; $el.remove();">
     <div class="flex flex-col items-center text-md md:text-lg py-3 px-6 gap-x-2 cursor-pointer">
-        <div  class="text-center">
-            <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization">
+        <div class="text-center">
+            <img class="size-12 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization">
+            <div class="w-25 md:w-30">
             {{ form.name }}
+            </div>
         </div>
     </div>
     {% include "partials/form_errors.html" %}

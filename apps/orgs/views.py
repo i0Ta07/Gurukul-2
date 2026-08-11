@@ -7,15 +7,14 @@ from django.shortcuts import render,get_object_or_404
 from apps.orgs.models import OrgAdmin, OrgInvitation, OrgMembership, Organization
 from apps.users.models import User
 from django.core.exceptions import ValidationError
-from apps.orgs.forms import CreateChildOrgForm,CreateRootOrgForm,CreateOrgConfigForm,SendInvitationForm,CreateAdminForm
+from apps.orgs.forms import OrgNameForm,CreateRootOrgForm,CreateOrgConfigForm,SendInvitationForm,CreateAdminForm
 from django.db import transaction
 from config.utils import create_message_and_redirect
-from apps.orgs.utils import (
-    UserRole,
-    get_user_role,validate_child_org,validate_root_org,
-    build_breadcrumbs,build_slug,resolve_org_path,get_emails_from_excel,
+from apps.orgs.utils import ( UserRole,
+    validata_create_child_org,validate_create_root_org,build_slug,
+    resolve_parent_path_and_build_breadcrumbs,get_emails_from_excel,
     build_membership_slug,annotate_memberships,generate_numeric_otp,
-    delete_root_org_otp_key
+    delete_root_org_otp_key,validate_rename_org,render_error_inside_modal
     )
 from django.core.cache import cache
 from django.contrib.auth.hashers import make_password,check_password
@@ -40,32 +39,32 @@ class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
             return render(request, self.template_name, context)
 
 # should only show the TLD orgs the user has created
-class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
+class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, OrgMembershipRequiredMixin, View):
     template_name = "orgs/view_orgs_and_classrooms.html"
 
     def get(self, request, *args, **kwargs):
-        org_path = kwargs.get("org_path")
-        slugs = [slug for slug in org_path.strip("/").split("/") if slug]
-        root_node = get_object_or_404(Organization.get_root_nodes(), slug = slugs[0]) # Get root node
-        org_role = get_user_role(root = root_node,user= request.user) # Check if user has access to root node
-        if org_role:            
-            current_node = resolve_org_path(root_node =root_node,slugs=slugs)
-            children = current_node.get_children().order_by("name")
+        role = self.role
+        if role:
+            root_node = self.get_root_org()
+            org_path = kwargs.get("org_path")
+            slugs = [slug for slug in org_path.strip("/").split("/") if slug]
+            parent_node,breadcrumbs = resolve_parent_path_and_build_breadcrumbs(root_node =root_node,slugs=slugs)
+            children = parent_node.get_children().order_by("name")
             template = root_node.config.template()
-            current_depth = current_node.get_depth()
-            node_label = template[current_depth -1]
-            classrooms = current_node.classrooms.order_by('name')
+            current_depth = parent_node.get_depth()
+            label = template[current_depth -1]
+            classrooms = parent_node.classrooms.order_by('name')
             context = {
-                "org_role":org_role,
+                "role":role,
                 "orgs":build_slug(children,org_path),
                 "classrooms":build_slug(classrooms,org_path),
-                "current_org_name": current_node.name,
-                "parent_org_id": current_node.id,
+                "parent_org_name": parent_node.name,
+                "parent_org_id": parent_node.id,
                 "parent_org_path":org_path,
-                "breadcrumbs": build_breadcrumbs(org_path), 
+                "breadcrumbs": breadcrumbs, 
                 "child_org_view": not classrooms.exists() and current_depth != len(template),
                 "classroom_view": not children.exists()  and current_depth  == len(template),
-                "node_label":node_label,
+                "label":label,
             }
             if request.htmx:
                 return render(request, "orgs/view_orgs_and_classrooms.html#view-org",context)
@@ -75,13 +74,12 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, View):
 
 class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
     template_name = "orgs/partials/create_child_org.html"
-    form_class = CreateChildOrgForm
+    form_class = OrgNameForm
 
     def get(self,request, *args, **kwargs):
         form = self.form_class()
         return render(request, self.template_name, {"form":form,**kwargs,})
 
-    
     def post(self, request, *args, **kwargs):
         parent_id = kwargs['org_id']
         parent = get_object_or_404(Organization, pk=parent_id)
@@ -94,14 +92,15 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,
         org = form.save(commit=False) # need id of the created obj, henc form.save(commit = False), not Organization(**cleaned_data)
         org.created_by = request.user
         try:
-            validate_child_org(parent_node = parent, instance=org)
+            validata_create_child_org(parent = parent, instance=org)
         except ValidationError as e:
             form.add_error(field=None,error=e.message)
             return render(request, self.template_name,form_context)
         parent.add_child(instance=org)
-        org_path = kwargs['org_path']
+        parent_org_path = kwargs['org_path']
         row_context = {
-            "org":build_slug(instance=org,parent_path=org_path),"parent_org_path":org_path
+            "org":build_slug(instance=org,parent_org_path=parent_org_path),"parent_org_path":parent_org_path,
+            "child_org_view":True, 'role': self.role
         }
         messages.success(request,message="Organization created successfully.")
         response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
@@ -119,33 +118,26 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
         return render(request, self.template_name, {"root_form":root_form,"config_form":config_form})
     
     def post(self, request, *args, **kwargs):
-        def render_error():
-            response = render(
-                request,
-                self.template_name,
-                {
-                    "root_form": root_form,
-                    "config_form": config_form,
-                },
-            )
-            response["HX-Retarget"] = "#modal_container" # Change the target to inside modal from main-list if there is an error
-            response["HX-Reswap"] = "innerHTML" # Change the swap method to innerHTML from afterbegin inside the target container
-            return response
-
         root_form = self.root_form(request.POST)
         config_form = self.config_form(request.POST)
 
         if not root_form.is_valid() or not config_form.is_valid():
-            return render_error()
+            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+                "root_form": root_form,
+                "config_form": config_form,                
+            })
         
-        org = root_form.save(commit=False) # Need commit= False because we need id in building slug
+        org = root_form.save(commit=False) # Need commit= False because we need id in build_slug
         org.created_by = request.user
 
         try:
-            validate_root_org(instance=org)
+            validate_create_root_org(instance=org)
         except ValidationError as e:
             root_form.add_error(field=None,error=e.message)
-            return render_error()
+            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+                "root_form": root_form,
+                "config_form": config_form,                
+            })
         
         org_config = config_form.save(commit=False)  # Need commit= False to later save.
         org_config.org = org
@@ -155,7 +147,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
             Organization.add_root(instance = org)
             org_config.save()
 
-        messages.success(request,"Organization created successfully")
+        messages.success(request,"Root Organization created successfully")
         response = render(request,"orgs/view_orgs_and_classrooms.html#org-row", {
             "org": build_slug(instance= org, role= UserRole.OWNER),
             "root_org_view":True,
@@ -203,7 +195,7 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired
         else:
             file =  form.cleaned_data['file']
             data = get_emails_from_excel(file)
-            response = render(request,template_name="orgs/send_invitations.html#render-emails-from-files",context={"data":data, **kwargs})
+            response = render(request,template_name="orgs/send_invitations.html#render-emails-from-file",context={"data":data, **kwargs})
             response['HX-Retarget'] = '#file_email_container'
             return response
 
@@ -217,7 +209,6 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequ
             .exclude(pk=request.user.pk) # 1. user is not inviting himself.
             .exclude(org_membership__org=root_org) # 2. requested user are not already part of the org.
             .exclude(received_invitation__org=root_org) # 3. If there is already an invitation
-            .distinct()
         )
         created_invitations = OrgInvitation.objects.bulk_create(
             [
@@ -273,7 +264,7 @@ class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,Vi
     def get(self,request, *args, **kwargs):
         root_org = self.get_root_org()
         form = self.form_class(root_org= root_org)
-        context = {'form':form,"org_name":root_org.name,**kwargs}
+        context = {'form':form,"root_org_name":root_org.name,**kwargs}
         if request.htmx:
             return render(request,template_name="orgs/create_admin.html#create-admin",context=context)
         return render(request,template_name=self.template_name,context=context)
@@ -281,7 +272,7 @@ class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,Vi
     def post(self,request, *args, **kwargs):
         root_org = self.get_root_org()
         form = self.form_class(request.POST,root_org= root_org)
-        error_context = {'form':form,"org_name":root_org.name,**kwargs}
+        error_context = {'form':form,"root_org_name":root_org.name,**kwargs}
 
         if not form.is_valid():
             return render(request,template_name="orgs/create_admin.html#create-admin",context = error_context)
@@ -295,7 +286,7 @@ class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,Vi
         instance.save()
         messages.success(request,"Admin created successfully")
         # Render fresh form
-        context = {'form':self.form_class(root_org = root_org),"org_name":root_org.name,**kwargs}
+        context = {'form':self.form_class(root_org = root_org),"root_org_name":root_org.name,**kwargs}
         return render(request,template_name="orgs/create_admin.html#create-admin",context = context)
 
 class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
@@ -315,7 +306,7 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
             m.teacher
             for m in memberships.filter(admin__isnull=True)
         ]
-        role = get_user_role(root=root_org,user= request.user)
+        role = self.role
         is_admin_or_owner,is_owner = False,False
 
         if role == 'Owner':
@@ -335,7 +326,7 @@ class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired
         key= delete_root_org_otp_key(user_id=request.user.id,org_id=root_org.id)
         if cache.get(key=key):
             messages.success(request,"An OTP has already been sent to your registered email.")
-            return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"org_name":root_org.name,**kwargs})             
+            return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"root_org_name":root_org.name,**kwargs})             
         otp = generate_numeric_otp(length=6)
         hash = make_password(otp,salt=str(request.user.last_login))
         cache.set(
@@ -352,15 +343,15 @@ class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired
             html_email_template_name="orgs/delete_root_org_otp_email.html",
             subject=f"Request for Deletion: {root_org.name}",
             receiver=[owner.email],
-            context={"otp":otp,"org_name":root_org.name,"user_full_name":owner.get_full_name()}
+            context={"otp":otp,"root_org_name":root_org.name,"user_full_name":owner.get_full_name()}
         )
-        return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"org_name":root_org.name,**kwargs})        
+        return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"root_org_name":root_org.name,**kwargs})        
 
 class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
     def get(self,request,*args,**kwargs):
         """Show confirmation modal"""
         root_org = self.get_root_org()
-        return render(request, 'orgs/partials/delete_root_org.html', {"org_name":root_org.name,**kwargs})
+        return render(request, 'orgs/partials/delete_root_org.html', {"root_org_name":root_org.name,**kwargs})
 
     def post(self,request,*args,**kwargs):
         """Hanlde OTP submission"""
@@ -383,12 +374,9 @@ class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
         else:
             messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
             cache.set(key=key,value=data,timeout=300)
-            # Render the same form again.
-            response = render(request,'orgs/partials/delete_root_org_verify_otp.html',context={"org_name":root_org.name,**kwargs})
-            # With different target and swap.
-            response["HX-Retarget"] = "#modal_container"
-            response["HX-Reswap"] = "innerHTML"
-            return response
+            return  render_error_inside_modal(request=request,template_name='orgs/partials/delete_root_org_verify_otp.html',
+                context={"root_org_name":root_org.name,**kwargs}
+            )
 
 class DeleteChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
     def get(self,request,*args,**kwargs):
@@ -424,7 +412,6 @@ class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequ
         mem_obj.delete()
         return HttpResponse("", status=200)
 
-
 class RevokeOrgAdmin(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
     def get(self, request, *args, **kwargs):
         first_name, last_name = get_object_or_404(
@@ -444,8 +431,58 @@ class RevokeOrgAdmin(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View)
         admin_obj.delete()
         return HttpResponse("", status=200)
 
-class RenameChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
-    pass
+class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+    form_class = OrgNameForm
+    template_name = "orgs/partials/rename_org.html"
+    def get(self,request, *args, **kwargs):
+        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        form  = self.form_class(initial={'name':org.name})
+        if self.get_root_org() == org:
+            context = {**kwargs,"form":form, "root_org_view":True,}
+        else:
+            context = {**kwargs,"form":form,"child_org_view":True}
+        return render(request,self.template_name,context)
 
-class RenameRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
-    pass
+    def post(self, request, *args, **kwargs):
+        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+                **kwargs,"form":form
+            })
+        parent_org_path = kwargs.get('parent_org_path')
+        is_root = False
+        if not parent_org_path:
+            if self.get_root_org() != org:
+                return create_message_and_redirect(request,"Invalid rename request","users-dashboard","error",)
+            is_root = True
+        if is_root and self.role != 'Owner':
+            return create_message_and_redirect(request,"Only Owners can rename root organizations","users-dashboard","error",) 
+
+        org.name = form.cleaned_data['name']
+
+        try:
+            if is_root:
+                validate_rename_org(instance=org)
+            else:
+                validate_rename_org(instance=org, parent=org.get_parent())
+        except ValidationError as e:
+            form.add_error(field=None,error=e.message)
+            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+                **kwargs,"form":form,"root_org_view":is_root, "child_org_view":not(is_root)
+            })        
+        org.save()
+        
+        if is_root:
+            row_context = {
+            "org":build_slug(instance=org,parent_org_path=parent_org_path,role=UserRole.OWNER),"parent_org_path":parent_org_path,
+            "root_org_view":True,
+            }
+        else:
+            row_context = {
+            "org":build_slug(instance=org,parent_org_path=parent_org_path),"parent_org_path":parent_org_path,
+            "child_org_view": True, 'role': self.role
+            }            
+        response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
+        response['HX-Trigger'] = 'org-renamed'
+        return response

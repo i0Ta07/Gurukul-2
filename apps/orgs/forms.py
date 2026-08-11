@@ -1,20 +1,23 @@
 from django import forms
 from .models import  OrgConfig, Organization, OrgMembership
 from django.utils.translation import gettext_lazy as _
-from apps.orgs.utils import validate_child_org
+from apps.orgs.utils import validata_create_child_org
 from treebeard.forms import MoveNodeForm, movenodeform_factory
 from django.template.defaultfilters import filesizeformat
 from django.core.exceptions import ValidationError
 from config.validators import validate_file_mimetype
 from django.forms import ModelChoiceField
+from django.core.validators import RegexValidator
 
-class CreateChildOrgForm(forms.ModelForm):
+class OrgNameForm(forms.ModelForm):
     name = forms.CharField(
         max_length=50,
         required=True,
+        label = _('Name'),
         widget=forms.TextInput(attrs={'placeholder':'name', 
-        'class':"form-input w-25",
-        "placeholder": 'name', 'autofocus': True })       
+        'class':"form-input w-full",
+        "placeholder": 'name', 'autofocus': True }),
+        validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)]    
     )
     class Meta:
         model = Organization
@@ -116,7 +119,7 @@ class MoveOrganizationForm(MoveNodeForm):
         position = cleaned_data.get('treebeard_position') # either sorted-child or sorted-sibling
         
 
-        validate_child_org(
+        validata_create_child_org(
             instance=self.instance, 
             ref_node=target_node, 
             position=position

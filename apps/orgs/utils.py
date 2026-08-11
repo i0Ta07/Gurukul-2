@@ -6,7 +6,7 @@ from enum import Enum
 from config.settings import MAX_DEPTH
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404,render
 from openpyxl import load_workbook
 from django.core.validators import EmailValidator
 from collections.abc import Iterable
@@ -38,32 +38,35 @@ def get_user_role(root:Organization,user:User):
 def is_owner_or_admin(root:Organization,user:User):
     role = get_user_role(root=root,user=user)
     if role in [UserRole.OWNER.value, UserRole.ADMIN.value]:
-        return True
+        return role
     return False
 
 def is_owner(root:Organization,user:User):
     role = get_user_role(root=root,user=user)
     if role == UserRole.OWNER.value:
-        return True
+        return role
     return False
 
 # in the root node we only have to validate the uniques sibling for else we have to additonally check if height < MAX_HEIGHT and classrooms exists
 # also we are always adding child node, not sibling. When move we will move inside a org as a child not a sibling.
 # node.move(ref_node= node1, pos="sorted-child")
 
-def validate_root_org(instance:Organization):
-        """Validate root org, check if the siblings are unique."""
-        _validate_unique_siblings(instance = instance)
+def validate_create_root_org(instance:Organization):
+    """Validate root org, check if the siblings are unique."""
+    _validate_unique_siblings(instance = instance)
 
-def validate_child_org(parent_node: Organization, instance: Organization):
+def validate_rename_org(instance:Organization, parent:Organization | None =  None):
+    _validate_unique_siblings(instance=instance, parent=parent)
+
+def validata_create_child_org(parent: Organization, instance: Organization):
     """
-    parent_node: we can only move and create inside a org as a child, not a sibling.
+    parent: we can only move and create inside a org as a child, not a sibling.
     instance: when move -> existing_node; when create: new_node
     position: always child.
     Can be used with create root/child orgs and move child orgs.
     """
 
-    target_depth = parent_node.depth + 1
+    target_depth = parent.depth + 1
 
     # --- RULE 1: Maximum Depth Limit ---
     
@@ -72,11 +75,11 @@ def validate_child_org(parent_node: Organization, instance: Organization):
 
     # ---RULE 2: Classes at leaf nodes ---
     
-    if parent_node.classrooms.exists():
+    if parent.classrooms.exists():
         raise ValidationError(f'Organization and classrooms cannot be in same folder.')
 
     # --- RULE 3: Scoped Sibling Uniqueness &  ---
-    _validate_unique_siblings(parent_node = parent_node,instance= instance)
+    _validate_unique_siblings(parent = parent,instance= instance)
 
 # p1.add_sibling(pos = "sibling",p2)
 
@@ -101,13 +104,13 @@ def _validate_depth(target_depth:int, instance:Organization):
         if (target_depth + subtree_height) > MAX_DEPTH:
             raise ValidationError(f"Cannot move here. This branch is {subtree_height + 1} levels tall, which would push nested organizations past the {MAX_DEPTH}-level limit.")
 
-def _validate_unique_siblings(instance:Organization, parent_node:Organization = None ):
+def _validate_unique_siblings(instance:Organization, parent:Organization = None ):
     """
     Validate that siblings have unique name either during move or new node creation.
     For root orgs, we only provide the instance.
     """
-    if parent_node:
-        siblings = parent_node.get_children()
+    if parent:
+        siblings = parent.get_children()
     else:
         siblings = Organization.get_root_nodes()
    
@@ -118,53 +121,54 @@ def _validate_unique_siblings(instance:Organization, parent_node:Organization = 
     slug = slugify(instance.name)
 
     if siblings.filter(slug=slug).exists():
-        raise ValidationError(f"The root name must be unique.")
+        raise ValidationError(f"{slug} already exists. Name should be unique.")
            
 # OMG,this function is pure beauty.
-def resolve_org_path(root_node: Organization, slugs) -> Organization:
+def resolve_parent_path_and_build_breadcrumbs(root_node: Organization, slugs: list[str]) -> tuple[Organization, list[dict]]:
     """
-    Resolve a slug path like: harvard/cse/2024 into the matching Organization node.
-    It resolves the URL, level by level. First it retrieves the root node at slugs[0] -> harvard among all root nodes.
-    Then it goes folder by folder matching the path. If current = harvard.get_childern() has cse then current = cse
-    then current = cse.get_children() has 2024 then current = 2024. We got the last node. 
-    
-    Suppose we have two paths like harvard/cse/2024 and harvard/mechanical/2024. Since , it goes folder by, it reaches
-    the exact path. If suppose we have harvard/biochem and it does not exist, it will return HTTP404 since current.get_children(), slug = slug
-    does not have biochem 
-    """
+    Resolves a slug path (e.g. `harvard/cse/2024`) starting from `root_node`.
 
-    current = root_node
+    Each slug is resolved only among the children of the current node, ensuring
+    the exact hierarchy is followed. If any slug does not exist at its expected
+    level, a 404 is raised.
+
+    Returns:
+        tuple:
+            - The resolved Organization node.
+            - Breadcrumbs for all parent nodes (excluding the resolved node).
+    """
+    current_node = root_node
+    current_path = f"/{root_node.slug}"
+
+    breadcrumbs = [{
+        "name": current_node.slug.upper(),
+        "path": current_path,
+        "id": current_node.id,
+    }]
+
     for slug in slugs[1:]:
-        current = get_object_or_404(current.get_children(), slug=slug)
+        current_node = get_object_or_404(
+            current_node.get_children(),
+            slug=slug,
+        )
 
-    return current
+        current_path = f"{current_path}/{current_node.slug}"
 
-def build_breadcrumbs(org_path: str):
-    """
-    Build breadcrumb navigation for an organization path.
-
-    Returns a list of dictionaries containing the display name and cumulative path
-    for each organization level, excluding the final segment.
-    """
-    breadcrumbs = []
-    current_path = ""
-
-    for slug in org_path.strip("/").split("/")[0:-1]:
-        current_path += f"/{slug}"
         breadcrumbs.append({
-            "name": slug.upper(),
+            "name": current_node.slug.upper(),
             "path": current_path,
+            "id": current_node.id,
         })
 
-    return breadcrumbs
+    return current_node, breadcrumbs[:-1]
 
 def _serialize_many(instance, serializer):
     if isinstance(instance, Iterable) and not isinstance(instance, (str, bytes)):
         return [serializer(obj) for obj in instance]
     return serializer(instance)
 
-def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iterable[Classroom],
-        parent_path:str = "",role: UserRole | None = None):
+def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iterable[Classroom],parent_org_path:str = "",
+        role: UserRole | None = None):
     """
     Pass role when displaying root orgs only. This can work with both child orgs and classrooms.
     """
@@ -172,7 +176,7 @@ def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iter
         data = {
             "name":obj.name,
             "id":obj.id,
-            "path": f"{parent_path}/{obj.slug}" if parent_path else obj.slug,
+            "path": f"{parent_org_path}/{obj.slug}" if parent_org_path else obj.slug,
         }
 
         if role is not None:
@@ -182,6 +186,7 @@ def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iter
     return _serialize_many(instance,serialize)
 
 def build_membership_slug(instance: OrgMembership | Iterable[OrgMembership]):
+    """Serialize name,path,role and id based on the has_admin membership attribute from annotation"""
     def serialize(membership):
         data = {
             "name": membership.org.name,
@@ -281,3 +286,14 @@ def generate_numeric_otp(length=6):
 
 def delete_root_org_otp_key(user_id:int,org_id:int):
     return f"otp:delete_root:{org_id}:{user_id}"
+
+def render_error_inside_modal(request,template_name,context):
+    """Change the htmx target and swap to modal to render error after a successful POST."""
+    response = render(
+        request,
+        template_name,
+        context,
+    )
+    response["HX-Retarget"] = "#modal_container" 
+    response["HX-Reswap"] = "innerHTML" 
+    return response
