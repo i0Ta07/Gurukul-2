@@ -184,6 +184,9 @@ class OrgAdmin(models.Model):
 
         if not self.membership.org.is_root():
             raise ValidationError('Admins can only be created with root level orgs.')
+
+        if self.membership.teacher == self.created_by:
+            raise ValidationError('Created by and teacher cannot be same ')
         
         if self.created_by != self.membership.org.config.owner and not is_admin(org=self.membership.org,teacher=self.created_by):
             raise ValidationError("Only owners and admins can create admins.")

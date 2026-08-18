@@ -298,6 +298,9 @@ def generate_numeric_otp(length=6):
 def delete_root_org_otp_key(user_id:int,org_id:int):
     return f"otp:delete_root:{org_id}:{user_id}"
 
+def transfer_ownership_otp_key(owner_id:int,org_id:int):
+    return f"otp:change_owner:{org_id}:{owner_id}"
+
 def render_error_inside_modal(request,template_name,context):
     """Change the htmx target and swap to modal to render error after a successful POST."""
     response = render(

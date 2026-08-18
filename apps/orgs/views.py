@@ -3,18 +3,19 @@ from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,Own
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render,get_object_or_404
+from django.shortcuts import render,get_object_or_404,redirect
 from apps.orgs.models import OrgAdmin, OrgInvitation, OrgMembership, Organization
 from apps.users.models import User
 from django.core.exceptions import ValidationError
-from apps.orgs.forms import OrgNameForm,CreateRootOrgForm,CreateOrgConfigForm,SendInvitationForm,CreateAdminForm
+from apps.orgs.forms import OrgNameForm,CreateRootOrgForm,CreateOrgConfigForm,SendInvitationForm,CreateAdminForm,TransferOwnershipForm
 from django.db import transaction
 from config.utils import create_message_and_redirect
 from apps.orgs.utils import ( UserRole,
     validata_create_child_org,validate_create_root_org,build_slug,
     resolve_parent_path_and_build_breadcrumbs,get_emails_from_excel,
     build_membership_slug,annotate_memberships,generate_numeric_otp,
-    delete_root_org_otp_key,validate_rename_org,render_error_inside_modal
+    delete_root_org_otp_key,validate_rename_org,render_error_inside_modal,
+    transfer_ownership_otp_key,
     )
 from django.core.cache import cache
 from django.contrib.auth.hashers import make_password,check_password
@@ -330,11 +331,11 @@ class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired
             messages.success(request,"An OTP has already been sent to your registered email.")
             return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"root_org_name":root_org.name,**kwargs})             
         otp = generate_numeric_otp(length=6)
-        hash = make_password(otp,salt=str(request.user.last_login))
+        otp_hash = make_password(otp)
         cache.set(
             key=key,
             value={
-                "hash":hash,
+                "otp_hash":otp_hash,
                 "attempts":0
             },
             timeout=EMAIL_EXPIRY_DURATION
@@ -364,11 +365,11 @@ class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
             return create_message_and_redirect(request,"OTP expired",url='users-dashboard',code="error")
         data['attempts'] += 1
 
-        if check_password(password=request.POST.get("otp"),encoded=data['hash']):
+        if check_password(password=request.POST.get("otp"),encoded=data['otp_hash']):
             cache.delete(key)
             root_org.delete()
             response = HttpResponse("", status=200)
-            response['HX-Trigger'] = "otp-verified" # Close the modal
+            response['HX-Trigger'] = "delete-root-otp-verified" # Close the modal
             return response
         elif data['attempts'] >= 3:
             cache.delete(key)
@@ -488,3 +489,96 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View)
         response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
         response['HX-Trigger'] = 'org-renamed'
         return response
+
+class TransferRootOwnershipSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+    def post(self,request, *args, **kwargs):
+        root_org = self.get_root_org()
+        form = TransferOwnershipForm(request.POST,root_org = root_org)
+        if not form.is_valid():
+            return render(request,
+                'orgs/partials/transfer_root_ownership.html#transfer-root-ownership',
+                {
+                    "form": form,
+                    "root_org_name": root_org.name,
+                    **kwargs,
+                }
+            )
+
+        new_owner_membership =  form.cleaned_data['admins']
+        key = transfer_ownership_otp_key(owner_id=request.user.id,org_id=root_org.id)
+        if cache.get(key=key):
+            messages.success(request,"An OTP has already been sent to your registered email.")
+            return render(request, 'orgs/partials/transfer_root_ownership_verify_otp.html', {"root_org_name":root_org.name,**kwargs})            
+        otp = generate_numeric_otp(length=6)
+        otp_hash = make_password(otp)
+        cache.set(
+            key=key,
+            value={
+                "otp_hash":otp_hash,
+                "attempts":0,
+                'new_owner_id':new_owner_membership.teacher.id
+            },
+            timeout=EMAIL_EXPIRY_DURATION
+        )
+        owner = root_org.config.owner
+        send_email(
+            email_template_name="orgs/transfer_root_ownership_otp_email.txt",
+            html_email_template_name="orgs/transfer_root_ownership_otp_email.html",
+            subject=f"Ownership Transfer: {root_org.name}",
+            receiver=[owner.email],
+            context={
+                    "otp":otp,"root_org_name":root_org.name,"user_full_name":owner.get_full_name(),
+                    "new_owner_email":new_owner_membership.teacher.email,"new_owner_name":new_owner_membership.teacher.get_full_name()
+                }
+        )
+        return render(request, 'orgs/partials/transfer_root_ownership_verify_otp.html', {"root_org_name":root_org.name,**kwargs})            
+        # Save id in redis 
+        # Send OTP and display OTP form
+
+class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+    form_class = TransferOwnershipForm
+    def get(self, request, *args, **kwargs):
+        root_org = self.get_root_org()
+        context = {"form":self.form_class(root_org = root_org),"root_org_name":root_org.name,**kwargs}
+        if request.htmx:
+            return render(request,"orgs/partials/transfer_ownership.html#transfer-root-ownership",context)
+        return render(request,"orgs/partials/transfer_ownership.html",context)
+
+    def post(self,request, *args, **kwargs):
+        root_org = self.get_root_org()
+        key = transfer_ownership_otp_key(owner_id=request.user.id, org_id=root_org.id)
+        data = cache.get(key)
+        if not data:
+            return create_message_and_redirect(request,"OTP expired",url='users-dashboard',code="error")
+        data['attempts'] += 1
+
+        if check_password(password=request.POST.get("otp"),encoded=data['otp_hash']):
+            new_owner_id = data['new_owner_id']
+            with transaction.atomic():
+                root_org.config.owner_id = new_owner_id
+                root_org.config.save(update_fields=["owner_id"])
+                prev_owner_membership = OrgMembership(teacher_id = request.user.id,org = root_org, created_by_id = new_owner_id)
+                prev_owner_membership.save()
+                # No need to delete admin since if membership is deleted the admin will also get deleted with .CASCADE
+                new_owner_membership = get_object_or_404(OrgMembership, teacher_id = new_owner_id,org_id = root_org.id)
+                new_owner_membership.delete()
+                OrgAdmin.objects.create(
+                    membership_id=prev_owner_membership.id,
+                    created_by_id=new_owner_id,
+                )
+            cache.delete(key)
+            response = redirect('view-root-orgs')
+            response['HX-Trigger'] = "transfer-root-owner-otp-verified" # Close the modal
+            return response
+        elif data['attempts'] >= 3:
+            cache.delete(key)
+            return create_message_and_redirect(request,"Maximum 3 attempts. Try again later.",url='users-dashboard',code="error")
+        else:
+            messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
+            cache.set(key=key,value=data,timeout=300)
+            return  render_error_inside_modal(request=request,template_name='orgs/partials/transfer_root_ownership_verify_otp.html',
+                context={"root_org_name":root_org.name,**kwargs}
+            )
+    # Check if user exists. 
+    # Change the ownership if and only if he is the member of the org.
+    # Demote the current user to admin.

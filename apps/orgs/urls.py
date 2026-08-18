@@ -4,7 +4,8 @@ from apps.orgs.views import (
     SendInvitations,SendBulkInvitations,ViewRootOrgs,
     CreateAdmins,ViewInvitations,ViewRootOrgConfig,
     ViewOrgDetails,DeleteChildOrg,DeleteRootOrg,DeleteRootOrgSendOTP,
-    RevokeOrgMembership,RevokeOrgAdmin,RenameOrg
+    RevokeOrgMembership,RevokeOrgAdmin,RenameOrg,TransferRootOwnership,
+    TransferRootOwnershipSendOTP,
 )
 
 urlpatterns = [
@@ -33,6 +34,10 @@ urlpatterns = [
     # Should be first
     path("rename/root/<int:org_id>/",RenameOrg.as_view(),name='rename-root-org'),
     path("rename/<path:parent_org_path>/<int:org_id>/",RenameOrg.as_view(),name='rename-child-org'),
+
+    path("transfer/ownership/verify-otp/<int:org_id>/",TransferRootOwnershipSendOTP.as_view(),name='transfer-root-ownership-verify-otp'),
+    path("transfer/ownership/<int:org_id>/",TransferRootOwnership.as_view(),name='transfer-root-ownership'),
+
 
     # path("edit/org/<int:org_id>/", edit_org, name="org-edit"),
     

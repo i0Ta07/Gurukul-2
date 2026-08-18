@@ -1,5 +1,5 @@
 from django import forms
-from .models import  OrgConfig, Organization, OrgMembership
+from .models import OrgConfig, Organization, OrgMembership
 from django.utils.translation import gettext_lazy as _
 from apps.orgs.utils import validata_create_child_org
 from treebeard.forms import MoveNodeForm, movenodeform_factory
@@ -101,7 +101,25 @@ class CreateAdminForm(forms.Form):
             .filter(org=root_org)
             .filter(admin__isnull=True)
         )
+class UserModelChoiceField(ModelChoiceField):
+    def label_from_instance(self, obj):
+        return f"{obj.teacher.get_full_name()}"
 
+class TransferOwnershipForm(forms.Form):
+    admins = UserModelChoiceField(
+        queryset=OrgMembership.objects.none(),
+        empty_label="You can only select among admins",
+        widget=forms.Select(attrs={'class': ' form-input'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        root_org = kwargs.pop("root_org")
+        super().__init__(*args, **kwargs)
+        self.fields["admins"].queryset = (
+            OrgMembership.objects
+            .filter(org=root_org)
+            .filter(admin__isnull=False)
+        )
 # Create a get org form that will take a org slug, then check among the root_nodes check if that org
 # exists if yes, then check the membership of the user to the org.
 

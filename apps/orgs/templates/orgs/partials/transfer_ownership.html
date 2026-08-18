@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Transfer Ownership{% endblock %}
+
+{% block content %}
+
+<div class="page-container" id="page-container" hx-history-elt >
+    {% partialdef transfer-root-ownership inline %}
+    <div class="flex flex-col items-center p-5 gap-5" x-data>
+        <h1 class="text-xl md:text-3xl">Transfer Ownership ({{ root_org_name }})</h1>
+        <div class="flex gap-3 items-center justify-center bg-amber-400 text-amber-900 p-3 rounded-xl">
+                <img class="size-7" src="{% static 'icons/svg/danger_amber_900.svg' %}" alt="Home Icon">
+                <p  class="font-semibold">This is ONE TIME ACTION You will be DEMOTED to Admin </p>
+        </div>
+        <form hx-post="{% url 'transfer-root-ownership-verify-otp' org_id=org_id %}" hx-target="#modal_container" hx-swap="innerHTML" class="flex flex-col items-center gap-3 w-full max-w-2xl" @submit="org_modal.showModal();">
+            {{ form.admins }}
+            <button type="submit" class="base-button bg-red-500 hover:bg-red-900 w-50" >Submit</button>
+        </form>
+        {% include "partials/messages.html" %}
+        {% include "partials/form_errors.html" %}
+        {% include "orgs/view_orgs_and_classrooms.html#org-modal" %} 
+    </div>
+    {% endpartialdef transfer-root-ownership %}
+</div>
+{% endblock content %}
