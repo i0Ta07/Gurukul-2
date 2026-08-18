@@ -5,7 +5,8 @@ from apps.orgs.views import (
     CreateAdmins,ViewInvitations,ViewRootOrgConfig,
     ViewOrgDetails,DeleteChildOrg,DeleteRootOrg,DeleteRootOrgSendOTP,
     RevokeOrgMembership,RevokeOrgAdmin,RenameOrg,TransferRootOwnership,
-    TransferRootOwnershipSendOTP,
+    TransferRootOwnershipSendOTP,CreateOrgMemberships,LeaveOrg,
+    CountInvitations
 )
 
 urlpatterns = [
@@ -19,8 +20,9 @@ urlpatterns = [
 
     path("create/admin/<int:org_id>/",CreateAdmins.as_view(),name='create-admin'),
 
-    path("invitations/",ViewInvitations.as_view(),name='view-invitations'),
-    path("invitations/<int:invitation_id>/",ViewInvitations.as_view(),name='create-org-members'),
+    path("view/invitations/",ViewInvitations.as_view(),name='view-invitations'),
+    path("count/invitations/",CountInvitations.as_view(),name='count-invitations'),
+    path("invitations/<int:invitation_id>/",CreateOrgMemberships.as_view(),name='create-org-members'),
 
     path("view/details/<int:org_id>/",ViewOrgDetails.as_view(), name='view-org-details'),
 
@@ -38,6 +40,7 @@ urlpatterns = [
     path("transfer/ownership/verify-otp/<int:org_id>/",TransferRootOwnershipSendOTP.as_view(),name='transfer-root-ownership-verify-otp'),
     path("transfer/ownership/<int:org_id>/",TransferRootOwnership.as_view(),name='transfer-root-ownership'),
 
+	path("leave/<int:org_id>/",LeaveOrg.as_view(),name='leave-org'),
 
     # path("edit/org/<int:org_id>/", edit_org, name="org-edit"),
     

@@ -40,15 +40,12 @@ python manage.py tailwind update
 ## Rules
 
 * Classes cannot co-exist with organization. They must be present at the leaf node.
-
 * Root Organizations can be deleted by owner after OTP authentication.
 
 ## To do list
 
 * Handle messages and errors in smaller screens.
-
 * Add guardrails to email like max 3 attempts, resend button and cooldown periods.
-
 * Add honcho to run multiple commands more easily. Create two honcho files with and without celery.
 
 ```Python
@@ -64,6 +61,10 @@ beat: celery -A config beat -l INFO
 honcho start -f Procfile.dev
 honcho start -f Procfile.redis
 ```
+
+* Implement locks while using cache.
+* Use `select_for_update()` while fetching objects to avoid race conditions.
+* At some places we could directly assign the obj_id without actually fetching the entire obj.
 
 ## Pending decisons
 

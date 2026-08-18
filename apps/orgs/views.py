@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseBadRequest
-from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OwnerAdminRequired,OwnerRequired
+from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OwnerAdminRequired,OwnerRequired,AdminTeacherRequired
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -234,6 +234,18 @@ class ViewInvitations(LoginRequiredMixin,TeacherRequiredMixin,View):
             return render(request,template_name="orgs/view_invitations.html#view-invitations",context=context)
         return render(request,template_name=self.template_name,context=context)
 
+class CountInvitations(LoginRequiredMixin,TeacherRequiredMixin,View):
+    def get(self,request, *args, **kwargs):
+        count = OrgInvitation.objects.filter(to_user = request.user).count()
+        if count:
+            response = HttpResponse(str(count), status=200)
+            response['HX-Trigger'] = 'render-invitation-count'
+        else:
+            response = HttpResponse("", status=200)
+            response['HX-Trigger'] = 'remove-invitation-count'
+        return response 
+
+class CreateOrgMemberships(LoginRequiredMixin,TeacherRequiredMixin,View):
     def post(self,request, *args, **kwargs):
         inv_id = kwargs['invitation_id']
         inv_obj = get_object_or_404(OrgInvitation,pk=inv_id)
@@ -582,3 +594,14 @@ class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequire
     # Check if user exists. 
     # Change the ownership if and only if he is the member of the org.
     # Demote the current user to admin.
+    
+class LeaveOrg(LoginRequiredMixin,TeacherRequiredMixin,AdminTeacherRequired,View):
+    def get(self,request,*args,**kwargs):
+        root_org = self.get_root_org()
+        return render(request,"orgs/partials/leave_org.html",{"root_org_name":root_org.name,**kwargs})
+
+    def post(self,request,*args,**kwargs):
+        root_org = self.get_root_org()
+        membership = get_object_or_404(OrgMembership, org = root_org, teacher = request.user)
+        membership.delete()
+        return create_message_and_redirect(request,f"You are no longer the part of {root_org.name}.",'view-root-orgs',"info")

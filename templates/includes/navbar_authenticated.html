@@ -8,10 +8,17 @@
             Dashboard
         </a>
     </div>
-    <div class="relative flex items-center text-white" x-data="{ open: false }">
+    <div class="relative flex items-center text-white" x-data="{ open_dropdown: false , show_invitation_count:false}">
         <div class="flex items-center justify-center gap-x-3">
-            <a href="{% url 'view-invitations' %}" hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true"><img class="size-10 p-1" src="{% static 'icons/svg/invitations.svg' %}" alt="Invitations"></a>
-            <button @click="open = ! open" type="button" class="  flex text-sm rounded-full focus:ring-2">
+            <a href="{% url 'view-invitations' %}" hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
+                <div class="avatar indicator">
+                    <span class="indicator-item badge badge-sm badge-info p-1" x-show="show_invitation_count" x-cloak hx-get="{% url 'count-invitations' %}"
+                        hx-swap="innerHTML" hx-push-url="false" hx-target="this" hx-trigger="every 60s" @render-invitation-count="show_invitation_count = true"
+                        @remove-invitation-count="show_invitation_count=false"></span>
+                    <img class="size-7" src="{% static 'icons/svg/invitations.svg' %}" alt="Invitations">
+                </div>
+            </a>
+            <button @click="open_dropdown = ! open_dropdown" type="button" class="  flex text-sm rounded-full focus:ring-2">
                 {% if user.profile_photo %}
                 <img class="size-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">
                 {% else %}
@@ -21,13 +28,13 @@
             </button>
         </div>
         <!-- Dropdown menu -->
-        <div x-show="open" x-cloak  x-transition @click.outside="open = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
+        <div x-show="open_dropdown" x-cloak  x-transition @click.outside="open_dropdown = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
             <div class="px-4 py-3 text-sm border-b">
                 <span class="block text-white">{{user.get_full_name}}</span>
                 <span class="block text-gray-200">{{user.email}}</span>
             </div>
             <ul class="p-2 text-sm text-body font-medium">
-                <li @click="open = false">
+                <li @click="open_dropdown = false">
                     <a href="{% url 'users-profile' %}" hx-get="{% url 'users-profile' %}" hx-push-url="true" hx-target="#page-container" hx-swap="innerHTML" 
                         class=" inline-flex items-center w-full p-2  text-gray-200 hover:bg-gray-700 hover:text-white hover:rounded-lg">View
                         Profile</a>

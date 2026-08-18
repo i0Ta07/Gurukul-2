@@ -42,6 +42,18 @@ When the owner clicks the delete button and we show a confirmation. IF pressed Y
 
 > There should be a cooldown period that will be implemented later like one user can have 3 emails sent to him in an hour to do a specific task.
 
+### Transfer Ownership
+
+We will show the owner the list of admins in which he can select an admin. We will verify the operation using OTP first. After verification the previous owner will be demoted to admin and the selected admin will be promoted to owner.
+
+### Show Invitation Count
+
+DaisyUI came in clutch with the `indicator` class, we will hx-trigger="every 60s" to fetch the number of invitations pending.
+
+### Rename Org
+
+Open the prefilled form inside the modal and perform validations. If failed re-render the form inside the modal.
+
 ## To do
 
 * Add Rename to orgs and classrooms.
