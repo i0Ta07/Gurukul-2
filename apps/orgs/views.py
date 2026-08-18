@@ -307,14 +307,16 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
             for m in memberships.filter(admin__isnull=True)
         ]
         role = self.role
-        is_admin_or_owner,is_owner = False,False
+        is_admin_or_owner,is_owner,is_admin_or_teacher = False,False,False
 
-        if role == 'Owner':
+        if role == UserRole.OWNER:
             is_owner = True
-        if role in ['Admin','Owner']:
+        if role in [UserRole.ADMIN, UserRole.OWNER]:
             is_admin_or_owner = True
+        if role in [UserRole.ADMIN, UserRole.TEACHER]:
+            is_admin_or_teacher = True
 
-        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"is_admin_or_owner":is_admin_or_owner,"is_owner":is_owner}
+        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"is_admin_or_owner":is_admin_or_owner,"is_owner":is_owner,"is_admin_or_teacher":is_admin_or_teacher}
         if request.htmx:
             return render(request,template_name="orgs/view_root_config.html#view-root-config",context=context)
         return render(request,self.template_name,context)

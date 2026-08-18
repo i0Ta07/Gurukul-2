@@ -2,7 +2,7 @@ from apps.classes.models import Classroom
 from apps.orgs.models import Organization,OrgMembership,OrgAdmin
 from apps.users.models import User
 from django.db.models import Exists,OuterRef
-from enum import Enum
+from enum import StrEnum
 from config.settings import MAX_DEPTH
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
@@ -13,7 +13,7 @@ from collections.abc import Iterable
 from django.db.models.query import QuerySet
 import secrets
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     OWNER = "Owner"
     ADMIN = "Admin"
     TEACHER = "Teacher"
@@ -23,7 +23,7 @@ def get_user_role(root:Organization,user:User):
     Check if the user belong to this root org, it yes return the role [Admin,Teacher,Owner] else return None
     """
     if Organization.get_root_nodes().filter(id = root.id, config__owner = user).exists():
-        return UserRole.OWNER.value
+        return UserRole.OWNER
     membership = (
         OrgMembership.objects.filter(org=root, teacher=user).annotate(
             has_admin=Exists(
@@ -32,21 +32,32 @@ def get_user_role(root:Organization,user:User):
         ).first()
     )
     if membership:
-        return UserRole.ADMIN.value if membership.has_admin else UserRole.TEACHER.value
+        return UserRole.ADMIN if membership.has_admin else UserRole.TEACHER
     return None
 
 def is_owner_or_admin(root:Organization,user:User):
     role = get_user_role(root=root,user=user)
-    if role in [UserRole.OWNER.value, UserRole.ADMIN.value]:
+    if role in [UserRole.OWNER, UserRole.ADMIN]:
         return role
     return False
 
 def is_owner(root:Organization,user:User):
     role = get_user_role(root=root,user=user)
-    if role == UserRole.OWNER.value:
+    if role == UserRole.OWNER:
         return role
     return False
 
+def is_admin_or_teacher(root:Organization,user:User):
+    role = get_user_role(root=root,user=user)
+    if role in [UserRole.ADMIN,UserRole.TEACHER]:
+        return role
+    return False
+
+def is_member(root:Organization,user:User):
+    role = get_user_role(root=root,user=user)
+    if role:
+        return role
+    return False
 # in the root node we only have to validate the uniques sibling for else we have to additonally check if height < MAX_HEIGHT and classrooms exists
 # also we are always adding child node, not sibling. When move we will move inside a org as a child not a sibling.
 # node.move(ref_node= node1, pos="sorted-child")
@@ -180,7 +191,7 @@ def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iter
         }
 
         if role is not None:
-            data["role"] = role.value
+            data["role"] = role
         return data
     
     return _serialize_many(instance,serialize)
@@ -191,7 +202,7 @@ def build_membership_slug(instance: OrgMembership | Iterable[OrgMembership]):
         data = {
             "name": membership.org.name,
             "path": f"{membership.org.slug}",
-            "role": UserRole.ADMIN.value if membership.has_admin else UserRole.TEACHER.value,
+            "role": UserRole.ADMIN if membership.has_admin else UserRole.TEACHER,
             "id":membership.org.id,
         }
         return data
