@@ -8,12 +8,11 @@
 <div class="page-container" id="page-container">
     {% partialdef profile inline %}
 
-    <div class="grid grid-cols-1 2xl:grid-cols-2 gap-5 2xl:auto-rows-fr">
+    <div class="grid items-center lg:grid-cols-2 gap-6">
         <div id="profile-form">
             {% partialdef profile-form inline %} <!-- Update the form, any form errors and page messages. -->
 
-            <form method="POST" enctype="multipart/form-data" hx-post="{% url 'users-profile' %}" hx-swap="innerHTML"  hx-target="#profile-form" class="space-y-5 w-full max-w-4xl" x-data="{ saving: false }" @submit="saving = true">
-                {% csrf_token %}
+            <form enctype="multipart/form-data" hx-post="{% url 'users-profile' %}" hx-swap="innerHTML"  hx-target="#profile-form" class="space-y-5 w-full max-w-4xl" x-data="{ saving: false }" @submit="saving = true">
                 {% if can_change_password %}
                 <div class="flex justify-end w-full">
                     <a href="{% url 'password-change' %}" hx-get="{% url 'password-change' %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true" class="w-fit base-button bg-indigo-600 hover:bg-indigo-700">
@@ -86,8 +85,8 @@
             {% endpartialdef %}
         </div>
         <!-- relative to the parent, stick the image to all four corners. -->
-        <div class="relative">
-            <img src="{% static 'users/quotes/1.png' %}" class="absolute inset-0 w-full h-full object-contain" alt="Quote1" />
+        <div class="aspect-4/3 p-3">
+            <img src="{% static 'users/quotes/profile.png' %}" class="size-full object-fill" alt="Quote1" />
         </div>
     </div>
     

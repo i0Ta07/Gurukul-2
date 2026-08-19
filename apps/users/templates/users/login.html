@@ -6,9 +6,9 @@
 
 <div class="page-container items-center justify-center ">
     <div class="grid items-center gap-6 max-w-6xl lg:grid-cols-2">
-        <div class="bordered-card mx-auto lg:mx-0"> <!--in split screen layout the card should be center in md screen but at start when screen is large, so we can show the image -->
+        <div class="bordered-card lg:mx-0"> <!--in split screen layout the card should be center in md screen but at start when screen is large, so we can show the image -->
             <div class="mb-8">
-                <h1>Sign in</h1>
+                <h1 class="text-center">Sign in</h1>
             </div>
             <form class="space-y-6" method="post">
                 {% csrf_token %}
@@ -75,8 +75,8 @@
             </div>
             {% endpartialdef %}
         </div>
-        <div class="aspect-71/50 max-lg:w-4/5 mx-auto">
-            <img src="https://readymadeui.com/images/integration-illus.webp" class="w-full object-cover"
+        <div class="aspect-4/3">
+            <img src="{% static 'users/quotes/login.jpg' %}" class="size-full object-contain"
                 alt="login img" />
         </div>
     </div>
