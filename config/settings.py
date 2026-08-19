@@ -31,6 +31,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+if DEBUG:
+    ALLOWED_HOSTS = ['192.168.1.106', 'localhost', '127.0.0.1']
 
 # Application definition
 
