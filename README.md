@@ -16,6 +16,19 @@ celery -A config worker -P threads -E -l info
 celery -A config beat -l INFO 
 ```
 
+### Using Honcho (Development only)
+
+```Python
+
+# Start the web server and tailwind watcher
+honcho start -f Procfile
+
+# Start the celery worker node and beat scheduler
+honcho start -f Procfile.celery
+```
+
+> Note: Setup Kubernetes during production instead of Honcho to fully utilize the container/services orchestration.
+
 ### To check for updates for tailwind npm packages and update them use
 
 ```Python
@@ -36,6 +49,7 @@ python manage.py tailwind update
 * Render a new form using hx-get on button click and submit it using hx-post.
 * Created a cron-job that deletes the expired invitations using django-celery-beat.
 * Changed sync PasswordReset email to async.
+* Added Honcho to manage subprocess more efficiently during devlopment by creating two Procfiles. The first handles the core web and Tailwind processes, while the second handles the Celery processes. Added as `uv add --dev honcho`, will use Kubernetes during production. Use `honcho start -f Procfile`.
 
 ## Rules
 
@@ -46,22 +60,6 @@ python manage.py tailwind update
 
 * Handle messages and errors in smaller screens.
 * Add guardrails to email like max 3 attempts, resend button and cooldown periods.
-* Add honcho to run multiple commands more easily. Create two honcho files with and without celery.
-
-```Python
-
-web: python manage.py runserver
-tailwind: python manage.py tailwind start
-
-web: python manage.py runserver
-tailwind: python manage.py tailwind start
-worker: celery -A config worker -P threads -E -l info
-beat: celery -A config beat -l INFO
-
-honcho start -f Procfile.dev
-honcho start -f Procfile.redis
-```
-
 * Implement locks while using cache.
 * Use `select_for_update()` while fetching objects to avoid race conditions.
 * At some places we could directly assign the obj_id without actually fetching the entire obj.

@@ -23,3 +23,8 @@ dependencies = [
     "redis>=8.0.0",
     "social-auth-app-django>=5.9.0",
 ]
+
+[dependency-groups]
+dev = [
+    "honcho>=2.0.0",
+]

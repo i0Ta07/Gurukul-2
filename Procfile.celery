@@ -1,0 +1,2 @@
+worker: celery -A config worker -P threads -E -l info
+beat: celery -A config beat -l INFO
