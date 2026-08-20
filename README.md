@@ -63,6 +63,7 @@ python manage.py tailwind update
 * Implement locks while using cache.
 * Use `select_for_update()` while fetching objects to avoid race conditions.
 * At some places we could directly assign the obj_id without actually fetching the entire obj.
+* If social auth is cancelled error is raised, should have been back to login or open the auth in new window and close it if cancelled or completed.
 
 ## Pending decisons
 

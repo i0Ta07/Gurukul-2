@@ -88,24 +88,24 @@
                 {% if orgs %}
                     {% for org in orgs %}
                         {% partialdef org-row inline %}
-                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 gap-x-2 cursor-pointer" x-data="{ open: false }" id="org-{{ org.id }}">
-                                <!--Dropdown-->
+                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 gap-x-2 cursor-pointer" x-data="{ open_org_menu: false }" id="org-{{ org.id }}">
+                                <!--Organization Dropdown-->
                                 <div class="relative ml-auto">
-                                    <img class="size-5 block " src="{% static 'icons/svg/menu.svg' %}" alt="Menu" @click="open = ! open">
-                                    <div x-show="open" x-cloak  x-transition @click.outside="open = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg  bg-slate-950" >
+                                    <img class="size-5 block " src="{% static 'icons/svg/menu.svg' %}" alt="Menu" @click="open_org_menu = ! open_org_menu">
+                                    <div x-show="open_org_menu" x-cloak  x-transition @click.outside="open_org_menu = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg  bg-slate-950" >
                                         <ul class="p-2 text-sm text-body font-medium">
-                                            <li @click="open = false">
+                                            <li @click="open_org_menu = false">
                                                 <a href="{% url 'view-org-details' org_id=org.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
                                                 @click="org_modal.showModal();">Details</a>
                                             </li>
                                             {% if root_org_view and org.role == 'Owner' or child_org_view and role == 'Admin' or child_org_view and role == 'Owner' %}
-                                            <li @click="open = false">
+                                            <li @click="open_org_menu = false">
                                                 <button hx-get="{% if root_org_view %}{% url 'rename-root-org' org_id=org.id %}{% elif child_org_view %}{% url 'rename-child-org' parent_org_path=parent_org_path org_id=org.id %}{% endif %}" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg"  hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML"
                                                 @click="org_modal.showModal();">Rename</button>
                                             </li>  
-                                            <li @click="open = false">
+                                            <li @click="open_org_menu = false">
                                                 <button hx-get="{% if root_org_view %}{% url 'delete-root-org' org_id=org.id %}{% elif child_org_view %}{% url 'delete-child-org' parent_org_path=parent_org_path org_id=org.id %}{% endif %}" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-700 hover:text-white hover:rounded-lg"
                                                 @click="org_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Delete</button>
@@ -128,10 +128,35 @@
                 {% elif classrooms %}
                     {% for classroom in classrooms %}
                         {% partialdef classroom-row inline %}
-                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 cursor-pointer">
+                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 cursor-pointer min-w-35"  x-data="{ open_classroom_menu: false }" id="classroom-{{ classroom.id }}">
+                                <!--Classroom dropdown-->
+                                <div class="relative ml-auto">
+                                    <img class="size-5 block" src="{% static 'icons/svg/menu.svg' %}" alt="Menu" @click="open_classroom_menu = ! open_classroom_menu">
+                                    <div x-show="open_classroom_menu" x-cloak  x-transition @click.outside="open_classroom_menu = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg  bg-slate-950" >
+                                        <ul class="p-2 text-sm text-body font-medium">
+                                            <li @click="open_classroom_menu = false">
+                                                <a href="{% url 'view-classroom-details' parent_org_id=parent_org_id classroom_id=classroom.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
+                                                class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
+                                                @click="org_modal.showModal();">Details</a>
+                                            </li>
+                                            {% if role == 'Admin' or role == 'Owner' %}
+                                            <li @click="open_classroom_menu = false">
+                                                <button hx-get="#" 
+                                                class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg"  hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML"
+                                                @click="org_modal.showModal();">Rename</button>
+                                            </li>  
+                                            <li @click="open_classroom_menu = false">
+                                                <button hx-get="#" 
+                                                class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-700 hover:text-white hover:rounded-lg"
+                                                @click="org_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Delete</button>
+                                            </li>
+                                            {% endif %}                                          
+                                        </ul>
+                                    </div>
+                                </div>
                                 <a href="{% url 'view-classroom' classroom_path=classroom.path  %}" class="text-center">
                                     <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom">
-                                    <label class="font-bold">{{ classroom.name }}</label>
+                                    <label class="font-bold min-w-20">{{ classroom.name }}</label>
                                 </a>
                             </div>
                             {% include "partials/messages.html" %} 

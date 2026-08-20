@@ -1,4 +1,4 @@
-from apps.orgs.models import Organization,OrgMembership
+from apps.orgs.models import Organization
 from apps.users.models import User
 from apps.orgs.utils import is_owner_or_admin,is_owner,is_admin_or_teacher,is_member
 from django.shortcuts import get_object_or_404
@@ -18,7 +18,7 @@ class RootOrganizationMixin:
         if not hasattr(self, "_root_org"):
             org = get_object_or_404(
                 Organization,
-                pk=self.kwargs["org_id"],
+                pk=self.kwargs.get('org_id') or self.kwargs.get('parent_org_id'),
             )
             self._root_org = org.get_root()
         return self._root_org

@@ -1,8 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin
+from apps.classes.models import Classroom
+from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
 from django.shortcuts import get_object_or_404,render
 from apps.orgs.models import Organization
-from django.http import HttpResponseNotAllowed
 from django.core.exceptions import ValidationError
 from apps.classes.forms import CreateClassForm
 from django.contrib import messages
@@ -55,3 +55,10 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
 
 class ViewClassroom(LoginRequiredMixin,View): # class membership for students. or membership of teacher or owner of class
     pass
+
+class ViewClassroomDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
+    template_name = "classes/partials/view_classroom_details.html"
+    def get(self,request,*args,**kwargs):
+        classroom = get_object_or_404(Classroom,id=kwargs['classroom_id'])
+        return render(request,self.template_name,{"classroom":classroom})
+        
