@@ -1,12 +1,12 @@
 from django import forms
 from .models import Classroom
 
-class CreateClassForm(forms.ModelForm):
+class ClassroomNameForm(forms.ModelForm):
     name = forms.CharField(
         max_length=50,
         required=True,
         widget=forms.TextInput(attrs={'placeholder':'name', 
-        'class':"form-input w-25",
+        'class':"form-input",
         "placeholder": 'name', 'autofocus': True })       
     )
     class Meta:

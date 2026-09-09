@@ -139,14 +139,14 @@
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
                                                 @click="org_modal.showModal();">Details</a>
                                             </li>
-                                            {% if role == 'Admin' or role == 'Owner' %}
+                                            {% if role == 'Admin' or role == 'Owner' or classroom.role == 'Class Owner'%}
                                             <li @click="open_classroom_menu = false">
-                                                <button hx-get="#" 
+                                                <button hx-get="{% url 'rename-classroom' parent_org_path=parent_org_path parent_org_id=parent_org_id classroom_id=classroom.id  %}"
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg"  hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML"
                                                 @click="org_modal.showModal();">Rename</button>
                                             </li>  
                                             <li @click="open_classroom_menu = false">
-                                                <button hx-get="#" 
+                                                <button hx-get="{% url 'delete-classroom' parent_org_id=parent_org_id classroom_id=classroom.id %}" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-700 hover:text-white hover:rounded-lg"
                                                 @click="org_modal.showModal();" hx-target="#modal_container" hx-swap="innerHTML">Delete</button>
                                             </li>
