@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from apps.orgs.forms import OrgNameForm,CreateRootOrgForm,CreateOrgConfigForm,SendInvitationForm,CreateAdminForm,TransferOwnershipForm
 from django.db import transaction
 from config.utils import create_message_and_redirect
-from apps.orgs.utils import ( UserRole,
+from apps.orgs.utils import ( OrgUserType,ClassUserType,
     validata_create_child_org,validate_create_root_org,build_slug,
     resolve_parent_path_and_build_breadcrumbs,get_emails_from_excel,
     build_membership_slug,annotate_memberships,generate_numeric_otp,
@@ -31,7 +31,7 @@ class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
                 OrgMembership.objects.filter(teacher= request.user).select_related("org")
             )
             orgs = [
-                *build_slug(instance= created_orgs,role=UserRole.OWNER),
+                *build_slug(instance= created_orgs,role=OrgUserType.OWNER),
                 *build_membership_slug(instance=memberships),
             ]
             context = {"orgs": orgs,"root_org_view":True}
@@ -57,7 +57,7 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, OrgMembershipRequi
             owned_classrooms = parent_node.classrooms.filter(owner_id = request.user.id).order_by('name')
             remaining_classrooms = parent_node.classrooms.exclude(owner_id=request.user.id).order_by("name")
             classrooms = [
-                    *build_slug(owned_classrooms,org_path,UserRole.CLASS_OWNER),
+                    *build_slug(owned_classrooms,org_path,ClassUserType.OWNER),
                     *build_slug(remaining_classrooms,org_path)
                 ]
             context = {
@@ -154,7 +154,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
 
         messages.success(request,"Root Organization created successfully")
         response = render(request,"orgs/view_orgs_and_classrooms.html#org-row", {
-            "org": build_slug(instance= org, role= UserRole.OWNER),
+            "org": build_slug(instance= org, role= OrgUserType.OWNER),
             "root_org_view":True,
             }
         )
@@ -326,11 +326,11 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
         role = self.role
         is_admin_or_owner,is_owner,is_admin_or_teacher = False,False,False
 
-        if role == UserRole.OWNER:
+        if role == OrgUserType.OWNER:
             is_owner = True
-        if role in [UserRole.ADMIN, UserRole.OWNER]:
+        if role in [OrgUserType.ADMIN, OrgUserType.OWNER]:
             is_admin_or_owner = True
-        if role in [UserRole.ADMIN, UserRole.TEACHER]:
+        if role in [OrgUserType.ADMIN, OrgUserType.TEACHER]:
             is_admin_or_teacher = True
 
         context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"is_admin_or_owner":is_admin_or_owner,"is_owner":is_owner,"is_admin_or_teacher":is_admin_or_teacher}
@@ -479,7 +479,8 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
             if root_org != org:
                 return create_message_and_redirect(request,"Invalid rename request","users-dashboard","error",)
             is_root = True
-        if is_root and self.role != UserRole.OWNER:
+            
+        if is_root and self.role != OrgUserType.OWNER:
             return create_message_and_redirect(request,"Only Owners can rename root organizations","users-dashboard","error",) 
 
         org.name = form.cleaned_data['name']
@@ -498,7 +499,7 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
         
         if is_root:
             row_context = {
-                "org":build_slug(instance=org,parent_org_path=parent_org_path,role=UserRole.OWNER),"parent_org_path":parent_org_path,
+                "org":build_slug(instance=org,parent_org_path=parent_org_path,role=OrgUserType.OWNER),"parent_org_path":parent_org_path,
                 "root_org_view":True,
             }
         else:

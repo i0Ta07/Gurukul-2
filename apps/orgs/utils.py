@@ -13,11 +13,14 @@ from collections.abc import Iterable
 from django.db.models.query import QuerySet
 import secrets
 
-class UserRole(StrEnum):
+class OrgUserType(StrEnum):
     OWNER = "Owner"
     ADMIN = "Admin"
     TEACHER = "Teacher"
-    CLASS_OWNER = "Class Owner"
+
+class ClassUserType(StrEnum):
+    OWNER = "Owner"
+    TEACHER  = "Teacher"
 
 def get_user_role(root:Organization,user:User):
     """
@@ -31,26 +34,26 @@ def get_user_role(root:Organization,user:User):
         ).first()
     )
     if membership:
-        return UserRole.ADMIN if membership.has_admin else UserRole.TEACHER
+        return OrgUserType.ADMIN if membership.has_admin else OrgUserType.TEACHER
     elif Organization.get_root_nodes().filter(id = root.id, config__owner = user).exists():
-        return UserRole.OWNER
+        return OrgUserType.OWNER
     return None
 
 def is_owner_or_admin(root:Organization,user:User):
     role = get_user_role(root=root,user=user)
-    if role in [UserRole.OWNER, UserRole.ADMIN]:
+    if role in [OrgUserType.OWNER, OrgUserType.ADMIN]:
         return role
     return False
 
 def is_owner(root:Organization,user:User):
     role = get_user_role(root=root,user=user)
-    if role == UserRole.OWNER:
+    if role == OrgUserType.OWNER:
         return role
     return False
 
 def is_admin_or_teacher(root:Organization,user:User):
     role = get_user_role(root=root,user=user)
-    if role in [UserRole.ADMIN,UserRole.TEACHER]:
+    if role in [OrgUserType.ADMIN,OrgUserType.TEACHER]:
         return role
     return False
 
@@ -180,7 +183,7 @@ def _serialize_many(instance, serializer):
     return serializer(instance)
 
 def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iterable[Classroom],parent_org_path:str = "",
-        role: UserRole | None = None):
+        role: OrgUserType | None = None):
     """
     Pass role when displaying root orgs or classroom only. This can work with both child orgs and classrooms.
     """
@@ -203,7 +206,7 @@ def build_membership_slug(instance: OrgMembership | Iterable[OrgMembership]):
         data = {
             "name": membership.org.name,
             "path": f"{membership.org.slug}",
-            "role": UserRole.ADMIN if membership.has_admin else UserRole.TEACHER,
+            "role": OrgUserType.ADMIN if membership.has_admin else OrgUserType.TEACHER,
             "id":membership.org.id,
         }
         return data

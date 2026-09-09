@@ -9,7 +9,7 @@ from apps.classes.forms import ClassroomNameForm
 from django.contrib import messages
 from django.views import View
 from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
-from apps.orgs.utils import UserRole, render_error_inside_modal, build_slug
+from apps.orgs.utils import OrgUserType, ClassUserType, render_error_inside_modal, build_slug
 
 
 # Create your views here.
@@ -44,7 +44,7 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
             return render(request, self.template_name,form_context)
         classroom.save()
         row_context = {
-            "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path,role = UserRole.CLASS_OWNER),**kwargs
+            "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path,role = ClassUserType.OWNER),**kwargs
         }
         messages.success(request,message="Classroom created successfully.")
         response = render(request, "orgs/view_orgs_and_classrooms.html#classroom-row",row_context)
@@ -83,13 +83,13 @@ class RenameClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgA
             form.add_error(field=None,error=e.message)
             return render_error_inside_modal(request,self.template_name,{'form':form,**kwargs})
         classroom.save()
-        if self.role in [UserRole.ADMIN,UserRole.OWNER]:
+        if self.role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
             row_context = {
                 "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path),'role':self.role,**kwargs
             }
-        elif self.role  == UserRole.CLASS_OWNER:
+        elif self.role  == ClassUserType.OWNER:
             row_context = {
-                "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path,role = UserRole.CLASS_OWNER),**kwargs
+                "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path,role = ClassUserType.OWNER),**kwargs
             }            
         response =  render(request,"orgs/view_orgs_and_classrooms.html#classroom-row",row_context)
         response['HX-Trigger'] = 'classroom-renamed'
