@@ -22,7 +22,7 @@ class ClassUserType(StrEnum):
     OWNER = "Owner"
     TEACHER  = "Teacher"
 
-def get_user_role(root:Organization,user:User):
+def _get_user_org_role(root:Organization,user:User):
     """
     Check if the user belong to this root org, it yes return the role [Admin,Teacher,Owner] else return None
     """
@@ -39,26 +39,26 @@ def get_user_role(root:Organization,user:User):
         return OrgUserType.OWNER
     return None
 
-def is_owner_or_admin(root:Organization,user:User):
-    role = get_user_role(root=root,user=user)
+def is_org_owner_or_admin(root:Organization,user:User):
+    role = _get_user_org_role(root=root,user=user)
     if role in [OrgUserType.OWNER, OrgUserType.ADMIN]:
         return role
     return False
 
-def is_owner(root:Organization,user:User):
-    role = get_user_role(root=root,user=user)
+def is_org_owner(root:Organization,user:User):
+    role = _get_user_org_role(root=root,user=user)
     if role == OrgUserType.OWNER:
         return role
     return False
 
-def is_admin_or_teacher(root:Organization,user:User):
-    role = get_user_role(root=root,user=user)
+def is_org_admin_or_teacher(root:Organization,user:User):
+    role = _get_user_org_role(root=root,user=user)
     if role in [OrgUserType.ADMIN,OrgUserType.TEACHER]:
         return role
     return False
 
-def is_member(root:Organization,user:User):
-    role = get_user_role(root=root,user=user)
+def is_org_member(root:Organization,user:User):
+    role = _get_user_org_role(root=root,user=user)
     if role:
         return role
     return False

@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from apps.classes.models import Classroom
 from config.utils import create_message_and_redirect
 from apps.orgs.mixins import RootOrganizationMixin
-from apps.orgs.utils import is_owner_or_admin,ClassUserType
+from apps.orgs.utils import is_org_owner_or_admin,ClassUserType
 
 class ClassroomRequiredMixin:
     def get_classroom(self):
@@ -15,7 +15,7 @@ class ClassroomOwnerOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrganizatio
     def dispatch(self, request, *args, **kwargs):
         root,_ = self.get_root_current_org()
         classroom = self.get_classroom()
-        role = is_owner_or_admin(root=root,user=request.user)
+        role = is_org_owner_or_admin(root=root,user=request.user)
         if role:
             self.role = role
         elif classroom.owner_id == request.user.id:
