@@ -45,6 +45,6 @@ urlpatterns = [
     # path("edit/org/<int:org_id>/", edit_org, name="org-edit"),
     
     # Catches them all, has to be last
-    path("create/<path:org_path>/<int:org_id>/", CreateChildOrg.as_view(), name="create-child-org"),
+    path("create/<path:parent_org_path>/<int:parent_org_id>/", CreateChildOrg.as_view(), name="create-child-org"), #Change to parent_org_path and parent_org_id
     path("<path:org_path>/<int:org_id>", ViewChildOrgs.as_view(), name="view-child-orgs"),
 ]

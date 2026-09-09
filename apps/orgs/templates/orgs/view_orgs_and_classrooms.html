@@ -24,14 +24,14 @@
             {% if classroom_view %}
             <div class="flex ml-auto">
                 <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @classroom-created.window="formOpen = false"
-                hx-get="{% url 'create-classroom' org_path=parent_org_path org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin">
+                hx-get="{% url 'create-classroom' parent_org_path=parent_org_path parent_org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin">
                 Create Classroom</button>
             </div>
             {% elif child_org_view %}
                 <div class="flex justify-between gap-x-3">
                     <a href="{% url 'view-root-config' org_id=parent_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">View Config</a>
                     <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
-                    hx-get="{% url 'create-child-org' org_path=parent_org_path org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
+                    hx-get="{% url 'create-child-org' parent_org_path=parent_org_path parent_org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
                     Create {{ label }}</button>
                 </div>
             {%endif %}

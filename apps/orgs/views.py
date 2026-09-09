@@ -98,7 +98,7 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,
             form.add_error(field=None,error=e.message)
             return render(request, self.template_name,form_context)
         parent.add_child(instance=org)
-        parent_org_path = kwargs['org_path']
+        parent_org_path = kwargs['parent_org_path']
         row_context = {
             "org":build_slug(instance=org,parent_org_path=parent_org_path),"parent_org_path":parent_org_path,
             "child_org_view":True, 'role': self.role
