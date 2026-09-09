@@ -14,19 +14,20 @@ class TeacherRequiredMixin:
 
 # Inserts root_org inside the View instance, so don't have to make multiple DB calls.
 class RootOrganizationMixin:
-    def get_root_org(self):
-        if not hasattr(self, "_root_org"):
-            org = get_object_or_404(
+    def get_root_current_org(self):
+        "returns a tuple as (root,org)"
+        if not hasattr(self, "_root_org") or not hasattr(self, "_org"):
+            self._org  = get_object_or_404(
                 Organization,
                 pk=self.kwargs.get('org_id') or self.kwargs.get('parent_org_id'),
             )
-            self._root_org = org.get_root()
-        return self._root_org
+            self._root_org = self._org.get_root()
+        return self._root_org,self._org
     
-class OwnerAdminRequired(RootOrganizationMixin):
+class OrgOwnerAdminRequired(RootOrganizationMixin):
     """Mixin that requires the user to be a owner or admin to access any view of the org using org_id given in the request."""
     def dispatch(self, request, *args, **kwargs):
-        root = self.get_root_org()
+        root,_ = self.get_root_current_org()
         role = is_owner_or_admin(root=root,user=request.user)
         if not role:
             return create_message_and_redirect(request,message="Only admins and owner can perform this action.",
@@ -35,10 +36,10 @@ class OwnerAdminRequired(RootOrganizationMixin):
 
         return super().dispatch(request, *args, **kwargs)    
 
-class OwnerRequired(RootOrganizationMixin):
+class OrgOwnerRequired(RootOrganizationMixin):
     """Mixin that requires the user to be a owner or admin to access any view of the org using org_id given in the request."""
     def dispatch(self, request, *args, **kwargs):
-        root = self.get_root_org()
+        root,_ = self.get_root_current_org()
         role = is_owner(root=root,user=request.user)
         if not role:
             return create_message_and_redirect(request,message="Only owner can perform this action.",url="users-dashboard",code="error")
@@ -48,7 +49,7 @@ class OwnerRequired(RootOrganizationMixin):
 
 class AdminTeacherRequired(RootOrganizationMixin):
     def dispatch(self, request, *args, **kwargs):
-        root = self.get_root_org()
+        root,_ = self.get_root_current_org()
         role = is_admin_or_teacher(root=root,user=request.user)
         if not role:
             return create_message_and_redirect(request,"Only teachers and admins of this organization can perform this action","users-dashboard","warning",)
@@ -58,7 +59,7 @@ class AdminTeacherRequired(RootOrganizationMixin):
 class OrgMembershipRequiredMixin(RootOrganizationMixin):
     """Mixin that requires the user to be the member of the given organization given by org_id to perform some task."""
     def dispatch(self, request, *args, **kwargs):
-        root = self.get_root_org()
+        root,_ = self.get_root_current_org()
         role  = is_member(root=root,user=request.user)
         if not role:
             return create_message_and_redirect(request,"You are not a part of this organization","users-dashboard","warning",)

@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseBadRequest
-from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OwnerAdminRequired,OwnerRequired,AdminTeacherRequired
+from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OrgOwnerAdminRequired,OrgOwnerRequired,AdminTeacherRequired
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -46,7 +46,7 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, OrgMembershipRequi
     def get(self, request, *args, **kwargs):
         role = self.role
         if role:
-            root_node = self.get_root_org()
+            root_node,_ = self.get_root_current_org()
             org_path = kwargs.get("org_path")
             slugs = [slug for slug in org_path.strip("/").split("/") if slug]
             parent_node,breadcrumbs = resolve_parent_path_and_build_breadcrumbs(root_node =root_node,slugs=slugs)
@@ -54,17 +54,22 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, OrgMembershipRequi
             template = root_node.config.template()
             current_depth = parent_node.get_depth()
             label = template[current_depth -1]
-            classrooms = parent_node.classrooms.order_by('name')
+            owned_classrooms = parent_node.classrooms.filter(owner_id = request.user.id).order_by('name')
+            remaining_classrooms = parent_node.classrooms.exclude(owner_id=request.user.id).order_by("name")
+            classrooms = [
+                    *build_slug(owned_classrooms,org_path,UserRole.CLASS_OWNER),
+                    *build_slug(remaining_classrooms,org_path)
+                ]
             context = {
                 "role":role,
                 "orgs":build_slug(children,org_path),
-                "classrooms":build_slug(classrooms,org_path),
+                "classrooms":classrooms,
                 "parent_org_name": parent_node.name,
                 "parent_org_id": parent_node.id,
                 "parent_org_path":org_path,
-                "breadcrumbs": breadcrumbs, 
-                "child_org_view": not classrooms.exists() and current_depth != len(template),
-                "classroom_view": not children.exists()  and current_depth  == len(template),
+                "breadcrumbs": breadcrumbs,
+                "child_org_view": not owned_classrooms.exists() and not remaining_classrooms.exists() and current_depth != len(template),
+                "classroom_view": not children.exists() and current_depth  == len(template),
                 "label":label,
             }
             if request.htmx:
@@ -73,7 +78,7 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, OrgMembershipRequi
             return render(request, self.template_name, context)
         return create_message_and_redirect(request,message="You are not part of this organization",url="users-dashboard",code="error")
 
-class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     template_name = "orgs/partials/create_child_org.html"
     form_class = OrgNameForm
 
@@ -82,8 +87,7 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,
         return render(request, self.template_name, {"form":form,**kwargs,})
 
     def post(self, request, *args, **kwargs):
-        parent_id = kwargs['org_id']
-        parent = get_object_or_404(Organization, pk=parent_id)
+        _,parent = self.get_root_current_org()
 
         # Load post data into the form
         form = self.form_class(request.POST)
@@ -157,7 +161,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
         response['HX-Trigger'] = 'root-org-created'
         return response
 
-class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     template_name = "orgs/send_invitations.html"
     form_class = SendInvitationForm
 
@@ -181,7 +185,7 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired
             except User.DoesNotExist:
                 form.add_error("email","No such user exists. Kindly recheck the email.")
                 return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form, **kwargs})
-            root_org = self.get_root_org()
+            root_org,_ = self.get_root_current_org()
             invitation = OrgInvitation(to_user=user,from_user=request.user,org=root_org,)
             try:
                 invitation.full_clean()   
@@ -200,9 +204,9 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired
             response['HX-Retarget'] = '#file_email_container'
             return response
 
-class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     def post(self,request, *args, **kwargs):
-        root_org = self.get_root_org()      
+        root_org,_ = self.get_root_current_org()      
         email_ids = set(request.POST.getlist("emails"))
         users = (
             User.objects
@@ -270,12 +274,12 @@ class CreateOrgMemberships(LoginRequiredMixin,TeacherRequiredMixin,View):
         response['HX-Trigger'] = "invitation-removed"
         return response
         
-class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     template_name = "orgs/create_admin.html"
     form_class = CreateAdminForm
 
     def get(self,request, *args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         form = self.form_class(root_org= root_org)
         context = {'form':form,"root_org_name":root_org.name,**kwargs}
         if request.htmx:
@@ -283,7 +287,7 @@ class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,Vi
         return render(request,template_name=self.template_name,context=context)
     
     def post(self,request, *args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         form = self.form_class(request.POST,root_org= root_org)
         error_context = {'form':form,"root_org_name":root_org.name,**kwargs}
 
@@ -306,7 +310,7 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
     template_name = "orgs/view_root_config.html"
 
     def get(self,request, *args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         owner = root_org.config.owner
         memberships = OrgMembership.objects.filter(org=root_org)
 
@@ -334,10 +338,10 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
             return render(request,template_name="orgs/view_root_config.html#view-root-config",context=context)
         return render(request,self.template_name,context)
 
-class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,View):
     def post(self,request, *args, **kwargs,):
         """User selected Yes on confirmation modal. Generate OTP, send it and save it in redis."""
-        root_org =self.get_root_org()
+        root_org,_ =self.get_root_current_org()
         key= delete_root_org_otp_key(user_id=request.user.id,org_id=root_org.id)
         if cache.get(key=key):
             messages.success(request,"An OTP has already been sent to your registered email.")
@@ -362,15 +366,15 @@ class DeleteRootOrgSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired
         )
         return render(request, 'orgs/partials/delete_root_org_verify_otp.html', {"root_org_name":root_org.name,**kwargs})        
 
-class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,View):
     def get(self,request,*args,**kwargs):
         """Show confirmation modal"""
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         return render(request, 'orgs/partials/delete_root_org.html', {"root_org_name":root_org.name,**kwargs})
 
     def post(self,request,*args,**kwargs):
         """Hanlde OTP submission"""
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         key = delete_root_org_otp_key(user_id=request.user.id, org_id=root_org.id)
         data = cache.get(key)
         if not data:
@@ -393,23 +397,23 @@ class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
                 context={"root_org_name":root_org.name,**kwargs}
             )
 
-class DeleteChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+class DeleteChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     def get(self,request,*args,**kwargs):
-        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        _,org = self.get_root_current_org()
         return render(request, 'orgs/partials/delete_child_org.html', {"org_name":org.name,**kwargs})
 
     def post(self,request,*args,**kwargs):
-        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        _,org = self.get_root_current_org()
         org.delete()
         return HttpResponse("", status=200)
 
 class ViewOrgDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     template_name = 'orgs/partials/view_org_details.html'
     def get(self,request,*args,**kwargs):
-        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        _,org = self.get_root_current_org()
         return render(request,self.template_name,{'org':org})
 
-class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     def get(self,request,*args, **kwargs):
         first_name, last_name = get_object_or_404(
             User.objects.values_list("first_name", "last_name"), # Return first_name and last_name inside a tuple, rather than whole user instance.
@@ -420,14 +424,14 @@ class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequ
 
     
     def post(self,request,*args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         # In DB, a ForeignKey field like teacher is stored as a teacher_id column containing the primary key of the related User,
         #  so in OrgMembership table we have something like org_id, teacher_id
-        mem_obj = get_object_or_404(OrgMembership,teacher_id = kwargs['teacher_id'],org = root_org) 
+        mem_obj = get_object_or_404(OrgMembership,teacher_id = kwargs['teacher_id'],org_id = root_org.id) 
         mem_obj.delete()
         return HttpResponse("", status=200)
 
-class RevokeOrgAdmin(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+class RevokeOrgAdmin(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,View):
     def get(self, request, *args, **kwargs):
         first_name, last_name = get_object_or_404(
             User.objects.values_list('first_name','last_name'),
@@ -437,29 +441,29 @@ class RevokeOrgAdmin(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View)
         return render(request,"orgs/partials/revoke_org_admin.html",{**kwargs,"admin_name":admin_name})
 
     def post(self,request,*args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         admin_obj = get_object_or_404(
             OrgAdmin,
             membership__teacher_id=kwargs["admin_id"],
-            membership__org=root_org,
+            membership__org_id=root_org.id,
         )
         admin_obj.delete()
         return HttpResponse("", status=200)
 
-class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View):
+class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     form_class = OrgNameForm
     template_name = "orgs/partials/rename_org.html"
     def get(self,request, *args, **kwargs):
-        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        root_org,org = self.get_root_current_org()
         form  = self.form_class(initial={'name':org.name})
-        if self.get_root_org() == org:
+        if root_org == org:
             context = {**kwargs,"form":form, "root_org_view":True,}
         else:
             context = {**kwargs,"form":form,"child_org_view":True}
         return render(request,self.template_name,context)
 
     def post(self, request, *args, **kwargs):
-        org = get_object_or_404(Organization,pk=kwargs['org_id'])
+        root_org,org = self.get_root_current_org()
         form = self.form_class(request.POST)
         if not form.is_valid():
             return render_error_inside_modal(request=request,template_name=self.template_name,context={
@@ -468,10 +472,10 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View)
         parent_org_path = kwargs.get('parent_org_path')
         is_root = False
         if not parent_org_path:
-            if self.get_root_org() != org:
+            if root_org != org:
                 return create_message_and_redirect(request,"Invalid rename request","users-dashboard","error",)
             is_root = True
-        if is_root and self.role != 'Owner':
+        if is_root and self.role != UserRole.OWNER:
             return create_message_and_redirect(request,"Only Owners can rename root organizations","users-dashboard","error",) 
 
         org.name = form.cleaned_data['name']
@@ -490,21 +494,21 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OwnerAdminRequired,View)
         
         if is_root:
             row_context = {
-            "org":build_slug(instance=org,parent_org_path=parent_org_path,role=UserRole.OWNER),"parent_org_path":parent_org_path,
-            "root_org_view":True,
+                "org":build_slug(instance=org,parent_org_path=parent_org_path,role=UserRole.OWNER),"parent_org_path":parent_org_path,
+                "root_org_view":True,
             }
         else:
             row_context = {
-            "org":build_slug(instance=org,parent_org_path=parent_org_path),"parent_org_path":parent_org_path,
-            "child_org_view": True, 'role': self.role
+                "org":build_slug(instance=org,parent_org_path=parent_org_path),"parent_org_path":parent_org_path,
+                "child_org_view": True, 'role': self.role
             }            
         response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
         response['HX-Trigger'] = 'org-renamed'
         return response
 
-class TransferRootOwnershipSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+class TransferRootOwnershipSendOTP(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,View):
     def post(self,request, *args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         form = TransferOwnershipForm(request.POST,root_org = root_org)
         if not form.is_valid():
             return render(request,
@@ -547,17 +551,17 @@ class TransferRootOwnershipSendOTP(LoginRequiredMixin,TeacherRequiredMixin,Owner
         # Save id in redis 
         # Send OTP and display OTP form
 
-class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequired,View):
+class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,View):
     form_class = TransferOwnershipForm
     def get(self, request, *args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         context = {"form":self.form_class(root_org = root_org),"root_org_name":root_org.name,**kwargs}
         if request.htmx:
             return render(request,"orgs/partials/transfer_ownership.html#transfer-root-ownership",context)
         return render(request,"orgs/partials/transfer_ownership.html",context)
 
     def post(self,request, *args, **kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         key = transfer_ownership_otp_key(owner_id=request.user.id, org_id=root_org.id)
         data = cache.get(key)
         if not data:
@@ -597,11 +601,11 @@ class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OwnerRequire
     
 class LeaveOrg(LoginRequiredMixin,TeacherRequiredMixin,AdminTeacherRequired,View):
     def get(self,request,*args,**kwargs):
-        root_org = self.get_root_org()
+        root_org,_ = self.get_root_current_org()
         return render(request,"orgs/partials/leave_org.html",{"root_org_name":root_org.name,**kwargs})
 
     def post(self,request,*args,**kwargs):
-        root_org = self.get_root_org()
-        membership = get_object_or_404(OrgMembership, org = root_org, teacher = request.user)
+        root_org,_ = self.get_root_current_org()
+        membership = get_object_or_404(OrgMembership, org_id = root_org.id, teacher_id = request.user.id)
         membership.delete()
         return create_message_and_redirect(request,f"You are no longer the part of {root_org.name}.",'view-root-orgs',"info")

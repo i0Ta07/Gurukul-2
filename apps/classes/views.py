@@ -24,10 +24,8 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
 
     
     def post(self, request, *args, **kwargs):
-        parent_id = kwargs['org_id']
-        parent_org_path = kwargs['org_path']
-
-        parent = get_object_or_404(Organization, pk=parent_id)
+        parent_org_path = kwargs['parent_org_path']
+        _,parent = self.get_root_current_org()
 
         # Load post data into the form
         form = self.form_class(request.POST)

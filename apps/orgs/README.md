@@ -20,7 +20,7 @@ Current authorization allows the user to access any part of an organization if h
 
 Added `django-celery-beat` and then migrate. Defined a cron job and attached the given task(delete_expired_invitations) to it using the admin panel.
 
-> Most of the organization views requires the root org_id, therefore after extracting the root_id from given current org_id using `self.get_root_org` defined in RootOrganization mixin (Both Permission mixin inherits from this), we send the root_id to the frontend. There will be no less but the lookup will be fast as compared to going down the tree.
+> Most of the organization views requires the root org_id, therefore after extracting the root_id from given current org_id using `self.get_root_current_org` defined in RootOrganization mixin (Both Permission mixin inherits from this), we send the root_id to the frontend. There will be no less but the lookup will be fast as compared to going down the tree.
 
 ### Scrollbar
 
@@ -61,6 +61,7 @@ Open the prefilled form inside the modal and perform validations. If failed re-r
 * Change `org_path` to `parent_org_path` and `org_id` to `parent_org_id`. Some `org_id` remain `org_id`, only those of parent will change.
 
 * In several views we could get specific attributes from the object instead of the whole instance.
+* Retrieving current org at several place use the get_root_current_org function to get both the root org and current org.
 
 ## Remember
 

@@ -17,13 +17,12 @@ class UserRole(StrEnum):
     OWNER = "Owner"
     ADMIN = "Admin"
     TEACHER = "Teacher"
+    CLASS_OWNER = "Class Owner"
 
 def get_user_role(root:Organization,user:User):
     """
     Check if the user belong to this root org, it yes return the role [Admin,Teacher,Owner] else return None
     """
-    if Organization.get_root_nodes().filter(id = root.id, config__owner = user).exists():
-        return UserRole.OWNER
     membership = (
         OrgMembership.objects.filter(org=root, teacher=user).annotate(
             has_admin=Exists(
@@ -33,6 +32,8 @@ def get_user_role(root:Organization,user:User):
     )
     if membership:
         return UserRole.ADMIN if membership.has_admin else UserRole.TEACHER
+    elif Organization.get_root_nodes().filter(id = root.id, config__owner = user).exists():
+        return UserRole.OWNER
     return None
 
 def is_owner_or_admin(root:Organization,user:User):
@@ -181,7 +182,7 @@ def _serialize_many(instance, serializer):
 def build_slug(instance: Organization| Iterable[Organization] | Classroom | Iterable[Classroom],parent_org_path:str = "",
         role: UserRole | None = None):
     """
-    Pass role when displaying root orgs only. This can work with both child orgs and classrooms.
+    Pass role when displaying root orgs or classroom only. This can work with both child orgs and classrooms.
     """
     def serialize(obj):
         data = {
