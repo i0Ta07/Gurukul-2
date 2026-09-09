@@ -274,7 +274,7 @@ class CreateOrgMemberships(LoginRequiredMixin,TeacherRequiredMixin,View):
         response['HX-Trigger'] = "invitation-removed"
         return response
         
-class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
+class CreateAdmins(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,View):
     template_name = "orgs/create_admin.html"
     form_class = CreateAdminForm
 
@@ -427,7 +427,11 @@ class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminR
         root_org,_ = self.get_root_current_org()
         # In DB, a ForeignKey field like teacher is stored as a teacher_id column containing the primary key of the related User,
         #  so in OrgMembership table we have something like org_id, teacher_id
-        mem_obj = get_object_or_404(OrgMembership,teacher_id = kwargs['teacher_id'],org_id = root_org.id) 
+        mem_obj = get_object_or_404(OrgMembership,teacher_id = kwargs['teacher_id'],org_id = root_org.id)
+        is_admin = OrgAdmin.objects.filter(membership_id = mem_obj.id).exists()
+        if is_admin:
+            messages.error(request,"Admin can only remove members.")
+            return render(request=request,template_name="partials/messages.html")
         mem_obj.delete()
         return HttpResponse("", status=200)
 
