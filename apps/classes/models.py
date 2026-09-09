@@ -12,7 +12,7 @@ class Classroom(models.Model):
     slug = models.SlugField(max_length=50)
     code = models.UUIDField(unique=True,default=uuid.uuid4) # Callable, not the actual instance with (),if uuid4(), same uuid for every class
     # Links directly to one specific node in the tree
-    parent_org = models.ForeignKey(
+    parent = models.ForeignKey(
         Organization, 
         on_delete=models.CASCADE, 
         related_name="classrooms", 
@@ -39,12 +39,12 @@ class Classroom(models.Model):
         super().save(*args,**kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.parent_org.name})"
+        return f"{self.name} ({self.parent.name})"
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['parent_org', 'slug'], 
+                fields=['parent', 'slug'], 
                 name='unique_class_name_inside_org' # Create composite key, the two fields have to unique together
             )
         ]
@@ -78,7 +78,7 @@ class ClassMembership(models.Model):
     )
 
     def __str__(self):
-        return f"{self.user.username} in {self.classroom.name}"
+        return f"{self.user.get_full_name()} in {self.classroom.name}"
     
     class Meta:
         constraints = [
