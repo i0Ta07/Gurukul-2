@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Transfer Ownership{% endblock %}
+{% block title %}Transfer Ownership ({{ root_org_name }}){% endblock %}
 
 {% block content %}
 
 <div class="page-container" id="page-container" hx-history-elt >
     {% partialdef transfer-root-ownership inline %}
+    <title>Transfer Ownership ({{ root_org_name }})</title>
     <div class="flex flex-col items-center p-5 gap-5" x-data>
         <h1 class="text-xl md:text-3xl">Transfer Ownership ({{ root_org_name }})</h1>
         <div class="flex gap-3 items-center justify-center bg-amber-400 text-amber-900 p-3 rounded-xl">

@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Organizations{% endblock %}
+{% block title %}
+    {% if parent_org_name %}
+        {{ parent_org_name }}
+    {% else %}
+        My Root Organizations
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 
@@ -9,6 +15,13 @@
 <div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
 
     {% partialdef view-org inline %}
+    <title>    
+        {% if parent_org_name %}
+            {{ parent_org_name }}
+        {% else %}
+            My Root Organizations
+        {% endif %}
+    </title>
     <div class="flex flex-col flex-auto" x-data="{ formOpen: false }" >
         <!--Create Root org-->
         {% if root_org_view %}
