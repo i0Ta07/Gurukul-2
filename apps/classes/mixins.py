@@ -3,6 +3,7 @@ from apps.classes.models import Classroom
 from config.utils import create_message_and_redirect
 from apps.orgs.mixins import RootOrganizationMixin
 from apps.orgs.utils import is_org_owner_or_admin,ClassUserType
+from apps.classes.utils import is_class_owner_or_teacher,is_class_owner
 
 class ClassroomRequiredMixin:
     def get_classroom(self):
@@ -18,8 +19,21 @@ class ClassroomOwnerOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrganizatio
         role = is_org_owner_or_admin(root=root,user=request.user)
         if role:
             self.role = role
-        elif classroom.owner_id == request.user.id:
-            self.role = ClassUserType.OWNER
         else:
+            role = is_class_owner(classroom=classroom,teacher=request.user)
+        if not role:
             return create_message_and_redirect(request,message="Only classroom owner, Organization's Admins/Owners can perform this action.")
+        return super().dispatch(request, *args, **kwargs)
+
+class ClassroomOwnerTeacherOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrganizationMixin):
+    def dispatch(self, request, *args, **kwargs):
+        root,_ = self.get_root_current_org()
+        classroom = self.get_classroom()
+        role = is_org_owner_or_admin(root=root,user=request.user)
+        if role:
+            self.role = role
+        else:
+            role = is_class_owner_or_teacher(classroom=classroom,teacher = request.user)
+        if not role:
+            return create_message_and_redirect(request,message="Only classroom owner/teachers, Organization's Admins/Owners can perform this action.")
         return super().dispatch(request, *args, **kwargs)

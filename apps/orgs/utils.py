@@ -19,7 +19,7 @@ class OrgUserType(StrEnum):
     TEACHER = "Teacher"
 
 class ClassUserType(StrEnum):
-    OWNER = "Owner"
+    OWNER = "Classroom Owner"
     TEACHER  = "Teacher"
 
 def _get_user_org_role(root:Organization,user:User):

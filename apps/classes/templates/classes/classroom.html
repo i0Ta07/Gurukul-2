@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ classroom_name }}{% endblock %}
+
+{% block content %}
+
+<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
+    {% partialdef classroom inline %}
+    <h1>{{ role }}</h1>
+    {% endpartialdef classroom %}
+</div>
+
+{% endblock content %}

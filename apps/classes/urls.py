@@ -9,6 +9,6 @@ urlpatterns = [
     path("delete/<int:parent_org_id>/<int:classroom_id>",DeleteClassroom.as_view(),name = "delete-classroom"),
     # path("<path:class_path>", classroom_detail, name="classroom-detail"), 
     
-    path("<path:classroom_path>/", ViewClassroom.as_view(), name="view-classroom"),
+    path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroom.as_view(), name="view-classroom"),
 
 ]

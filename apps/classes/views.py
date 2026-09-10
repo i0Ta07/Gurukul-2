@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from apps.classes.models import ClassMembership, Classroom
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
-from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired
+from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired
 from django.shortcuts import get_object_or_404,render
 from django.core.exceptions import ValidationError
 from apps.classes.forms import ClassroomNameForm
@@ -51,8 +51,15 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
         response['HX-Trigger'] = 'classroom-created'
         return response
 
-class ViewClassroom(LoginRequiredMixin,View): # class membership for students. or membership of teacher or owner of class
-    pass
+class ViewClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,View): # class membership for students. or membership of teacher or owner of class
+    template_name = "classes/classroom.html"
+    def get(self,request, *args,**kwargs):
+        role = self.role
+        classroom = self.get_classroom()
+        context = {"role":role,"classroom_name":classroom.name}
+        if request.htmx:
+            return render(request,"classes/classroom.html#classroom",context=context)
+        return render(request=request,template_name=self.template_name,context=context)
 
 class ViewClassroomDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     template_name = "classes/partials/view_classroom_details.html"

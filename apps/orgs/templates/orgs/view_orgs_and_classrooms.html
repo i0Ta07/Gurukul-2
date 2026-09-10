@@ -154,7 +154,7 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <a href="{% url 'view-classroom' classroom_path=classroom.path  %}" class="text-center">
+                                <a href="{% url 'view-classroom' classroom_path=classroom.path parent_org_id=parent_org_id classroom_id=classroom.id  %}" class="text-center">
                                     <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom">
                                     <label class="font-bold min-w-20">{{ classroom.name }}</label>
                                 </a>

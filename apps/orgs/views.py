@@ -44,39 +44,36 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, OrgMembershipRequi
     template_name = "orgs/view_orgs_and_classrooms.html"
 
     def get(self, request, *args, **kwargs):
-        role = self.role
-        if role:
-            root_node,_ = self.get_root_current_org()
-            org_path = kwargs.get("org_path")
-            slugs = [slug for slug in org_path.strip("/").split("/") if slug]
-            parent_node,breadcrumbs = resolve_parent_path_and_build_breadcrumbs(root_node =root_node,slugs=slugs)
-            children = parent_node.get_children().order_by("name")
-            template = root_node.config.template()
-            current_depth = parent_node.get_depth()
-            label = template[current_depth -1]
-            owned_classrooms = parent_node.classrooms.filter(owner_id = request.user.id).order_by('name')
-            remaining_classrooms = parent_node.classrooms.exclude(owner_id=request.user.id).order_by("name")
-            classrooms = [
-                    *build_slug(owned_classrooms,org_path,ClassUserType.OWNER),
-                    *build_slug(remaining_classrooms,org_path)
-                ]
-            context = {
-                "role":role,
-                "orgs":build_slug(children,org_path),
-                "classrooms":classrooms,
-                "parent_org_name": parent_node.name,
-                "parent_org_id": parent_node.id,
-                "parent_org_path":org_path,
-                "breadcrumbs": breadcrumbs,
-                "child_org_view": not owned_classrooms.exists() and not remaining_classrooms.exists() and current_depth != len(template),
-                "classroom_view": not children.exists() and current_depth  == len(template),
-                "label":label,
-            }
-            if request.htmx:
-                return render(request, "orgs/view_orgs_and_classrooms.html#view-org",context)
-                
-            return render(request, self.template_name, context)
-        return create_message_and_redirect(request,message="You are not part of this organization",url="users-dashboard",code="error")
+        root_node,_ = self.get_root_current_org()
+        org_path = kwargs.get("org_path")
+        slugs = [slug for slug in org_path.strip("/").split("/") if slug]
+        parent_node,breadcrumbs = resolve_parent_path_and_build_breadcrumbs(root_node =root_node,slugs=slugs)
+        children = parent_node.get_children().order_by("name")
+        template = root_node.config.template()
+        current_depth = parent_node.get_depth()
+        label = template[current_depth -1]
+        owned_classrooms = parent_node.classrooms.filter(owner_id = request.user.id).order_by('name')
+        remaining_classrooms = parent_node.classrooms.exclude(owner_id=request.user.id).order_by("name")
+        classrooms = [
+                *build_slug(owned_classrooms,org_path,ClassUserType.OWNER),
+                *build_slug(remaining_classrooms,org_path)
+            ]
+        context = {
+            "role":self.role,
+            "orgs":build_slug(children,org_path),
+            "classrooms":classrooms,
+            "parent_org_name": parent_node.name,
+            "parent_org_id": parent_node.id,
+            "parent_org_path":org_path,
+            "breadcrumbs": breadcrumbs,
+            "child_org_view": not owned_classrooms.exists() and not remaining_classrooms.exists() and current_depth != len(template),
+            "classroom_view": not children.exists() and current_depth  == len(template),
+            "label":label,
+        }
+        if request.htmx:
+            return render(request, "orgs/view_orgs_and_classrooms.html#view-org",context)
+            
+        return render(request, self.template_name, context)
 
 class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,View):
     template_name = "orgs/partials/create_child_org.html"
