@@ -466,16 +466,15 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
     def post(self, request, *args, **kwargs):
         root_org,org = self.get_root_current_org()
         form = self.form_class(request.POST)
+        is_root = (root_org == org)
         if not form.is_valid():
             return render_error_inside_modal(request=request,template_name=self.template_name,context={
-                **kwargs,"form":form
+                **kwargs,"form":form,"root_org_view":is_root, "child_org_view":not is_root
             })
+
         parent_org_path = kwargs.get('parent_org_path')
-        is_root = False
-        if not parent_org_path:
-            if root_org != org:
-                return create_message_and_redirect(request,"Invalid rename request","users-dashboard","error",)
-            is_root = True
+        if not parent_org_path and not is_root:
+            return create_message_and_redirect(request,"Invalid rename request","users-dashboard","error",)
             
         if is_root and self.role != OrgUserType.OWNER:
             return create_message_and_redirect(request,"Only Owners can rename root organizations","users-dashboard","error",) 
@@ -491,13 +490,13 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
             form.add_error(field=None,error=e.message)
             return render_error_inside_modal(request=request,template_name=self.template_name,context={
                 **kwargs,"form":form,"root_org_view":is_root, "child_org_view":not(is_root)
-            })        
+            })
+            
         org.save()
-        
         if is_root:
             row_context = {
-                "org":build_slug(instance=org,parent_org_path=parent_org_path,role=OrgUserType.OWNER),"parent_org_path":parent_org_path,
-                "root_org_view":True,
+                "org":build_slug(instance=org,parent_org_path="",role=OrgUserType.OWNER),
+                "root_org_view":True, 
             }
         else:
             row_context = {
