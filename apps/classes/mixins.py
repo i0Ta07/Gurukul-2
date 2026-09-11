@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from apps.classes.models import Classroom
 from config.utils import create_message_and_redirect
 from apps.orgs.mixins import RootOrganizationMixin
-from apps.orgs.utils import is_org_owner_or_admin,ClassUserType
+from apps.orgs.utils import is_org_owner_or_admin
 from apps.classes.utils import is_class_owner_or_teacher,is_class_owner
 
 class ClassroomRequiredMixin:

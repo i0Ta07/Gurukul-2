@@ -3,7 +3,11 @@ from apps.classes.models import ClassMembership, Classroom
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from apps.users.models import User
-from apps.orgs.utils import ClassUserType
+from enum import StrEnum
+
+class ClassUserType(StrEnum):
+    OWNER = "Classroom Owner"
+    TEACHER  = "Teacher"
 
 def validate_unique_classroom_siblings(parent:Organization ,instance:Classroom,):
     duplicates = Classroom.objects.filter(parent=parent,slug = slugify(instance.name))

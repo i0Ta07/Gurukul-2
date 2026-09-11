@@ -18,10 +18,6 @@ class OrgUserType(StrEnum):
     ADMIN = "Admin"
     TEACHER = "Teacher"
 
-class ClassUserType(StrEnum):
-    OWNER = "Classroom Owner"
-    TEACHER  = "Teacher"
-
 def _get_user_org_role(root:Organization,user:User):
     """
     Check if the user belong to this root org, it yes return the role [Admin,Teacher,Owner] else return None

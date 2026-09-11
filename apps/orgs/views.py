@@ -10,13 +10,14 @@ from django.core.exceptions import ValidationError
 from apps.orgs.forms import OrgNameForm,CreateRootOrgForm,CreateOrgConfigForm,SendInvitationForm,CreateAdminForm,TransferOwnershipForm
 from django.db import transaction
 from config.utils import create_message_and_redirect
-from apps.orgs.utils import ( OrgUserType,ClassUserType,
+from apps.orgs.utils import ( OrgUserType,
     validata_create_child_org,validate_create_root_org,build_slug,
     resolve_parent_path_and_build_breadcrumbs,get_emails_from_excel,
     build_membership_slug,annotate_memberships,generate_numeric_otp,
     delete_root_org_otp_key,validate_rename_org,render_error_inside_modal,
     transfer_ownership_otp_key,
     )
+from apps.classes.utils import ClassUserType
 from django.core.cache import cache
 from django.contrib.auth.hashers import make_password,check_password
 from config.utils import send_email

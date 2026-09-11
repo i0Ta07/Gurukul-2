@@ -9,7 +9,8 @@ from apps.classes.forms import ClassroomNameForm
 from django.contrib import messages
 from django.views import View
 from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
-from apps.orgs.utils import OrgUserType, ClassUserType, render_error_inside_modal, build_slug
+from apps.orgs.utils import OrgUserType, render_error_inside_modal, build_slug
+from apps.classes.utils import ClassUserType
 
 
 # Create your views here.
