@@ -130,7 +130,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
                 "config_form": config_form,                
             })
         
-        org = root_form.save(commit=False) # Need commit= False because we need id in build_slug
+        org = root_form.save(commit=False) # Need commit= False to add created_by
         org.created_by = request.user
 
         try:
@@ -142,7 +142,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
                 "config_form": config_form,                
             })
         
-        org_config = config_form.save(commit=False)  # Need commit= False to later save.
+        org_config = config_form.save(commit=False)
         org_config.org = org
         org_config.owner = request.user
 

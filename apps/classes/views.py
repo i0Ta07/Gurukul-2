@@ -11,9 +11,9 @@ from django.views import View
 from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
 from apps.orgs.utils import OrgUserType, render_error_inside_modal, build_slug
 from apps.classes.utils import ClassUserType
+from apps.chats.models import ChatRoom
+from django.db import transaction
 
-
-# Create your views here.
 
 # You can view all the classrooms in the present organization, but you can access if you are owner/admin or is the owner of the class.
 
@@ -43,7 +43,10 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
         except ValidationError as e:
             form.add_error(field=None,error=e.message)
             return render(request, self.template_name,form_context)
-        classroom.save()
+        with transaction.atomic(): 
+            classroom.save()
+            _ = ChatRoom.objects.create(classroom_id = classroom.id)
+
         row_context = {
             "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path,role = ClassUserType.OWNER),**kwargs
         }
