@@ -18,6 +18,12 @@
                     <img class="size-7" src="{% static 'icons/svg/invitations.svg' %}" alt="Invitations">
                 </div>
             </a>
+            <a href="{% url 'chat-home' %}" hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
+                <div class="avatar indicator">
+                    <span class="indicator-item badge badge-sm badge-info p-1">100</span>
+                    <img class="size-8" src="{% static 'chats/icons/png/chats.png' %}" alt="Chats">
+                </div>
+            </a>
             <button @click="open_dropdown = ! open_dropdown" type="button" class="  flex text-sm rounded-full focus:ring-2">
                 {% if user.profile_photo %}
                 <img class="size-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">

@@ -37,6 +37,7 @@ if DEBUG:
 # Application definition
 
 DJANGO_APPS = [
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -59,6 +60,7 @@ PROJECT_APPS = [
     'apps.users.apps.UsersConfig',
     'apps.orgs.apps.OrgsConfig',
     'apps.theme.apps.ThemeConfig',
+    'apps.chats.apps.ChatsConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -115,7 +117,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+# WSGI_APPLICATION = 'config.wsgi.application'
+
+ASGI_APPLICATION = "config.asgi.application"
 
 MAX_DEPTH = 6
 
