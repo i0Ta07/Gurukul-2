@@ -13,20 +13,7 @@ class ChatRoom(models.Model):
 
     def __str__(self):
         return f"{self.classroom.name} ({self.classroom.id})'s Room"
-
-class Message(models.Model):
-    body = models.CharField(max_length=300)
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="messages",
-        related_query_name="message"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.author.id}"
-
+    
 class RoomMessage(models.Model):
     room = models.ForeignKey(
         ChatRoom,
@@ -34,7 +21,11 @@ class RoomMessage(models.Model):
         related_name="messages",
         related_query_name="message"
     )
-    body = models.CharField(max_length=300)
+    body = models.CharField(max_length=300,blank=True)
+    attachment = models.FileField(
+        upload_to="chats/attachments/rooms/",
+        blank=True,
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -44,7 +35,7 @@ class RoomMessage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.room.id}, {self.author.id}"
+        return f"{self.room.id} ({self.author.id}) {self.created_at}"
 
 class ChatThread(models.Model):
     user1 = models.ForeignKey(
@@ -85,3 +76,25 @@ class ChatThread(models.Model):
         user1, user2 = (u1, u2) if u1.pk < u2.pk else (u2, u1)
         thread, created = cls.objects.get_or_create(user1=user1, user2=user2)
         return thread # thread.save() to trigger auto_add during websocket disconnection.
+
+class Message(models.Model):
+    thread = models.ForeignKey(
+        ChatThread, 
+        on_delete=models.CASCADE, 
+        related_name="messages"
+    )
+    body = models.CharField(max_length=300,blank=True)
+    attachment = models.FileField(
+        upload_to="chats/attachments/threads/",
+        blank=True,
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="messages",
+        related_query_name="message"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Thread: {self.thread.id}({self.author.id}) {self.created_at}"
