@@ -6,7 +6,6 @@ from apps.orgs.views import (
     ViewOrgDetails,DeleteChildOrg,DeleteRootOrg,DeleteRootOrgSendOTP,
     RevokeOrgMembership,RevokeOrgAdmin,RenameOrg,TransferRootOwnership,
     TransferRootOwnershipSendOTP,CreateOrgMemberships,LeaveOrg,
-    CountInvitations
 )
 
 urlpatterns = [
@@ -21,7 +20,6 @@ urlpatterns = [
     path("create/admin/<int:org_id>/",CreateAdmins.as_view(),name='create-admin'),
 
     path("view/invitations/",ViewInvitations.as_view(),name='view-invitations'),
-    path("count/invitations/",CountInvitations.as_view(),name='count-invitations'),
     path("invitations/<int:invitation_id>/",CreateOrgMemberships.as_view(),name='create-org-members'),
 
     path("view/details/<int:org_id>/",ViewOrgDetails.as_view(), name='view-org-details'),

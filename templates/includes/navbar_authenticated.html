@@ -8,18 +8,17 @@
             Dashboard
         </a>
     </div>
-    <div class="relative flex items-center text-white" x-data="{ open_dropdown: false , show_invitation_count:false}">
+    <div class="relative flex items-center text-white" x-data="{ open_dropdown: false }"  sse-connect="{% url 'stream-notifications' %}">
         <div class="flex items-center justify-center gap-x-3">
+            {% if request.user.user_type == 'T' %}
             <a href="{% url 'view-invitations' %}" hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
-                <div class="avatar indicator">
-                    <span class="indicator-item badge badge-sm badge-info p-1" x-show="show_invitation_count" x-cloak hx-get="{% url 'count-invitations' %}"
-                        hx-swap="innerHTML" hx-push-url="false" hx-target="this" hx-trigger="every 60s" @render-invitation-count="show_invitation_count = true"
-                        @remove-invitation-count="show_invitation_count=false"></span>
-                    <img class="size-7" src="{% static 'icons/svg/invitations.svg' %}" alt="Invitations">
+                <div class="avatar indicator"  hx-swap="innerHTML" hx-target="this" sse-swap="invitation_count">
+                    {% include 'orgs/partials/invitation_icon.html' %}
                 </div>
             </a>
+            {% endif %}
             <a href="{% url 'chat-home' %}" hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
-                <div class="avatar indicator">
+                <div class="avatar indicator" hx-swap="innerHTML" hx-target="this" sse-swap="message_count">
                     <span class="indicator-item badge badge-sm badge-info p-1">100</span>
                     <img class="size-8" src="{% static 'chats/icons/png/chats.png' %}" alt="Chats">
                 </div>

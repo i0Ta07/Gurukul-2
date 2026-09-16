@@ -179,7 +179,7 @@
 
             </div>
             {% if not classrooms and not orgs %}
-                <div  class="flex flex-col flex-auto justify-center items-center" @child-org-created.window="$el.remove();"><!--Need bubble up, from child to parent-->
+                <div  class="flex flex-col flex-auto justify-center items-center" @child-org-created.window="$el.remove();" @root-org-created.window="$el.remove();"><!--Need bubble up, from child to parent-->
                     <span class=" text-gray-500 font-semibold text-lg">It's empty down here</span>
                 </div>
             {% endif  %}

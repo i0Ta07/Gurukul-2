@@ -22,6 +22,10 @@ from django.core.cache import cache
 from django.contrib.auth.hashers import make_password,check_password
 from config.utils import send_email
 from config.settings import EMAIL_EXPIRY_DURATION
+from django.template.loader import render_to_string
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.views import View
 
 class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
     template_name = "orgs/view_orgs_and_classrooms.html"
@@ -193,6 +197,19 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequi
                 return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':form, **kwargs})
 
             messages.success(request,"Request sent successfully")
+
+            count = OrgInvitation.objects.filter(to_user_id=user.id).count()
+            channel_layer = get_channel_layer()
+            html = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
+            async_to_sync(channel_layer.group_send)(
+                f"user_notifications_{user.id}",
+                {
+                    "type":"sse",
+                    "event_name": "invitation_count",
+                    "html": html.replace('\n','')
+                }
+            )
+
             # Render a fresh form
             return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':self.form_class(), **kwargs})
         else:
@@ -231,21 +248,10 @@ class ViewInvitations(LoginRequiredMixin,TeacherRequiredMixin,View):
 
     def get(self,request, *args, **kwargs):
         pending_invitations = OrgInvitation.objects.filter(to_user = request.user).order_by('-created_at')
-        context = {"pending_invitations":pending_invitations,"count":len(pending_invitations)}
+        context = {"pending_invitations":pending_invitations}
         if request.htmx:
             return render(request,template_name="orgs/view_invitations.html#view-invitations",context=context)
         return render(request,template_name=self.template_name,context=context)
-
-class CountInvitations(LoginRequiredMixin,TeacherRequiredMixin,View):
-    def get(self,request, *args, **kwargs):
-        count = OrgInvitation.objects.filter(to_user = request.user).count()
-        if count:
-            response = HttpResponse(str(count), status=200)
-            response['HX-Trigger'] = 'render-invitation-count'
-        else:
-            response = HttpResponse("", status=200)
-            response['HX-Trigger'] = 'remove-invitation-count'
-        return response 
 
 class CreateOrgMemberships(LoginRequiredMixin,TeacherRequiredMixin,View):
     def post(self,request, *args, **kwargs):
@@ -266,8 +272,22 @@ class CreateOrgMemberships(LoginRequiredMixin,TeacherRequiredMixin,View):
             messages.warning(request,f"Request from {inv_obj.from_user.get_full_name()} to join {inv_obj.org.name} has been rejected.")
         else:
             return HttpResponseBadRequest("Invalid action")
-        
+
         inv_obj.delete()
+
+        user = request.user
+        count = OrgInvitation.objects.filter(to_user_id=user.id).count()
+        channel_layer = get_channel_layer()
+        html = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
+        async_to_sync(channel_layer.group_send)(
+            f"user_notifications_{user.id}",
+            {
+                "type":"sse",
+                "event_name": "invitation_count",
+                "html": html.replace('\n','')
+            }
+        )
+        
         response = render(request,"partials/messages.html")
         response['HX-Trigger'] = "invitation-removed"
         return response

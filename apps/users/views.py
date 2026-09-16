@@ -35,6 +35,7 @@ from apps.users.utils import (
     decode_user_id,get_website_context
 )
 from apps.users.models import User
+from apps.orgs.models import OrgInvitation
 from django.contrib.auth.views import (
     LoginView,
     PasswordResetView,
@@ -58,9 +59,13 @@ class Dashboard(LoginRequiredMixin,View):
     template_name = 'users/dashboard.html'
 
     def get(self,request, *args, **kwargs,):
+        context = {}
+        if request.user.user_type == 'T':
+            count = OrgInvitation.objects.filter(to_user_id = request.user.id).count()
+            context['invitation_count'] = count
         if request.htmx:
-            return render(request,'users/dashboard.html#dashboard')
-        return render(request,self.template_name)
+            return render(request,'users/dashboard.html#dashboard',context)
+        return render(request,self.template_name,context)
 
 class RegisterEmailView(AnonymousRequiredMixin,View):
     """
