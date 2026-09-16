@@ -10,7 +10,7 @@
 
     <title>{% block title %}Gurukul{% endblock %}</title>
 
-    {% htmx_script %}
+    {% htmx_script extensions="hx-sse,hx-ws" %}
     {% tailwind_css %}
 
     <!--Aphine-->
@@ -18,7 +18,7 @@
     
 </head>
 
-<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}' hx-ext="sse">
 
     <main class="flex flex-col min-h-screen md:h-dvh bg-black">
 

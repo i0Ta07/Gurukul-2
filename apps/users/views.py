@@ -3,6 +3,10 @@ from django.contrib import messages
 from django.shortcuts import render
 from django.views import View
 from django.db import IntegrityError
+import asyncio
+from channels.layers import get_channel_layer
+from django.http import StreamingHttpResponse,HttpResponse
+from asgiref.sync import sync_to_async
 # Django reads your views.py file before it reads your urls.py file. It doesn't know your URL names yet. 
 # Inside a view if you put reverse('home'). It will try to find, but it cannot find it and throws an error.
 #  Hence use reverse_lazy in Class-Level Attribute.
@@ -333,4 +337,44 @@ class CompleteEmailUpdate(View):
         messages.success(request,message='Email updated successfully. Please log in again.')
         
         return create_message_and_redirect(request,message='Email updated successfully. Please log in again.',url='login',code='success')
-        
+
+class StreamNotifications(View):
+    async def get(self, request, *args, **kwargs):
+
+        user_id = await sync_to_async(lambda: request.user.id)()
+        if not user_id:
+            return HttpResponse("Unauthorized Access", status=401)
+
+        channel_layer = get_channel_layer() # get redis channel layer
+        channel_name = await channel_layer.new_channel() # Create a random name for current connection
+        group_name = f"user_notifications_{user_id}" # Get the broadcasting group
+
+        async def event_stream():
+            await channel_layer.group_add(group_name, channel_name) # Add this channel connection to the group.
+
+            try:
+                while True:
+                    message = await channel_layer.receive(channel_name) # Wait for messages on the broadcasting group.
+
+                    event_name = message.get("event_name")
+                    html = message.get("html")
+
+                    if event_name and html:
+                        yield f"event: {event_name}\ndata: {html}\n\n" # send SSE event
+
+            except asyncio.CancelledError: # task explicitely cancelled during execution
+                pass # should be logged
+
+            finally:
+                await channel_layer.group_discard( # remove the channel connection 
+                    group_name,
+                    channel_name,
+                )
+
+        response = StreamingHttpResponse(
+            event_stream(),
+            content_type="text/event-stream",
+        )
+        response["Cache-Control"] = "no-cache"
+
+        return response
