@@ -10,7 +10,6 @@ class ChatRoom(models.Model):
         primary_key=True,
         related_name="chatroom",
     )
-
     def __str__(self):
         return f"{self.classroom.name} ({self.classroom.id})'s Room"
     
@@ -21,11 +20,7 @@ class RoomMessage(models.Model):
         related_name="messages",
         related_query_name="message"
     )
-    body = models.CharField(max_length=300,blank=True)
-    attachment = models.FileField(
-        upload_to="chats/attachments/rooms/",
-        blank=True,
-    )
+    body = models.CharField(max_length=300)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -35,7 +30,7 @@ class RoomMessage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.room.id} ({self.author.id}) {self.created_at}"
+        return f"{self.room.classroom.name} ({self.author.get_full_name()})"
 
 class ChatThread(models.Model):
     user1 = models.ForeignKey(
@@ -51,6 +46,7 @@ class ChatThread(models.Model):
         related_query_name="thread_user2"
     )
     updated_at = models.DateTimeField(auto_now=True)
+    # Add last scene of each user so we can determine which message is new.
 
     class Meta:
         indexes = [
@@ -77,17 +73,13 @@ class ChatThread(models.Model):
         thread, created = cls.objects.get_or_create(user1=user1, user2=user2)
         return thread # thread.save() to trigger auto_add during websocket disconnection.
 
-class Message(models.Model):
+class ThreadMessage(models.Model):
     thread = models.ForeignKey(
         ChatThread, 
         on_delete=models.CASCADE, 
         related_name="messages"
     )
-    body = models.CharField(max_length=300,blank=True)
-    attachment = models.FileField(
-        upload_to="chats/attachments/threads/",
-        blank=True,
-    )
+    body = models.CharField(max_length=300)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -98,3 +90,8 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Thread: {self.thread.id}({self.author.id}) {self.created_at}"
+
+# put business rules in the model such as the author should be part of thread and attachment size and
+#  type (validate_file_mimetype)
+# In chat thread both users have to be differnet and when creating the thread make sure user1.id < user2.id
+# Same for the room the author should belong to the room.

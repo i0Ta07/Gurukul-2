@@ -27,3 +27,4 @@ The flow would be:
 ### To do list
 
 * Active search HTMX to search for users.
+* Make the Chats page responsive.
