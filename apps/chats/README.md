@@ -24,7 +24,13 @@ The flow would be:
 4. This group will broadcast this message to each connection in the group.
 5. The frontend will receive the message and make changes according to sse-swap.
 
+### Load more messages
+
+After user scrolled up and got to the last 50th messages, we have to make a request for more 50 messages.
+
 ### To do list
 
 * Active search HTMX to search for users.
 * Make the Chats page responsive.
+* Delete week old thread messages and month old group messages.
+* Make the chat-window scrollable

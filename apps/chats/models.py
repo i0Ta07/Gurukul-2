@@ -1,7 +1,8 @@
 from django.db import models
-from apps.classes.models import Classroom
+from apps.classes.models import ClassMembership, Classroom
 from apps.users.models import User
 from django.db.models import Q, F
+from django.core.exceptions import ValidationError
 
 class ChatRoom(models.Model):
     classroom = models.OneToOneField(
@@ -31,6 +32,13 @@ class RoomMessage(models.Model):
 
     def __str__(self):
         return f"{self.room.classroom.name} ({self.author.get_full_name()})"
+
+    def clean(self):
+        super().clean()
+        membership_exists = ClassMembership.objects.filter(user=self.author, classroom=self.room.classroom).exists()
+        if not membership_exists and self.author != self.room.classroom.owner: 
+            raise ValidationError("You cannot send messages inside this room.")
+
 
 class ChatThread(models.Model):
     user1 = models.ForeignKey(
@@ -64,7 +72,12 @@ class ChatThread(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user1.id},{self.user2.id}" 
+        return f"{self.user1.get_full_name()}, {self.user2.get_full_name()}"
+
+    def clean(self):
+        super().clean()
+        if self.user1.id == self.user2.id:
+            raise ValidationError("You cannot initiate a chat with yourself.")
 
     @classmethod
     def get_or_create_thread(cls, u1, u2): # Thread.get_or_create_thread
@@ -89,9 +102,9 @@ class ThreadMessage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Thread: {self.thread.id}({self.author.id}) {self.created_at}"
+        return f"{self.author.get_full_name()} ({self.thread.id})"
 
-# put business rules in the model such as the author should be part of thread and attachment size and
-#  type (validate_file_mimetype)
-# In chat thread both users have to be differnet and when creating the thread make sure user1.id < user2.id
-# Same for the room the author should belong to the room.
+    def clean(self):
+        super().clean()
+        if self.author != self.thread.user1 and self.author!= self.thread.user2:
+            raise ValidationError("You are not part of this thread.")

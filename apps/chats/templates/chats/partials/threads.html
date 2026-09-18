@@ -1,17 +1,18 @@
 {% load static %}
+{% load humanize %}
 {% for thread in threads %}
-<div class="flex gap-1 h-18">
+<div class="flex gap-1 h-18" hx-get="{% url 'thread' thread_id=thread.id %}" hx-target="#chat-window" hx-swap="innerHTML">
     <div class="flex justify-between items-center">
         {% if  thread.other_user.profile_photo %}
-            <img class="size-15 p-1 rounded-full" src="{{ thread.other_user.profile_photo.url }}" alt="Profile Picture">
+        <img class="size-15 p-1 rounded-full border border-gray-700" src="{{ thread.other_user.profile_photo.url }}" alt="Profile Picture">
         {% else %}
-        <img class="size-15 p-1 rounded-full" src="{% static 'images/default_profile.png' %}" alt="Default profile">
+        <img class="size-15 p-1 rounded-full border border-gray-700" src="{% static 'images/default_profile.png' %}" alt="Default profile">
         {% endif %}
     </div>
     <div class="flex flex-col gap-1 p-1 flex-1">
         <div class="flex justify-between mr-1">
             <h1 class="font-semibold text-xl">{{ thread.other_user_name }}</h1>
-            <p class="text-gray-400">{{ thread.last_message_time|date:"d-m-Y H:i" }}</p>
+            <p class="text-gray-400">{{ thread.last_message_time|naturaltime }}</p>
         </div>
         <div class="flex gap-1 text-gray-400">
             <p>{{ thread.last_message_body }}</p>

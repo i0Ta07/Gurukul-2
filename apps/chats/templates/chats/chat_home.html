@@ -7,21 +7,20 @@
 <div class="page-container" id="page-container" hx-history-elt >
     {% partialdef chat-home inline %}
     <title>Chats</title>
-    <div class="flex flex-1 gap-3" x-data="{ selected_user: true }">
+    <div class="flex flex-1 gap-3 min-h-0" x-data="{ selected_user: true }">
         <div class="flex flex-col items-center w-22 gap-2 bg-slate-950 rounded-2xl py-5">
             <a hx-get="{% url 'chat-users' %}" hx-target="#chats-list" hx-swap="innerHTML" hx-trigger="load,click">
-                <img class="size-20 hover:bg-slate-800" @click="selected_user = true;" :class="selected_user ? 'bg-slate-800' : ''" src="{% static 'images/default_profile.png' %}" alt="Users">
+                <img class="size-20 hover:bg-slate-800" @click="selected_user = true;" :class="selected_user ? 'bg-slate-800' : ''" src="{% static 'images/default_profile.png' %}" alt="User" title="Users">
             </a>
             <a hx-get="{% url 'chat-rooms' %}" hx-target="#chats-list" hx-swap="innerHTML">
-                <img class="size-22 hover:bg-slate-800" @click="selected_user = false" :class="selected_user ? '' : 'bg-slate-800'" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom">
+                <img class="size-22 hover:bg-slate-800" @click="selected_user = false" :class="selected_user ? '' : 'bg-slate-800'" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom" title="Classrooms">
             </a>
         </div>
         <div class="h-full border-l border-slate-700"></div>
-        <div class="grid grid-cols-4 flex-1 gap-3">
-            <div class="flex flex-col flex-1 bg-slate-950 rounded-2xl" id="chats-list"></div>
-            <div class="col-span-3 flex flex-col flex-1 bg-slate-950 rounded-2xl"></div>
+        <div class="grid grid-cols-4 flex-1 min-h-0 gap-3">
+            <div class="flex flex-col flex-1 bg-slate-950 rounded-2xl scrollbar-none overflow-y-auto min-h-0" id="chats-list" hx-on::after-swap="this.scrollTo(0, this.scrollHeight)"></div>
+            <div class="col-span-3 flex flex-col  bg-slate-950 rounded-2xl p-3 flex-1 scrollbar-none overflow-y-auto min-h-0" id="chat-window" hx-on::after-swap="this.scrollTo(0, this.scrollHeight)"></div>
         </div>
-        
     </div>
     {% endpartialdef chat-home %}
 </div>

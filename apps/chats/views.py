@@ -1,10 +1,14 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render,get_object_or_404
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from apps.classes.models import ClassMembership,Classroom
 from apps.chats.models import ChatThread,ChatRoom,ThreadMessage,RoomMessage
 from django.db.models import Q, OuterRef,Subquery
 # Create your views here.
+
+THREAD_LAST_MESSAGE_SIZE = 45
+GROUP_LAST_MESSAGE_SIZE = 55
+OTHER_USER_DISPLAY_NAME_SIZE = 15
+CLASSRROM_DISPLAY_NAME_SIZE = 25
 
 class ChatHome(LoginRequiredMixin,View):
     def get(self,request, *args, **kwargs):
@@ -35,15 +39,15 @@ class ChatUsers(LoginRequiredMixin, View):
             thread.other_user = thread.user2 if request.user == thread.user1 else thread.user1
 
             other_user_name = thread.other_user.get_full_name()
-            if len(other_user_name) > 15:
-                other_user_name = other_user_name[:15] + '...'
+            if len(other_user_name) > OTHER_USER_DISPLAY_NAME_SIZE:
+                other_user_name = other_user_name[:OTHER_USER_DISPLAY_NAME_SIZE] + '...'
             thread.other_user_name = other_user_name
 
 
             if thread.last_message_author_id != thread.other_user.id:
                 thread.last_message_body = 'You: ' + thread.last_message_body
-            if len(thread.last_message_body)> 45:
-                thread.last_message_body = thread.last_message_body[:45] + '...'
+            if len(thread.last_message_body)> THREAD_LAST_MESSAGE_SIZE:
+                thread.last_message_body = thread.last_message_body[:THREAD_LAST_MESSAGE_SIZE] + '...'
 
 
         context = {'threads': threads}
@@ -72,11 +76,11 @@ class ChatRooms(LoginRequiredMixin, View):
         )
 
         for room in rooms: 
-            if len(room.classroom.name) > 25:
-                room.classroom.name = room.classroom.name[:25] + '...'
+            if len(room.classroom.name) > CLASSRROM_DISPLAY_NAME_SIZE:
+                room.classroom.name = room.classroom.name[:CLASSRROM_DISPLAY_NAME_SIZE] + '...'
             room.message_body = room.last_message_author_first_name + ' ' +  room.last_message_author_last_name + ': ' + room.last_message_body
-            if len(room.message_body) > 45:
-                room.message_body = room.message_body[:45]
+            if len(room.message_body) > GROUP_LAST_MESSAGE_SIZE:
+                room.message_body = room.message_body[:GROUP_LAST_MESSAGE_SIZE] + '...'
         context = {"rooms": rooms} 
         return render(request, "chats/partials/rooms.html", context)
 
@@ -84,9 +88,15 @@ class LoadThreadMessages(LoginRequiredMixin,View):
     def get(self,request,*args,**kwargs):
         thread_id = kwargs.get("thread_id")
         thread = get_object_or_404(ChatThread,pk = thread_id)
-        messages = ThreadMessage.objects.filter(thread = thread)
-        other_user = thread.user1 if request.user.id == thread.user2.id else thread.user2.id
+        messages = ThreadMessage.objects.filter(thread = thread).select_related("author").order_by('created_at')[:50]
+        other_user = thread.user1 if request.user.id == thread.user2.id else thread.user2
         context = {"messages":messages,"other_user":other_user}
         return render(request,"chats/partials/thread_messages.html",context)
 
-        
+class LoadRoomMessages(LoginRequiredMixin,View):
+    def get(self,request,*args,**kwargs):
+        room_id = kwargs.get("room_id")
+        room = get_object_or_404(ChatRoom,pk = room_id)
+        messages = RoomMessage.objects.filter(room = room).select_related("author").order_by("created_at")[:50]
+        context = {"messages":messages,"room_name":room.classroom.name}
+        return render(request,"chats/partials/room_messages.html",context)

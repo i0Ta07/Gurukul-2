@@ -1,0 +1,32 @@
+{% load humanize %}
+{% load static %}
+<div class="flex justify-center items-center gap-1">
+    {% if other_user.profile_picture %}
+    <img class="size-10 rounded-full border p-1 border-gray-700" src="{{ other_user.profile_photo.url }}" alt="Profile Picture">
+    {% else %}
+    <img class="size-12 rounded-full border p-1 border-gray-700" src="{% static 'images/default_profile.png' %}" alt="Default profile">
+    {% endif %}
+    <h1>{{ other_user.get_full_name }}</h1>
+</div>
+<p class="text-center">Messages are automatically deleted after 7 days.</p>
+{% for message in messages %}
+{% if message.author == other_user %}
+<div class="chat chat-start">
+    <div class="chat-header">
+        <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+    </div>
+    <div class="chat-bubble">
+        {{ message.body }}
+    </div>
+</div>
+{% else %}
+<div class="chat chat-end">
+    <div class="chat-header">
+        <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+    </div>
+    <div class="chat-bubble chat-bubble-primary">
+        {{ message.body }}
+    </div>
+</div>
+{% endif %}
+{% endfor %}
