@@ -2,35 +2,39 @@
 {% load static %}
 
 <h1 class="text-center">{{ room_name }}</h1>
-<p class="text-center">Messages are automatically deleted after 30 days.</p>
-{% for message in messages %}
-{% if message.author != request.user %}
-<div class="chat chat-start">
-    <div class="chat-image avatar">
-        <div class="size-12 p-1 rounded-full border border-gray-700">
-            {% if message.author.profile_picture %}
-            <img src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
-            {% else %}
-            <img src="{% static 'images/default_profile.png' %}" alt="Default profile">
-            {% endif %}
+<p class="text-center mb-2">Messages are automatically deleted after 30 days.</p>
+
+<div class="overflow-y-auto scrollbar-none min-h-0 flex-1" x-init="$el.scrollTo(0, $el.scrollHeight)">
+    {% for message in messages %}
+    {% if message.author != request.user %}
+    <div class="chat chat-start">
+        <div class="chat-image avatar">
+            <div class="size-12 p-1 rounded-full border border-gray-700">
+                {% if message.author.profile_picture %}
+                <img src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
+                {% else %}
+                <img src="{% static 'images/default_profile.png' %}" alt="Default profile">
+                {% endif %}
+            </div>
+        </div>
+        <div class="chat-header">
+            {{ message.author.get_full_name }}
+            <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+        </div>
+        <div class="chat-bubble">
+            {{ message.body }}
         </div>
     </div>
-    <div class="chat-header">
-        {{ message.author.get_full_name }}
-        <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+    {% else %}
+    <div class="chat chat-end">
+        <div class="chat-header">
+            <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+        </div>
+        <div class="chat-bubble chat-bubble-primary">
+            {{ message.body }}
+        </div>
     </div>
-    <div class="chat-bubble">
-        {{ message.body }}
-    </div>
+    {% endif %}
+    {% endfor %}
 </div>
-{% else %}
-<div class="chat chat-end">
-    <div class="chat-header">
-        <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
-    </div>
-    <div class="chat-bubble chat-bubble-primary">
-        {{ message.body }}
-    </div>
-</div>
-{% endif %}
-{% endfor %}
+{% include 'chats/partials/thread_messages.html#send-message' %}
