@@ -1,7 +1,7 @@
 {% load static %}
 {% load humanize %}
 {% for thread in threads %}
-<div class="flex gap-1 h-18" hx-get="{% url 'thread' thread_id=thread.id %}" hx-target="#chat-window" hx-swap="innerHTML">
+<div class="flex gap-1 h-18" hx-get="{% url 'thread' thread_id=thread.id %}" id="{{ thread.id }}" @click="active = {{ thread.id }}" :class="{ 'bg-gray-800': active === {{ thread.id }} }" hx-target="#chat-window" hx-swap="innerHTML">
     <div class="flex justify-between items-center">
         {% if  thread.other_user.profile_photo %}
         <img class="size-15 p-1 rounded-full border border-gray-700" src="{{ thread.other_user.profile_photo.url }}" alt="Profile Picture">

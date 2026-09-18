@@ -28,6 +28,10 @@ The flow would be:
 
 After user scrolled up and got to the last 50th messages, we have to make a request for more 50 messages.
 
+### Active chat backgroud
+
+This is true beauty, I have never seen it anything like it. the parent container get a `x-data= "{active: null }"`. Now each thread gets `id = {{ thread.id}}  @click="active = {{ thread.id }}" :class="bg=gray-800: active==={{ thread.id }}"`. === checks both the type and value. Now when the user clicks on the thread `active = clicked_thread_id` which makes `active==={{ thread.id }}` = true which in turn makes bg-gray-800 = true and we get our gray background on selected thread. Truely master piece.
+
 ### To do list
 
 * Active search HTMX to search for users.
