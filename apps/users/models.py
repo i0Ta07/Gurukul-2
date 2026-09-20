@@ -1,56 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser,BaseUserManager
+from django.contrib.auth.models import AbstractUser,UserManager
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
 import uuid,os
 from PIL import Image
-
 from django.contrib.sessions.backends.db import SessionStore as DBStore
 from django.contrib.sessions.base_session import AbstractBaseSession
 from django.db import models
 
-# AbstractUser's default manager expects a username. If you remove it, Django's createsuperuser can behave unexpectedly.
-# Create a custom manager
-
-class UserManager(BaseUserManager):
-    """Define a model manager for User model with no username field."""
-
-    use_in_migrations = True
-
-    def _create_user(self, email, password, **extra_fields):
-        """Create and save a User with the given email and password."""
-        if not email:
-            raise ValueError("The given email must be set")
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_user(self, email, password=None, **extra_fields):
-        """Create and save a regular User with the given email and password."""
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
-        return self._create_user(email, password, **extra_fields)
-
-    def create_superuser(self, email, password, **extra_fields):
-        """Create and save a SuperUser with the given email and password."""
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
-
-        return self._create_user(email, password, **extra_fields)
-
-
-
-# AbstractUser already contains first_name, last_name, is_staff etc. In AbstractUser only username and password are mandotory
-# So we have to override the fields we want necessary
 class User(AbstractUser):
-    username = None
     email = models.EmailField(_('Email Address'),unique=True, blank=False)
     class UserType(models.TextChoices):
         TEACHER = 'T',_('Teacher')
@@ -78,10 +36,9 @@ class User(AbstractUser):
         blank=True
     )
     bio = models.CharField(max_length=100, blank=True)
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+
+    REQUIRED_FIELDS = ['email']
     
-    # Override default UserManager, Quering DB, create_user() and createsuperuser() will be done through our custom manager
     objects = UserManager()
 
     def __str__(self):

@@ -13,3 +13,7 @@ User enters an email, we will check if it is already taken if not we will save t
 ### Change Email
 
 The working is very similar to how django implement forgot password. We will render the profile form that will also contain the email. If the POST request does not contain the email field we will not do anything but if it does we will save the old email for now and save the new email in redis. Now we will use the user_id and convert it to base64 and use `TimestampSigner` to sign and send it to the user's new email. This is because if the user clicks on the link again it will be automatically invalidated since the salt is now the new email. When the user clicks the link we will extract the give user id and try to unsign the string with the extracted user's current email. If the link has been tampered with, we will get a error during unsign. If this all was successful we will get the new email from the redis and update. We have to check for race conditions, if in between user created an account with this email. We then delete the key from the cache and logout him from all devices.
+
+## Remeber
+
+* Since we changed the base.html from min-h-screen(scroll if content is more) to h-vdh(no scrolling) we have to manually add the scrollbar for the pages we want to scroll. Do not add overflow-y-auto scrollbar-none to page-container but rather to one class down.

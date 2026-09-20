@@ -69,7 +69,8 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2', # Oauth Github
     'social_core.backends.google.GoogleOAuth2', # Oauth Google
-    'django.contrib.auth.backends.ModelBackend',  # Default
+    'apps.users.authentication.EmailAuthBackend', # Email Backend
+    'django.contrib.auth.backends.ModelBackend',  # Default Username Backend
 )
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')

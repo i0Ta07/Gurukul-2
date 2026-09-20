@@ -16,9 +16,9 @@ from config.utils import send_email
 
 class LoginForm(AuthenticationForm):
     # Django AuthenticationForm still requires the name as username but since we did USERNAME_FIELD = "email", it will get replace
-    username = forms.EmailField(max_length=100,label=_('Email') ,required=True,widget=forms.EmailInput(attrs={
-        'placeholder': 'john_doe@gmail.com',
-        'class': 'form-input '
+    username = forms.CharField(max_length=254,label=_('Username / Email') ,required=True,widget=forms.TextInput(attrs={
+        'placeholder': 'john_doe@gmail.com or john_doe',
+        'class': 'form-input ','autocomplete':'email',
         })
     )
     
@@ -40,7 +40,7 @@ class RegisterEmailForm(forms.Form):
     email = forms.EmailField(
         required=True,
         label=_('Email'),
-        widget=forms.EmailInput(attrs={'placeholder': 'john_doe@gmail.com',
+        widget=forms.EmailInput(attrs={'placeholder': 'john_doe@gmail.com','autocomplete':'email',
         'class':'form-input'}),
     )
 
@@ -50,15 +50,24 @@ class CompleteRegistrationForm(UserCreationForm):
         required=False,
         label=_('Email'),
         disabled=True,
-        widget=forms.EmailInput(attrs={'placeholder': 'john_doe@gmail.com',
+        widget=forms.EmailInput(attrs={'placeholder': 'john_doe@gmail.com','autocomplete':'off',
         'class':'form-input'}),
+    )
+
+    username = forms.CharField(
+        required=True,
+        label=_('Username'),
+        max_length=150,
+        widget=forms.TextInput(
+            attrs={'placeholder':'username', 'class':'form-input','autocomplete':'username'}
+        )
     )
 
     first_name = forms.CharField(
         max_length=30,
         required=True,
         label=_('First Name'),
-        widget=forms.TextInput(attrs={'placeholder':'John', 
+        widget=forms.TextInput(attrs={'placeholder':'John', 'autocomplete':'name',
         'class':'form-input'}),
     )
     last_name = forms.CharField(
@@ -100,8 +109,8 @@ class CompleteRegistrationForm(UserCreationForm):
     class Meta:
         model = User
         fields = [
-            'first_name', 'last_name','user_type',
-            'password1', 'password2',
+            'username', 'first_name', 'last_name',
+            'user_type', 'password1', 'password2',
         ]
 
 
@@ -133,12 +142,21 @@ class UpdateUserDetailsForm(forms.ModelForm):
         if not self.instance.phone_number:
             self.initial["phone_number"] = ["IN", None]
 
+    username = forms.CharField(
+        required=True,
+        label=_('Username'),
+        max_length=150,
+        widget=forms.TextInput(
+            attrs={'placeholder':'username', 'class':'form-input','autocomplete':'username',}
+        )
+    )
+
     first_name = forms.CharField(
         max_length=30,
         required=True,
         label=_('First Name'),
         widget=forms.TextInput(attrs={
-        'class':'form-input'}),
+        'class':'form-input','autocomplete':'name',}),
     )
     last_name = forms.CharField(
         max_length=30,
@@ -151,7 +169,7 @@ class UpdateUserDetailsForm(forms.ModelForm):
         required=True,
         label=_('Email'),
         widget=forms.EmailInput(attrs={
-        'class': 'form-input '
+        'class': 'form-input ','autocomplete':'email',
         })
     )
     user_type = forms.ChoiceField(
@@ -162,7 +180,6 @@ class UpdateUserDetailsForm(forms.ModelForm):
         widget=forms.Select(attrs={
         'class': 'form-input'}),
     )
-
 
     phone_number = BootstrapSplitPhoneNumberField(
         label=_('Phone'),
@@ -196,7 +213,7 @@ class UpdateUserDetailsForm(forms.ModelForm):
     
     class Meta:
         model = User
-        fields = ['first_name','last_name','email','user_type','phone_number','date_of_birth','profile_photo','bio']
+        fields = ['username','first_name','last_name','email','user_type','phone_number','date_of_birth','profile_photo','bio']
 
 
 class ResetPasswordForm(PasswordResetForm):

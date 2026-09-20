@@ -5,10 +5,10 @@
 
 {% block content %}
 
-<div class="page-container" id="page-container">
+<div class="page-container " id="page-container">
     {% partialdef profile inline %}
     <title>My Profile</title>
-    <div class="grid items-center lg:grid-cols-2 gap-6">
+    <div class="grid items-center lg:grid-cols-2 gap-6 overflow-y-auto scrollbar-none">
         <div id="profile-form">
             {% partialdef profile-form inline %} <!-- Update the form, any form errors and page messages. -->
 
@@ -31,15 +31,15 @@
                             {% else %}
                             <img class="size-30 p-1 rounded-full ring-2 ring-gray-500" src="{% static 'images/default_profile.png' %}" alt="Default profile">
                             {% endif %}
-                            <label class="block my-1 text-sm font-medium text-heading">Upload new</label>
+                            <p class="block my-1 text-sm font-medium text-heading">Upload new</p>
                             {{ form.profile_photo }}
                         </div>
                         
                         <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center w-full gap-x-5">
                             <div class="hidden lg:flex lg:flex-col lg:gap-y-5 lg:mt-4 whitespace-nowrap">
-                                <label class="form-label text-base">{{form.first_name.label}}</label>
-                                <label class="form-label text-base">{{form.last_name.label}}</label>
-                                    <label class="form-label text-base">{{form.user_type.label}}</label>
+                                <p class="form-label text-base">{{form.first_name.label}}</p>
+                                <p class="form-label text-base">{{form.last_name.label}}</p>
+                                <p class="form-label text-base">{{form.user_type.label}}</p>
                             </div>
                             <div class="flex flex-col gap-y-3 w-full">
                                 {{ form.first_name }}
@@ -50,20 +50,22 @@
                     </div>
                     <div class="flex justify-center items-center gap-x-3 bordered-card">
                         <div class="hidden lg:flex lg:flex-col justify-center items-center lg:gap-y-5">
-                            <label class="form-label">{{form.email.label}}</label>
-                            <label class="form-label">{{form.phone_number.label}}</label>
+                            <p class="form-label">{{form.username.label}}</p>
+                            <p class="form-label">{{form.email.label}}</p>
+                            <p class="form-label">{{form.phone_number.label}}</p>
                         </div>
                         <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
+                            {{ form.username }}
                             {{ form.email }}
                             <div class="inline-flex gap-x-2 w-full">
                                 {{ form.phone_number }}
                             </div>
                         </div>
                     </div>
-                    <div class=" flex justify-center items-center  gap-x-3 bordered-card">
-                        <div class="hidden lg:flex lg:flex-col items-center whitespace-nowrap">
-                            <label class="form-label  mb-20">{{form.date_of_birth.label}}</label>
-                            <label class="form-label">{{form.bio.label}}</label>
+                    <div class=" flex justify-center items-center gap-x-3 bordered-card">
+                        <div class="hidden lg:flex lg:flex-col items-center whitespace-nowrap gap-5">
+                            <p class="form-label">{{form.date_of_birth.label}}</p>
+                            <p class="form-label h-22">{{form.bio.label}}</p>    
                         </div>
                         <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
                             {{ form.date_of_birth }}

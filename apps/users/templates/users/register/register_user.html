@@ -4,38 +4,42 @@
 
 {% block content %}
 
-<div class="page-container items-center justify-center"> <!--flex-auto take the remaining space from the parent flexbox, but take initail width into account-->
-    <div class="bordered-card max-w-5xl">
+<div class="page-container items-center justify-center "> <!--flex-auto take the remaining space from the parent flexbox, but take initail width into account-->
+    <div class="bordered-card max-w-5xl overflow-y-auto scrollbar-none">
         <h1 class="text-center mb-5">Create Account</h1>
         <form class="w-full" method="post">
             {% csrf_token %}
-            <div class="grid grid-cols-2 gap-6" x-data="{showPass:false}">
-                <div>
-                    <label class="mb-2 text-sm form-label">{{form.email.label}}</label>
+            <div class="flex flex-col lg:grid lg:grid-cols-2 gap-6 " x-data="{showPass:false}">
+                <div class="lg:col-span-2">
+                    <p class="mb-2 text-sm form-label">{{form.email.label}}</p>
                     {{ form.email }}
                 </div>
                 <div>
-                    <label class="mb-2 text-sm form-label">{{ form.user_type.label}}</label>
+                    <p class="mb-2 text-sm form-label">{{form.username.label}}</p>
+                    {{ form.username }}
+                </div>
+                <div>
+                    <p class="mb-2 text-sm form-label">{{ form.user_type.label}}</p>
                     {{ form.user_type }}
                 </div>
                 <div>
-                    <label class="mb-2 text-sm form-label">{{form.first_name.label}}</label>
+                    <p class="mb-2 text-sm form-label">{{form.first_name.label}}</p>
                     {{ form.first_name }}
                 </div>
                 <div>
-                    <label for="lname"
-                        class="mb-2 text-sm form-label">{{form.last_name.label }}</label>
+                    <p for="lname"
+                        class="mb-2 text-sm form-label">{{form.last_name.label }}</p>
                     {{ form.last_name }}
                 </div>
                 <div>
-                    <label class="mb-2 text-sm form-label">{{ form.password1.label}}</label>
+                    <p class="mb-2 text-sm form-label">{{ form.password1.label}}</p>
                     <div class="relative">
                     {{ form.password1 }}
                     {% include "users/login.html#toggle-password-btn" %}
                     </div>
                 </div>
                 <div>
-                    <label class="mb-2 text-sm form-label">{{form.password2.label}}</label>
+                    <p class="mb-2 text-sm form-label">{{form.password2.label}}</p>
                     <div class="relative">
                     {{ form.password2 }}
                     {% include "users/login.html#toggle-password-btn" %}
