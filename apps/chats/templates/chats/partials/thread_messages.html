@@ -6,9 +6,9 @@
     {% else %}
     <img class="size-12 rounded-full border p-1 border-gray-700" src="{% static 'images/default_profile.png' %}" alt="Default profile">
     {% endif %}
-    <h1>{{ other_user.get_full_name }}</h1>
+    <h1 class="text-center text-base xl:text-2xl">{{ other_user.get_full_name }}</h1>
 </div>
-<p class="text-center mb-2">Messages are automatically deleted after 7 days.</p>
+<p class="text-center mb-2 text-xs xl:text-base">Messages are automatically deleted after 7 days.</p>
 
 <div class="flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)">
     {% for message in messages %}
@@ -17,7 +17,7 @@
         <div class="chat-header">
             <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
         </div>
-        <div class="chat-bubble">
+        <div class="chat-bubble text-sm xl:text-base">
             {{ message.body }}
         </div>
     </div>
@@ -26,7 +26,7 @@
         <div class="chat-header">
             <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
         </div>
-        <div class="chat-bubble chat-bubble-primary">
+        <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
             {{ message.body }}
         </div>
     </div>
@@ -35,8 +35,8 @@
 </div>
 {% partialdef send-message inline %}
 <form class="relative" action="" >
-    <input type="text" placeholder="Type your message here" class="form-input m-1 h-12" autofocus="true" />
-    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 rounded-2xl p-1.5">
+    <input type="text" name="message" id="message" placeholder="Type your message" class="form-input mt-1 h-13" />
+    <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-500 rounded-2xl p-1.5">
         <img class="size-4.5" draggable="false" alt="Send" src="{% static 'chats/icons/svg/send.svg' %}">
     </button>
 </form>

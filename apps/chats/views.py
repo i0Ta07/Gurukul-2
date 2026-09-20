@@ -5,10 +5,10 @@ from apps.chats.models import ChatThread,ChatRoom,ThreadMessage,RoomMessage
 from django.db.models import Q, OuterRef,Subquery
 # Create your views here.
 
-THREAD_LAST_MESSAGE_SIZE = 45
-GROUP_LAST_MESSAGE_SIZE = 50
-OTHER_USER_DISPLAY_NAME_SIZE = 15
-CLASSRROM_DISPLAY_NAME_SIZE = 25
+THREAD_LAST_MESSAGE_SIZE = 75
+GROUP_LAST_MESSAGE_SIZE = 80
+OTHER_USER_DISPLAY_NAME_SIZE = 40
+CLASSRROM_DISPLAY_NAME_SIZE = 45
 
 class ChatHome(LoginRequiredMixin,View):
     def get(self,request, *args, **kwargs):

@@ -1,8 +1,8 @@
 {% load humanize %}
 {% load static %}
 
-<h1 class="text-center">{{ room_name }}</h1>
-<p class="text-center mb-2">Messages are automatically deleted after 30 days.</p>
+<h1 class="text-center text-base xl:text-2xl">{{ room_name }}</h1>
+<p class="text-center mb-2 text-xs xl:text-base">Messages are automatically deleted after 30 days.</p>
 
 <div class="overflow-y-auto scrollbar-none min-h-0 flex-1" x-init="$el.scrollTo(0, $el.scrollHeight)">
     {% for message in messages %}
@@ -21,7 +21,7 @@
             {{ message.author.get_full_name }}
             <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
         </div>
-        <div class="chat-bubble">
+        <div class="chat-bubble text-sm xl:text-base">
             {{ message.body }}
         </div>
     </div>
@@ -30,7 +30,7 @@
         <div class="chat-header">
             <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
         </div>
-        <div class="chat-bubble chat-bubble-primary">
+        <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
             {{ message.body }}
         </div>
     </div>

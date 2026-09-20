@@ -1,7 +1,13 @@
 {% load static %}
 {% load humanize %}
+<form action="#" class="relative p-1">
+    <input type="search" id="search" class="form-input h-13" placeholder="Search for users in joined organizations">
+    <button class="bg-blue-500 rounded-2xl p-2 absolute right-3 top-1/2 -translate-y-1/2">
+        <img class="size-4.5" draggable="false" alt="Search" src="{% static 'chats/icons/svg/search.svg' %}">
+    </button>
+</form>
 {% for thread in threads %}
-<div class="flex gap-1 h-18" hx-get="{% url 'thread' thread_id=thread.id %}" id="{{ thread.id }}" @click="active = {{ thread.id }}" :class="{ 'bg-gray-800': active === {{ thread.id }} }" hx-target="#chat-window" hx-swap="innerHTML">
+<div class="flex gap-1 min-h-18 h-fit" hx-get="{% url 'thread' thread_id=thread.id %}" id="{{ thread.id }}" @click="active = {{ thread.id }}; hide_list = true;" :class="{ 'bg-gray-800': active === {{ thread.id }} }" :hx-target="'#' + $id('chat-window')" hx-swap="innerHTML">
     <div class="flex justify-between items-center">
         {% if  thread.other_user.profile_photo %}
         <img class="size-15 p-1 rounded-full border border-gray-700" src="{{ thread.other_user.profile_photo.url }}" alt="Profile Picture">
@@ -11,11 +17,11 @@
     </div>
     <div class="flex flex-col gap-1 p-1 flex-1">
         <div class="flex justify-between mr-1">
-            <h1 class="font-semibold text-xl">{{ thread.other_user_name }}</h1>
-            <p class="text-gray-400">{{ thread.last_message_time|naturaltime }}</p>
+            <h1 class="font-semibold text-sm xl:text-xl">{{ thread.other_user_name }}</h1>
+            <p class="text-gray-400 text-sm xl:text-base">{{ thread.last_message_time|naturaltime }}</p>
         </div>
         <div class="flex gap-1 text-gray-400">
-            <p>{{ thread.last_message_body }}</p>
+            <p class="text-xs xl:text-base">{{ thread.last_message_body }}</p>
         </div>
     </div>
 </div>

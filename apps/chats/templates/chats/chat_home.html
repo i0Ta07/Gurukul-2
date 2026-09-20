@@ -7,19 +7,36 @@
 <div class="page-container" id="page-container" hx-history-elt >
     {% partialdef chat-home inline %}
     <title>Chats</title>
-    <div class="flex flex-1 gap-3 min-h-0" x-data="{ selected_user: true }">
+    <div class="hidden xl:flex flex-1 gap-3 min-h-0" x-data="{ selected_user: true,active: 0  }">
         <div class="flex flex-col items-center w-22 gap-2 bg-slate-950 rounded-2xl py-5">
-            <a hx-get="{% url 'chat-users' %}" hx-target="#chats-list" hx-swap="innerHTML" hx-trigger="load,click">
+            <a hx-get="{% url 'chat-users' %}" hx-target="#chats-list-xl" hx-swap="innerHTML" hx-trigger="load,click">
                 <img class="size-20 hover:bg-slate-800 rounded-2xl p-2" @click="selected_user = true;" :class="selected_user ? 'bg-slate-800' : ''" src="{% static 'images/default_profile.png' %}" alt="User" title="Users">
             </a>
-            <a hx-get="{% url 'chat-rooms' %}" hx-target="#chats-list" hx-swap="innerHTML">
+            <a hx-get="{% url 'chat-rooms' %}" hx-target="#chats-list-xl" hx-swap="innerHTML">
                 <img class="size-22 hover:bg-slate-800 rounded-2xl p-2" @click="selected_user = false" :class="selected_user ? '' : 'bg-slate-800'" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom" title="Classrooms">
             </a>
         </div>
         <div class="h-full border-l border-slate-700"></div>
-        <div class="grid grid-cols-4 flex-1 min-h-0 gap-3" x-data="{ active: null }">
-            <div class="flex flex-col flex-1 bg-slate-950 rounded-2xl scrollbar-none overflow-y-auto min-h-0" id="chats-list" ></div>
-            <div class="col-span-3 flex flex-col  bg-slate-950 rounded-2xl p-3 flex-1  min-h-0" id="chat-window" ></div>
+        <div class="grid  grid-cols-[3fr_5fr] flex-1 min-h-0 gap-3" x-id="['chat-window']">
+            <div class="flex flex-col flex-1 bg-slate-950 rounded-2xl scrollbar-none overflow-y-auto min-h-0" id="chats-list-xl"></div>
+            <div class="flex flex-col flex-1 bg-slate-950 rounded-2xl p-3 min-h-0" :id="$id('chat-window')"></div>
+        </div>
+    </div>
+    <div class="xl:hidden flex flex-col gap-3 flex-1 min-h-0" x-data="{selected_user: true,active:0, hide_list:false}" x-id="['chat-window']">
+        <div class="flex flex-col flex-1 bg-slate-950 rounded-2xl scrollbar-none overflow-y-auto min-h-0" :class="hide_list ? 'hidden' : ''" id="chats-list-sm"></div>
+        <div class="flex flex-col flex-1 bg-slate-950 rounded-2xl p-3 min-h-0" :id="$id('chat-window')" :class="hide_list ? '' : 'hidden'"></div>
+
+        <div class="grid grid-cols-2 gap-2 bg-slate-950 rounded-2xl"> 
+            <a @click="hide_list=false; document.getElementById($id('chat-window')).innerHTML = ''; selected_user = true;" class="hover:bg-slate-800 rounded-2xl p-1"
+                    :class="selected_user ? 'bg-slate-800' : ''"  hx-get="{% url 'chat-users' %}" hx-target="#chats-list-sm" hx-swap="innerHTML" hx-trigger="load,click">
+                <img class="size-10  mx-auto"  src="{% static 'images/default_profile.png' %}"
+                    alt="User" title="Users">
+            </a>
+            <a @click="hide_list=false; document.getElementById($id('chat-window')).innerHTML = ''; selected_user = false;" class="hover:bg-slate-800 rounded-2xl p-1" 
+                    :class="selected_user ? '' : 'bg-slate-800'"  hx-get="{% url 'chat-rooms' %}" hx-target="#chats-list-sm" hx-swap="innerHTML">
+                <img class="size-12 mx-auto"  src="{% static 'orgs/icons/svg/classroom.svg' %}"
+                    alt="Classroom" title="Classrooms">
+            </a>
         </div>
     </div>
     {% endpartialdef chat-home %}
