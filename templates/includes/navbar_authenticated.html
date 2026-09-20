@@ -1,10 +1,10 @@
 {% load static %}
-<div class="bg-slate-950 p-3 flex items-center flex-wrap justify-between">
+<div class="bg-slate-950 p-2 xl:p-3 flex items-center flex-wrap justify-between">
 
     <div class="flex items-center text-white gap-x-3">
-        <p class="text-3xl font-extrabold font-mono mr-5 hover:scale-105">Gurukul</p>
+        <p class="text-lg xl:text-3xl font-extrabold font-mono hover:scale-105">Gurukul</p>
         <a href="{% url 'users-dashboard' %}" hx-get="{% url 'users-dashboard' %}" hx-push-url="true"
-            hx-target="#page-container" hx-swap="innerHTML" class="font-semibold hover:text-blue-400">
+            hx-target="#page-container" hx-swap="innerHTML" class="font-semibold text-sm xl:text-base hover:text-blue-400">
             Dashboard
         </a>
     </div>
@@ -20,14 +20,14 @@
             <a href="{% url 'chat-home' %}" hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
                 <div class="avatar indicator" hx-swap="innerHTML" hx-target="this" sse-swap="message_count">
                     <span class="indicator-item badge badge-sm badge-info p-1">100</span>
-                    <img class="size-8" src="{% static 'chats/icons/png/chats.png' %}" alt="Chats">
+                    <img class="size-6 xl:size-8" src="{% static 'chats/icons/png/chats.png' %}" alt="Chats">
                 </div>
             </a>
             <button @click="open_dropdown = ! open_dropdown" type="button" class="  flex text-sm rounded-full focus:ring-2">
                 {% if user.profile_photo %}
-                <img class="size-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">
+                <img class="size-8 xl:size-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">
                 {% else %}
-                <img class="size-10 p-1 rounded-full" src="{% static 'images/default_profile.png' %}"
+                <img class="size-8 xl:size-10 p-1 rounded-full" src="{% static 'images/default_profile.png' %}"
                     alt="Default profile">
                 {% endif %}
             </button>

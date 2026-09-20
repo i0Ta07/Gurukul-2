@@ -7,7 +7,7 @@
 <div class="page-container" id="page-container" hx-history-elt>
     {% partialdef send-invitations inline %}
     <title>Add Teachers</title>
-    <div class="flex flex-col items-center p-5 gap-3 min-h-0 flex-auto">
+    <div class="flex flex-col items-center p-5 gap-3 min-h-0 flex-auto overflow-y-auto scrollbar-none">
         <h1>Invite Teachers</h1>
         <form hx-post="{% url 'send-invitation' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML"
             enctype="multipart/form-data">

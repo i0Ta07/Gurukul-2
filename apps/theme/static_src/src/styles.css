@@ -60,5 +60,5 @@ This is the child of main base.html flex flex-col div. The div contains two chil
 or grow based on remaining height. If full, it will take the whole height of the page and place itself in center (justify-center, items-center) */
     
 @utility page-container {
-  @apply flex flex-col py-4 px-4 md:px-8 flex-auto  min-h-0
+  @apply flex flex-col py-2 xl:py-4 px-4 xl:px-8 flex-auto min-h-0
 }
