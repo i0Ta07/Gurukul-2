@@ -8,7 +8,11 @@
     <title>My Dashboard</title>
     <div class="flex flex-col gap-y-3">
         <h1>Welcome to Dashboard page</h1>
-        <a href="{% url 'view-root-orgs'  %}" class="base-button w-25 bg-blue-500 hover:bg-blue-700">View Orgs</a>
+        {% if request.user.user_type == 'T' %}
+        <a href="{% url 'view-root-orgs'  %}" class="base-button w-fit bg-blue-500 hover:bg-blue-700">View Orgs</a>
+        {% elif request.user.user_type == 'S' %}
+        <a href="{% url 'list-classrooms'  %}" class="base-button w-fit bg-blue-500 hover:bg-blue-700">View Classrooms</a>
+        {% endif %}
     </div>
     {% endpartialdef %}    
 </div>

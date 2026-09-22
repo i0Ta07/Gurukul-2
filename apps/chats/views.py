@@ -5,11 +5,6 @@ from apps.chats.models import ChatThread,ChatRoom,ThreadMessage,RoomMessage
 from django.db.models import Q, OuterRef,Subquery
 # Create your views here.
 
-THREAD_LAST_MESSAGE_SIZE = 75
-GROUP_LAST_MESSAGE_SIZE = 80
-OTHER_USER_DISPLAY_NAME_SIZE = 40
-CLASSRROM_DISPLAY_NAME_SIZE = 45
-
 class ChatHome(LoginRequiredMixin,View):
     def get(self,request, *args, **kwargs):
         if request.htmx:
@@ -17,6 +12,9 @@ class ChatHome(LoginRequiredMixin,View):
         return render(request,"chats/chat_home.html")
 
 class ChatUsers(LoginRequiredMixin, View):
+    THREAD_LAST_MESSAGE_SIZE = 75
+    OTHER_USER_DISPLAY_NAME_SIZE = 40
+
     def get(self, request, *args, **kwargs):
         current_user = request.user
 
@@ -39,21 +37,24 @@ class ChatUsers(LoginRequiredMixin, View):
             thread.other_user = thread.user2 if request.user == thread.user1 else thread.user1
 
             other_user_name = thread.other_user.get_full_name()
-            if len(other_user_name) > OTHER_USER_DISPLAY_NAME_SIZE:
-                other_user_name = other_user_name[:OTHER_USER_DISPLAY_NAME_SIZE] + '...'
+            if len(other_user_name) > self.OTHER_USER_DISPLAY_NAME_SIZE:
+                other_user_name = other_user_name[:self.OTHER_USER_DISPLAY_NAME_SIZE] + '...'
             thread.other_user_name = other_user_name
 
 
             if thread.last_message_author_id != thread.other_user.id:
                 thread.last_message_body = 'You: ' + thread.last_message_body
-            if len(thread.last_message_body)> THREAD_LAST_MESSAGE_SIZE:
-                thread.last_message_body = thread.last_message_body[:THREAD_LAST_MESSAGE_SIZE] + '...'
+            if len(thread.last_message_body)> self.THREAD_LAST_MESSAGE_SIZE:
+                thread.last_message_body = thread.last_message_body[:self.THREAD_LAST_MESSAGE_SIZE] + '...'
 
 
         context = {'threads': threads}
         return render(request, "chats/partials/threads.html", context)
 
 class ChatRooms(LoginRequiredMixin, View):
+    GROUP_LAST_MESSAGE_SIZE = 80
+    CLASSRROM_DISPLAY_NAME_SIZE = 45
+
     def get(self, request, *args, **kwargs):
         # Subquery to pick the most recent RoomMessage for each room
         latest_room_msg = RoomMessage.objects.filter(
@@ -69,6 +70,7 @@ class ChatRooms(LoginRequiredMixin, View):
             .annotate(
                 last_message_body=Subquery(latest_room_msg.values('body')[:1]),
                 last_message_time=Subquery(latest_room_msg.values('created_at')[:1]),
+                last_message_author_id=Subquery(latest_room_msg.values('author__id')[:1]),
                 last_message_author_first_name=Subquery(latest_room_msg.values('author__first_name')[:1]),
                 last_message_author_last_name=Subquery(latest_room_msg.values('author__last_name')[:1]),
             )
@@ -76,11 +78,14 @@ class ChatRooms(LoginRequiredMixin, View):
         )
 
         for room in rooms: 
-            if len(room.classroom.name) > CLASSRROM_DISPLAY_NAME_SIZE:
-                room.classroom.name = room.classroom.name[:CLASSRROM_DISPLAY_NAME_SIZE] + '...'
-            room.message_body = room.last_message_author_first_name + ' ' +  room.last_message_author_last_name + ': ' + room.last_message_body
-            if len(room.message_body) > GROUP_LAST_MESSAGE_SIZE:
-                room.message_body = room.message_body[:GROUP_LAST_MESSAGE_SIZE] + '...'
+            if len(room.classroom.name) > self.CLASSRROM_DISPLAY_NAME_SIZE:
+                room.classroom.name = room.classroom.name[:self.CLASSRROM_DISPLAY_NAME_SIZE] + '...'
+            if room.last_message_author_id == request.user.id:
+                room.message_body = 'You: ' + room.last_message_body
+            else:
+                room.message_body = room.last_message_author_first_name + ' ' +  room.last_message_author_last_name + ': ' + room.last_message_body
+            if len(room.message_body) > self.GROUP_LAST_MESSAGE_SIZE:
+                room.message_body = room.message_body[:self.GROUP_LAST_MESSAGE_SIZE] + '...'
         context = {"rooms": rooms} 
         return render(request, "chats/partials/rooms.html", context)
 

@@ -24,9 +24,9 @@ The flow would be:
 4. This group will broadcast this message to each connection in the group.
 5. The frontend will receive the message and make changes according to sse-swap.
 
-### Load more messages
+### Mobile UI for Chats
 
-After user scrolled up and got to the last 50th messages, we have to make a request for more 50 messages.
+We have made a seperate but similar UI to the desktop setup. It used the same partials as the Desktop but we have used x-id to dynamically assign the ID to chat-window. When the request is made from either small screen or large screen, the target will be based on the closest `x-id="['chat-window']"` resolved by Alpine and threads or rooms will be replaced there. In mobile, we will have to replace the same chat-window in which threads were shown to load conversations. Therefore inside threads we have `:hx-target="'#' + $id('chat-window')"` which will target the closest chat-window. For desktop, there is a seperate chat-window but for mobile everything happens inside a chat-window.
 
 ### Active chat backgroud
 
@@ -35,6 +35,4 @@ This is true beauty, I have never seen it anything like it. the parent container
 ### To do list
 
 * Active search HTMX to search for users.
-* Make the Chats page responsive.
-* Delete week old thread messages and month old group messages.
-* Make the chat-window scrollable
+* Load more messages as user scrolls up in the chat.

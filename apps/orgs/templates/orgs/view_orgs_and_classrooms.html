@@ -129,7 +129,7 @@
                                 </div>
                                 <a href="{% url 'view-child-orgs' org_path=org.path org_id=org.id  %}" class="text-center">
                                     <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Folder">
-                                    <p class="font-bold min-w-20">{{ org.name }}</p>
+                                    <p class="font-bold min-w-20">{{ org.name|truncatechars:15 }}</p>
                                 </a>
                                 {% if root_org_view %}
                                     <div class="badge badge-soft badge-success">{{ org.role }}</div>
@@ -167,16 +167,15 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <a href="{% url 'view-classroom' classroom_path=classroom.path parent_org_id=parent_org_id classroom_id=classroom.id  %}" class="text-center">
+                                <a href="{% url 'view-classroom-teachers' classroom_path=classroom.path parent_org_id=parent_org_id classroom_id=classroom.id  %}" class="text-center">
                                     <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom">
-                                    <label class="font-bold min-w-20">{{ classroom.name }}</label>
+                                    <label class="font-bold min-w-20">{{ classroom.name|truncatechars:15 }}</label>
                                 </a>
                             </div>
                             {% include "partials/messages.html" %} 
                         {% endpartialdef classroom-row %}
                     {% endfor %}
                 {% endif %}
-
             </div>
             {% if not classrooms and not orgs %}
                 <div  class="flex flex-col flex-auto justify-center items-center" @child-org-created.window="$el.remove();" @root-org-created.window="$el.remove();"><!--Need bubble up, from child to parent-->

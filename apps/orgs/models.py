@@ -230,6 +230,9 @@ class OrgInvitation(models.Model):
         
         if self.to_user == self.from_user:
             raise ValidationError("You cannot invite yourself.")
+
+        if self.to_user.user_type == User.UserType.STUDENT:
+            raise ValidationError("You cannot invite students. They can only join using the classroom link.")
         
         if self.org.config.owner != self.from_user and not is_admin(org = self.org, teacher=self.from_user):
             raise ValidationError("You dont have permission to send invitations.")

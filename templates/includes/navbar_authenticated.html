@@ -34,11 +34,11 @@
         </div>
         <!-- Dropdown menu -->
         <div x-show="open_dropdown" x-cloak  x-transition @click.outside="open_dropdown = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
-            <div class="px-4 py-3 text-sm border-b">
+            <div class="px-4 py-3 text-xs xl:text-sm border-b">
                 <span class="block text-white">{{user.get_full_name}}</span>
                 <span class="block text-gray-200">{{user.email}}</span>
             </div>
-            <ul class="p-2 text-sm text-body font-medium">
+            <ul class="p-2 text-xs xl:text-sm text-body font-medium">
                 <li @click="open_dropdown = false">
                     <a href="{% url 'users-profile' %}" hx-get="{% url 'users-profile' %}" hx-push-url="true" hx-target="#page-container" hx-swap="innerHTML" 
                         class=" inline-flex items-center w-full p-2  text-gray-200 hover:bg-gray-700 hover:text-white hover:rounded-lg">View

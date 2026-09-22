@@ -1,8 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from apps.classes.models import ClassMembership, Classroom
-from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
-from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired
+from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin, StudentRequiredMixin
+from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomStudentRequired
 from django.shortcuts import get_object_or_404,render
 from django.core.exceptions import ValidationError
 from apps.classes.forms import ClassroomNameForm
@@ -55,7 +55,7 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
         response['HX-Trigger'] = 'classroom-created'
         return response
 
-class ViewClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,View): # class membership for students. or membership of teacher or owner of class
+class ViewClassroomTeacher(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,View): # class membership for students. or membership of teacher or owner of class
     template_name = "classes/classroom.html"
     def get(self,request, *args,**kwargs):
         role = self.role
@@ -126,3 +126,22 @@ class DeleteClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgA
         classroom = self.get_classroom()
         classroom.delete()
         return HttpResponse("", status=200)
+
+class ListClassrooms(LoginRequiredMixin,StudentRequiredMixin,View):
+    template_name = "classes/list_classrooms.html"
+    def get(self,request,*args, **kwargs):
+        classrooms = Classroom.objects.filter(membership__user_id = request.user.id)
+        context = {"classrooms":classrooms}
+        if request.htmx:
+            return render(request,"classes/list_classrooms.html#list-classrooms",context)
+        return render(request,self.template_name,context)
+
+class ViewClassroomStudent(LoginRequiredMixin,StudentRequiredMixin, ClassroomStudentRequired, View):
+    template_name = "classes/classroom.html"
+    def get(self,request, *args,**kwargs):
+        role = self.role
+        classroom = self.get_classroom()
+        context = {"role":role,"classroom_name":classroom.name}
+        if request.htmx:
+            return render(request,"classes/classroom.html#classroom",context=context)
+        return render(request=request,template_name=self.template_name,context=context)

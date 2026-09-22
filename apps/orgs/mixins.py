@@ -10,8 +10,15 @@ class TeacherRequiredMixin:
         if request.user.user_type != User.UserType.TEACHER:
             return create_message_and_redirect(request,"Only Teachers can perform this action.","users-dashboard","warning",)
 
-        return super().dispatch(request, *args, **kwargs)   
+        return super().dispatch(request, *args, **kwargs)
 
+class StudentRequiredMixin:
+    """Mixin that requires the user to be a student to access a page."""
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.user_type != User.UserType.STUDENT:
+            return create_message_and_redirect(request,"Only students can perform this action.","users-dashboard","warning",)
+
+        return super().dispatch(request, *args, **kwargs)
 # Inserts root_org inside the View instance, so don't have to make multiple DB calls.
 class RootOrganizationMixin:
     def get_root_current_org(self):
