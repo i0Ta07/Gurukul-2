@@ -3,6 +3,10 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from apps.chats.models import ChatThread,ChatRoom,ThreadMessage,RoomMessage
 from django.db.models import Q, OuterRef,Subquery
+from apps.chats.forms import ThreadMessageForm,RoomMessageForm
+from apps.classes.mixins import ClassroomMembershipRequired
+from apps.classes.models import ClassMembership
+from config.utils import create_message_and_redirect
 # Create your views here.
 
 class ChatHome(LoginRequiredMixin,View):
@@ -90,18 +94,57 @@ class ChatRooms(LoginRequiredMixin, View):
         return render(request, "chats/partials/rooms.html", context)
 
 class LoadThreadMessages(LoginRequiredMixin,View):
+    form_class = ThreadMessageForm
+
     def get(self,request,*args,**kwargs):
         thread_id = kwargs.get("thread_id")
         thread = get_object_or_404(ChatThread,pk = thread_id)
         messages = ThreadMessage.objects.filter(thread = thread).select_related("author").order_by('created_at')[:50]
         other_user = thread.user1 if request.user.id == thread.user2.id else thread.user2
-        context = {"messages":messages,"other_user":other_user}
+        form = self.form_class()
+        context = {"messages":messages,"other_user":other_user,'form':form, 'thread_id':thread_id}
         return render(request,"chats/partials/thread_messages.html",context)
 
-class LoadRoomMessages(LoginRequiredMixin,View):
+class LoadRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
+    form_class = RoomMessageForm
     def get(self,request,*args,**kwargs):
-        room_id = kwargs.get("room_id")
-        room = get_object_or_404(ChatRoom,pk = room_id)
-        messages = RoomMessage.objects.filter(room = room).select_related("author").order_by("created_at")[:50]
-        context = {"messages":messages,"room_name":room.classroom.name}
+        classroom = self.get_classroom()
+        messages = RoomMessage.objects.filter(room_id = classroom.id).select_related("author").order_by("created_at")[:50]
+        form = self.form_class()
+        context = {"messages":messages,"room_name":classroom.name,'form':form,'classroom_id':classroom.id}
         return render(request,"chats/partials/room_messages.html",context)
+
+class SendRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
+    form_class = RoomMessageForm
+    def post(self,request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return create_message_and_redirect(request=request,message="Some error occured",url="users-dashboard",code="error")
+        
+        classroom = self.get_classroom()
+        membership_exists = ClassMembership.objects.filter(user=request.user, classroom=classroom).exists()
+        if not membership_exists and request.user != self.room.classroom.owner: 
+            return create_message_and_redirect(request=request,message="You are NOT part of this room.",url="users-dashboard",code="warning")
+        room_message = form.save(commit=False)
+        room_message.author = request.user
+        room_message.room = classroom.chatroom
+        room_message.save()
+        return render(request,"chats/partials/room_messages.html#send-room-message",{'message':room_message})
+
+class SendThreadMessage(LoginRequiredMixin,View):
+    form_class= ThreadMessageForm
+    def post(self,request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return create_message_and_redirect(request=request,message="Some error occured",url="users-dashboard",code="error")
+        
+        thread_id = kwargs.get("thread_id")
+        thread = get_object_or_404(ChatThread,pk = thread_id)
+        if thread.user1.id != request.user.id and thread.user2.id != request.user.id:
+            return  create_message_and_redirect(request=request,message="You are NOT part of this thread",url="users-dashboard",code="warning")
+        thread_message = form.save(commit=False)
+        thread_message.thread = thread
+        thread_message.author = request.user
+        thread_message.save()
+        return render(request,"chats/partials/thread_messages.html#send-thread-message",{'message':thread_message})
+

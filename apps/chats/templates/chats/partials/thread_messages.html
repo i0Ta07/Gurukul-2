@@ -10,8 +10,9 @@
 </div>
 <p class="text-center mb-2 text-xs xl:text-base">Messages are automatically deleted after 7 days.</p>
 
-<div class="flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)">
+<div class="flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)" id="thread-messages">
     {% for message in messages %}
+    {% partialdef send-thread-message inline %}
     {% if message.author == other_user %}
     <div class="chat chat-start">
         <div class="chat-header">
@@ -31,13 +32,15 @@
         </div>
     </div>
     {% endif %}
+    {% endpartialdef send-thread-message %}
     {% endfor %}
 </div>
-{% partialdef send-message inline %}
-<form class="relative" action="" >
-    <input type="text" name="message" id="message" placeholder="Type your message" class="form-input mt-1 h-13" />
+
+<form class="relative" hx-post="{% url 'send-thread-message' thread_id=thread_id %}" hx-swap="beforeend scroll:#thread-messages:bottom" hx-target="#thread-messages"  hx-on::after-request="this.reset()" >
+    {{ form.body }}
+    {% partialdef send-button inline %}
     <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-500 rounded-2xl p-1.5">
         <img class="size-4.5" draggable="false" alt="Send" src="{% static 'chats/icons/svg/send.svg' %}">
     </button>
+    {% endpartialdef send-button %}
 </form>
-{% endpartialdef send-message %}

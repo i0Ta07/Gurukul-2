@@ -33,12 +33,8 @@ class RoomMessage(models.Model):
     def __str__(self):
         return f"{self.room.classroom.name} ({self.author.get_full_name()})"
 
-    def clean(self):
-        super().clean()
-        membership_exists = ClassMembership.objects.filter(user=self.author, classroom=self.room.classroom).exists()
-        if not membership_exists and self.author != self.room.classroom.owner: 
-            raise ValidationError("You cannot send messages inside this room.")
-
+    class Meta:
+        ordering = ['-created_at']
 
 class ChatThread(models.Model):
     user1 = models.ForeignKey(
@@ -80,10 +76,10 @@ class ChatThread(models.Model):
             raise ValidationError("You cannot initiate a chat with yourself.")
 
     @classmethod
-    def get_or_create_thread(cls, u1, u2): # Thread.get_or_create_thread
+    def create_thread(cls, sender_id, receiver_id): # Thread.get_or_create_thread
         # Always order the users so the smaller ID is user1
-        user1, user2 = (u1, u2) if u1.pk < u2.pk else (u2, u1)
-        thread, created = cls.objects.get_or_create(user1=user1, user2=user2)
+        sender_id, receiver_id = (sender_id, receiver_id) if sender_id < receiver_id else (receiver_id, sender_id)
+        thread = cls.objects.create(user1_id=sender_id, user2_id=receiver_id)
         return thread # thread.save() to trigger auto_add during websocket disconnection.
 
 class ThreadMessage(models.Model):
@@ -104,7 +100,5 @@ class ThreadMessage(models.Model):
     def __str__(self):
         return f"{self.author.get_full_name()} ({self.thread.id})"
 
-    def clean(self):
-        super().clean()
-        if self.author != self.thread.user1 and self.author!= self.thread.user2:
-            raise ValidationError("You are not part of this thread.")
+    class Meta:
+        ordering = ['-created_at']
