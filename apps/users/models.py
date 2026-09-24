@@ -36,6 +36,7 @@ class User(AbstractUser):
         blank=True
     )
     bio = models.CharField(max_length=100, blank=True)
+    last_seen = models.DateTimeField()
 
     REQUIRED_FIELDS = ['email']
     

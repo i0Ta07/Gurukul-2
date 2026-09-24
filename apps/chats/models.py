@@ -11,6 +11,8 @@ class ChatRoom(models.Model):
         primary_key=True,
         related_name="chatroom",
     )
+    updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
         return f"{self.classroom.name} ({self.classroom.id})'s Room"
     

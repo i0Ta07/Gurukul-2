@@ -3,7 +3,9 @@
 <div class="flex flex-col gap-1 h-fit p-3" id="{{ room.classroom.id }}" @click="active = {{ room.classroom.id }}; hide_list = true;" :class="{ 'bg-gray-800': active === {{ room.classroom.id }} }" hx-get="{% url 'room' classroom_id=room.classroom.id %}" :hx-target="'#' + $id('chat-window')" hx-swap="innerHTML">
     <div class="flex justify-between mr-1">
         <h1 class="font-semibold text-sm xl:text-xl">{{ room.classroom.name }}</h1>
+        {% if room.last_message_time %}
         <p class="text-gray-400 text-sm xl:text-base">{{ room.last_message_time|naturaltime }}</p>
+        {% endif %}
     </div>
     <div class="flex gap-1 text-gray-400">
         <p class="text-xs xl:text-base">{{ room.message_body }} </p>

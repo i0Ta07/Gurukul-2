@@ -7,6 +7,7 @@ from apps.chats.forms import ThreadMessageForm,RoomMessageForm
 from apps.classes.mixins import ClassroomMembershipRequired
 from apps.classes.models import ClassMembership
 from config.utils import create_message_and_redirect
+from django.db.models import Q
 # Create your views here.
 
 class ChatHome(LoginRequiredMixin,View):
@@ -15,7 +16,7 @@ class ChatHome(LoginRequiredMixin,View):
             return render(request,"chats/chat_home.html#chat-home")
         return render(request,"chats/chat_home.html")
 
-class ChatUsers(LoginRequiredMixin, View):
+class ListUsers(LoginRequiredMixin, View):
     THREAD_LAST_MESSAGE_SIZE = 75
     OTHER_USER_DISPLAY_NAME_SIZE = 40
 
@@ -35,7 +36,7 @@ class ChatUsers(LoginRequiredMixin, View):
                 last_message_time=Subquery(latest_thread_msg.values('created_at')[:1]),
                 last_message_author_id = Subquery(latest_thread_msg.values('author_id')[:1])
             )
-            .order_by('-updated_at')[:30]
+            .order_by('-updated_at')[:25]
         )
         for thread in threads:
             thread.other_user = thread.user2 if request.user == thread.user1 else thread.user1
@@ -45,17 +46,16 @@ class ChatUsers(LoginRequiredMixin, View):
                 other_user_name = other_user_name[:self.OTHER_USER_DISPLAY_NAME_SIZE] + '...'
             thread.other_user_name = other_user_name
 
-
-            if thread.last_message_author_id != thread.other_user.id:
-                thread.last_message_body = 'You: ' + thread.last_message_body
-            if len(thread.last_message_body)> self.THREAD_LAST_MESSAGE_SIZE:
-                thread.last_message_body = thread.last_message_body[:self.THREAD_LAST_MESSAGE_SIZE] + '...'
-
+            if thread.last_message_body:
+                if thread.last_message_author_id != thread.other_user.id:
+                    thread.last_message_body = 'You: ' + thread.last_message_body
+                if len(thread.last_message_body)> self.THREAD_LAST_MESSAGE_SIZE:
+                    thread.last_message_body = thread.last_message_body[:self.THREAD_LAST_MESSAGE_SIZE] + '...'
 
         context = {'threads': threads}
         return render(request, "chats/partials/threads.html", context)
 
-class ChatRooms(LoginRequiredMixin, View):
+class ListRooms(LoginRequiredMixin, View):
     GROUP_LAST_MESSAGE_SIZE = 80
     CLASSRROM_DISPLAY_NAME_SIZE = 45
 
@@ -67,9 +67,7 @@ class ChatRooms(LoginRequiredMixin, View):
 
         rooms = (
             ChatRoom.objects.filter(
-                classroom__membership__user=request.user,
-                classroom__membership__status='A'
-            )
+                Q(classroom__membership__user=request.user,classroom__membership__status='A') | Q(classroom__owner = request.user))
             .select_related('classroom')
             .annotate(
                 last_message_body=Subquery(latest_room_msg.values('body')[:1]),
@@ -78,18 +76,20 @@ class ChatRooms(LoginRequiredMixin, View):
                 last_message_author_first_name=Subquery(latest_room_msg.values('author__first_name')[:1]),
                 last_message_author_last_name=Subquery(latest_room_msg.values('author__last_name')[:1]),
             )
-            .distinct()
+            .order_by('-updated_at').distinct()[:25]
         )
 
         for room in rooms: 
             if len(room.classroom.name) > self.CLASSRROM_DISPLAY_NAME_SIZE:
                 room.classroom.name = room.classroom.name[:self.CLASSRROM_DISPLAY_NAME_SIZE] + '...'
-            if room.last_message_author_id == request.user.id:
-                room.message_body = 'You: ' + room.last_message_body
-            else:
-                room.message_body = room.last_message_author_first_name + ' ' +  room.last_message_author_last_name + ': ' + room.last_message_body
-            if len(room.message_body) > self.GROUP_LAST_MESSAGE_SIZE:
-                room.message_body = room.message_body[:self.GROUP_LAST_MESSAGE_SIZE] + '...'
+
+            if room.last_message_body:
+                if room.last_message_author_id == request.user.id:
+                    room.message_body = 'You: ' + room.last_message_body
+                else:
+                    room.message_body = room.last_message_author_first_name + ' ' +  room.last_message_author_last_name + ': ' + room.last_message_body
+                if len(room.message_body) > self.GROUP_LAST_MESSAGE_SIZE:
+                    room.message_body = room.message_body[:self.GROUP_LAST_MESSAGE_SIZE] + '...'
         context = {"rooms": rooms} 
         return render(request, "chats/partials/rooms.html", context)
 
@@ -111,7 +111,7 @@ class LoadRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
         classroom = self.get_classroom()
         messages = RoomMessage.objects.filter(room_id = classroom.id).select_related("author").order_by("created_at")[:50]
         form = self.form_class()
-        context = {"messages":messages,"room_name":classroom.name,'form':form,'classroom_id':classroom.id}
+        context = {"messages":messages,"room_name":classroom.name,'form':form,'classroom_id':classroom.id,'current_user_id':request.user.id}
         return render(request,"chats/partials/room_messages.html",context)
 
 class SendRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
@@ -129,7 +129,7 @@ class SendRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
         room_message.author = request.user
         room_message.room = classroom.chatroom
         room_message.save()
-        return render(request,"chats/partials/room_messages.html#send-room-message",{'message':room_message})
+        return render(request,"chats/partials/room_messages.html#send-room-message",{'message':room_message,'current_user_id':request.user.id})
 
 class SendThreadMessage(LoginRequiredMixin,View):
     form_class= ThreadMessageForm

@@ -7,7 +7,7 @@
 <div class="overflow-y-auto scrollbar-none min-h-0 flex-1" id="room-messages" x-init="$el.scrollTo(0, $el.scrollHeight)">
     {% for message in messages %}
     {% partialdef send-room-message inline %}
-    {% if message.author != request.user %}
+    {% if message.author.id != current_user_id %}
     <div class="chat chat-start">
         <div class="chat-image avatar">
             <div class="size-12 p-1 rounded-full border border-gray-700">
