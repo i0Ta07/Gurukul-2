@@ -4,7 +4,7 @@
 <h1 class="text-center text-base xl:text-2xl">{{ room_name }}</h1>
 <p class="text-center mb-2 text-xs xl:text-base">Messages are automatically deleted after 30 days.</p>
 
-<div class="overflow-y-auto scrollbar-none min-h-0 flex-1" id="room-messages" x-init="$el.scrollTo(0, $el.scrollHeight)">
+<div class="overflow-y-auto scrollbar-none min-h-0 flex-1" x-ref="room_messages" id="room-messages" x-init="$el.scrollTo(0, $el.scrollHeight)">
     {% for message in messages %}
     {% partialdef send-room-message inline %}
     {% if message.author.id != current_user_id %}
@@ -42,7 +42,8 @@
     {% endfor %}
 </div>
 
-<form class="relative" hx-post="{% url 'send-room-message' classroom_id=classroom_id  %}" hx-swap="beforeend scroll:#room-messages:bottom" hx-target="#room-messages" hx-on::after-request="this.reset()">
+<!--Use kebab case not camel case for HTMX hx-on events and alpine-->
+<form class="relative" x-data hx-ext="ws" ws-connect="/ws/chats/rooms/{{ classroom_id }}/" ws-send @htmx:ws-after-message="$refs.room_messages.scrollTo(0, $refs.room_messages.scrollHeight); $el.reset()">
     {{ form.body }}
     {% include 'chats/partials/thread_messages.html#send-button' %}
 </form>
