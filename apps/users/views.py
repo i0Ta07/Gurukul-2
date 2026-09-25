@@ -345,35 +345,49 @@ class CompleteEmailUpdate(View):
 
 class StreamNotifications(View):
     async def get(self, request, *args, **kwargs):
-
         user_id = await sync_to_async(lambda: request.user.id)()
         if not user_id:
             return HttpResponse("Unauthorized Access", status=401)
 
-        channel_layer = get_channel_layer() # get redis channel layer
-        channel_name = await channel_layer.new_channel() # Create a random name for current connection
-        group_name = f"user_notifications_{user_id}" # Get the broadcasting group
+        channel_layer = get_channel_layer()
+        channel_name = await channel_layer.new_channel()
+        group_name = f"user_notifications_{user_id}"
 
         async def event_stream():
-            await channel_layer.group_add(group_name, channel_name) # Add this channel connection to the group.
-
+            await channel_layer.group_add(group_name, channel_name)
+            
             try:
                 while True:
-                    message = await channel_layer.receive(channel_name) # Wait for messages on the broadcasting group.
+                    try:
+                        # Wait to receive the message for 25 seconds only, some LBs and firewalls have 30s timeouts.
+                        message = await asyncio.wait_for(
+                            channel_layer.receive(channel_name),
+                            timeout=25.0 
+                        )
+                        
+                        event_name = message.get("event_name")
+                        html = message.get("html")
 
-                    event_name = message.get("event_name")
-                    html = message.get("html")
+                        if event_name and html:
+                            yield f"event: {event_name}\ndata: {html}\n\n"
+                            
+                    except asyncio.TimeoutError:
+                        # Send an SSE comment to keep the TCP connection alive
+                        yield ": ping\n\n"
 
-                    if event_name and html:
-                        yield f"event: {event_name}\ndata: {html}\n\n" # send SSE event
-
-            except asyncio.CancelledError: # task explicitely cancelled during execution
-                pass # should be logged
+            except asyncio.CancelledError:
+                # acknowledge the cancellation to the ASGI server
+                raise 
 
             finally:
-                await channel_layer.group_discard( # remove the channel connection 
-                    group_name,
-                    channel_name,
+                # Create a background task so it executes even if the current view task is in a cancelled 
+                # state due to CancelledError. await will not exceute if task state = cancelled but creating
+                # a standalone bg task will always execute.
+                asyncio.create_task(
+                    channel_layer.group_discard(
+                        group_name,
+                        channel_name,
+                    )
                 )
 
         response = StreamingHttpResponse(
@@ -381,5 +395,8 @@ class StreamNotifications(View):
             content_type="text/event-stream",
         )
         response["Cache-Control"] = "no-cache"
+        
+        # Prevent Nginx/Proxies from buffering the SSE stream
+        response["X-Accel-Buffering"] = "no"
 
         return response
