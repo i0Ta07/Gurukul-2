@@ -5,9 +5,6 @@ from apps.chats.models import ChatThread,ChatRoom,ThreadMessage,RoomMessage
 from django.db.models import Q, OuterRef,Subquery
 from apps.chats.forms import ThreadMessageForm,RoomMessageForm
 from apps.classes.mixins import ClassroomMembershipRequired
-from apps.classes.models import ClassMembership
-from config.utils import create_message_and_redirect
-from django.db.models import Q
 from django.core.cache import cache
 from apps.users.utils import get_user_online_key
  
@@ -119,37 +116,4 @@ class LoadRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
         context = {"messages":messages,"room_name":classroom.name,'form':form,'classroom_id':classroom.id,'current_user_id':request.user.id}
         return render(request,"chats/partials/room_messages.html",context)
 
-class SendRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
-    form_class = RoomMessageForm
-    def post(self,request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        if not form.is_valid():
-            return create_message_and_redirect(request=request,message="Some error occured",url="users-dashboard",code="error")
-        
-        classroom = self.get_classroom()
-        membership_exists = ClassMembership.objects.filter(user=request.user, classroom=classroom).exists()
-        if not membership_exists and request.user != self.room.classroom.owner: 
-            return create_message_and_redirect(request=request,message="You are NOT part of this room.",url="users-dashboard",code="warning")
-        room_message = form.save(commit=False)
-        room_message.author = request.user
-        room_message.room = classroom.chatroom
-        room_message.save()
-        return render(request,"chats/partials/room_messages.html#send-room-message",{'message':room_message,'current_user_id':request.user.id})
-
-class SendThreadMessage(LoginRequiredMixin,View):
-    form_class= ThreadMessageForm
-    def post(self,request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        if not form.is_valid():
-            return create_message_and_redirect(request=request,message="Some error occured",url="users-dashboard",code="error")
-        
-        thread_id = kwargs.get("thread_id")
-        thread = get_object_or_404(ChatThread,pk = thread_id)
-        if thread.user1.id != request.user.id and thread.user2.id != request.user.id:
-            return  create_message_and_redirect(request=request,message="You are NOT part of this thread",url="users-dashboard",code="warning")
-        thread_message = form.save(commit=False)
-        thread_message.thread = thread
-        thread_message.author = request.user
-        thread_message.save()
-        return render(request,"chats/partials/thread_messages.html#send-thread-message",{'message':thread_message})
 
