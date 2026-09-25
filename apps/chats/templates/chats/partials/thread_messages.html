@@ -8,7 +8,7 @@
     {% endif %}
     <h1 class="text-center text-base xl:text-2xl">{{ other_user.get_full_name }}</h1>
 </div>
-<p class="text-center mb-2 text-xs xl:text-base">Messages are automatically deleted after 7 days.</p>
+<p class="text-center mb-2 text-xs xl:text-base"> Last seen {{ other_user.last_seen|naturaltime }}. Messages are automatically deleted after 7 days.</p>
 
 <div class="flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)" x-ref="thread_messages" id="thread-messages">
     {% for message in messages %}
@@ -36,7 +36,7 @@
     {% endfor %}
 </div>
 
-<form class="relative" hx-post="{% url 'send-thread-message' thread_id=thread_id %}" hx-swap="beforeend scroll:#thread-messages:bottom" hx-target="#thread-messages"  hx-on::after-request="this.reset()" >
+<form class="relative" x-data hx-ext="ws" ws-connect="/ws/chats/threads/{{ thread_id }}/" ws-send @htmx:ws-after-message="$refs.thread_messages.scrollTo(0, $refs.thread_messages.scrollHeight); $el.reset()">
     {{ form.body }}
     {% partialdef send-button inline %}
     <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-500 rounded-2xl p-1.5">

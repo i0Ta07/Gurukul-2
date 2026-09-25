@@ -4,6 +4,7 @@ from apps.classes.models import ClassMembership
 from apps.chats.models import ChatThread, RoomMessage,ChatRoom, ThreadMessage
 import json
 from asgiref.sync import sync_to_async
+from django.utils import timezone
 
 class RoomConsumer(AsyncWebsocketConsumer):
 
@@ -81,6 +82,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=html)
 
     async def disconnect(self, close_code):
+        # Update user's last_seen
+        self.user.last_seen = timezone.now()
+        await self.user.asave(update_fields=["last_seen"])
         # Leave room group. Add logging with code.
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name) 
         
@@ -153,5 +157,7 @@ class ThreadConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=html)
 
     async def disconnect(self, close_code):
+        self.user.last_seen = timezone.now()
+        await self.user.asave(update_fields=["last_seen"])
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name) 
     

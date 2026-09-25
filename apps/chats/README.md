@@ -55,6 +55,10 @@ Added meta tag to base.html to set `content='{"globalViewTransitions": true}'` b
 One gotcha to note is that DOM attributes do not preserve case. This means, unfortunately, an attribute like hx-on:htmx:beforeRequest will not work, because the DOM lowercases the attribute names. Fortunately, htmx supports both camel case event names and also kebab-case event names, so you can use ***hx-on:htmx:before-request*** instead.
 Event Naming: Note that all events are fired with two different names. CamelCase and kebab-case. So, for example, you can listen for htmx:afterSwap or for htmx:after-swap. This facilitates interoperability with other libraries. Alpine.js, for example, requires kebab case
 
+### Last_seen
+
+One and only way I think to possibly update the correct last_seen is during a disconnection of a websocket. But main is tradeoff is after each websocket disconnect we are updating the last_seen.
+
 ### To do list
 
 * Active search HTMX to search for users.
