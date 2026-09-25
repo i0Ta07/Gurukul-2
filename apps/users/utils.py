@@ -53,5 +53,6 @@ def get_website_context(request,token:str):
         'protocol':'https' if request.is_secure() else 'http'
     }
 
-
+def get_user_online_key(user_id):
+    return f"users:online:{user_id}"
 

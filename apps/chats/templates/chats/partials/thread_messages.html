@@ -1,6 +1,7 @@
 {% load humanize %}
 {% load static %}
-<div class="flex justify-center items-center gap-1">
+<div class="flex justify-center items-center gap-1 relative" x-data="{ is_online: {{ is_online|lower }} }">
+    <div class="size-3 rounded-full absolute left-0 top-0" :class="is_online ? 'bg-green-500' : 'bg-gray-500'"></div>
     {% if other_user.profile_photo %}
     <img class="size-12 rounded-full border p-1 border-gray-700" src="{{ other_user.profile_photo.url }}" alt="Profile Picture">
     {% else %}
@@ -8,8 +9,14 @@
     {% endif %}
     <h1 class="text-center text-base xl:text-2xl">{{ other_user.get_full_name }}</h1>
 </div>
-<p class="text-center mb-2 text-xs xl:text-base"> Last seen {{ other_user.last_seen|naturaltime }}. Messages are automatically deleted after 7 days.</p>
-
+<div class="flex flex-col md:flex-row items-center justify-center gap-2 text-center mb-2 text-xs xl:text-base">
+    {% if not is_online %}
+        <p class="text-gray-500"><b><i>Last seen {{ other_user.last_seen|naturaltime }}.</i></b></p>
+    {% else %}
+        <p class="text-green-500"><b><i>Online</i></b></p>
+    {% endif %}
+    <p>Messages are automatically deleted after 7 days.</p>
+</div>
 <div class="flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)" x-ref="thread_messages" id="thread-messages">
     {% for message in messages %}
     {% partialdef send-thread-message inline %}

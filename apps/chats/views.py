@@ -8,6 +8,9 @@ from apps.classes.mixins import ClassroomMembershipRequired
 from apps.classes.models import ClassMembership
 from config.utils import create_message_and_redirect
 from django.db.models import Q
+from django.core.cache import cache
+from apps.users.utils import get_user_online_key
+ 
 # Create your views here.
 
 class ChatHome(LoginRequiredMixin,View):
@@ -102,7 +105,9 @@ class LoadThreadMessages(LoginRequiredMixin,View):
         messages = ThreadMessage.objects.filter(thread = thread).select_related("author").order_by('created_at')[:50]
         other_user = thread.user1 if request.user.id == thread.user2.id else thread.user2
         form = self.form_class()
-        context = {"messages":messages,"other_user":other_user,'form':form, 'thread_id':thread_id}
+        key = get_user_online_key(user_id=other_user.id)
+        other_user_is_online = cache.get(key,False)
+        context = {"messages":messages,"other_user":other_user,'form':form, 'thread_id':thread_id,'is_online':other_user_is_online}
         return render(request,"chats/partials/thread_messages.html",context)
 
 class LoadRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):

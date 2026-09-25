@@ -22,7 +22,8 @@ from .forms import (
     ResetPasswordForm
 )
 from config.settings import EMAIL_EXPIRY_DURATION
-
+from django.utils import timezone
+from datetime import timedelta
 from config.utils import logout_user_from_all_devices,send_email
 # Mixins are used only with Class based views, writtern first in order.
 from django.contrib.messages.views import SuccessMessageMixin
@@ -32,7 +33,7 @@ from django.core.cache import cache
 from apps.users.utils import (
     get_changeEmail_key,get_register_token_key,
     get_hex_token,encode_user_id,sign_str,unsign_str,
-    decode_user_id,get_website_context
+    decode_user_id,get_website_context,get_user_online_key
 )
 from apps.users.models import User
 from apps.orgs.models import OrgInvitation
@@ -345,17 +346,23 @@ class CompleteEmailUpdate(View):
 
 class StreamNotifications(View):
     async def get(self, request, *args, **kwargs):
-        user_id = await sync_to_async(lambda: request.user.id)()
-        if not user_id:
+        # resolve user inside sync_to_async block using .is_authenticated otherwise lazy evaluation and resovled outside async context
+        user = await sync_to_async(
+            lambda: request.user if request.user.is_authenticated else None 
+        )()
+
+        if user is None:
             return HttpResponse("Unauthorized Access", status=401)
 
         channel_layer = get_channel_layer()
         channel_name = await channel_layer.new_channel()
-        group_name = f"user_notifications_{user_id}"
+        group_name = f"user_notifications_{user.id}"
+        key = get_user_online_key(user_id=user.id)
 
         async def event_stream():
             await channel_layer.group_add(group_name, channel_name)
-            
+            await cache.aset(key, True, timeout=30)
+
             try:
                 while True:
                     try:
@@ -374,6 +381,7 @@ class StreamNotifications(View):
                     except asyncio.TimeoutError:
                         # Send an SSE comment to keep the TCP connection alive
                         yield ": ping\n\n"
+                        await cache.atouch(key, 30) # update timer if still online
 
             except asyncio.CancelledError:
                 # acknowledge the cancellation to the ASGI server
@@ -383,12 +391,14 @@ class StreamNotifications(View):
                 # Create a background task so it executes even if the current view task is in a cancelled 
                 # state due to CancelledError. await will not exceute if task state = cancelled but creating
                 # a standalone bg task will always execute.
-                asyncio.create_task(
-                    channel_layer.group_discard(
-                        group_name,
-                        channel_name,
-                    )
-                )
+
+                async def cleanup():
+                    await channel_layer.group_discard(group_name,channel_name)
+                    cache.adelete(key)
+                    user.last_seen = timezone.now() - timedelta(seconds=30)
+                    await user.asave(update_fields=["last_seen"])
+                    
+                asyncio.create_task(cleanup())
 
         response = StreamingHttpResponse(
             event_stream(),

@@ -41,6 +41,8 @@ Event Naming: Note that all events are fired with two different names. CamelCase
 
 One and only way I think to possibly update the correct last_seen is during a disconnection of a websocket. But main is tradeoff is after each websocket disconnect we are updating the last_seen.
 
+One way we can implement is when we make the SSE connection for send-notifications we can set the user status online by storing as users:online:{user_id} = True in redis and when we disconnect we can remove the key and set the last_seen to timezone.now()
+
 ### To do list
 
 * Active search HTMX to search for users.
