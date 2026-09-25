@@ -1,8 +1,8 @@
 {% load humanize %}
 {% load static %}
 <div class="flex justify-center items-center gap-1">
-    {% if other_user.profile_picture %}
-    <img class="size-10 rounded-full border p-1 border-gray-700" src="{{ other_user.profile_photo.url }}" alt="Profile Picture">
+    {% if other_user.profile_photo %}
+    <img class="size-12 rounded-full border p-1 border-gray-700" src="{{ other_user.profile_photo.url }}" alt="Profile Picture">
     {% else %}
     <img class="size-12 rounded-full border p-1 border-gray-700" src="{% static 'images/default_profile.png' %}" alt="Default profile">
     {% endif %}
@@ -10,7 +10,7 @@
 </div>
 <p class="text-center mb-2 text-xs xl:text-base">Messages are automatically deleted after 7 days.</p>
 
-<div class="flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)" id="thread-messages">
+<div class="flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)" x-ref="thread_messages" id="thread-messages">
     {% for message in messages %}
     {% partialdef send-thread-message inline %}
     {% if message.author == other_user %}

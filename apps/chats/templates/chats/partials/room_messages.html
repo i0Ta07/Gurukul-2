@@ -12,7 +12,7 @@
         <div class="chat-image avatar">
             <div class="size-12 p-1 rounded-full border border-gray-700">
                 <a href="#"> <!--Add profile-->
-                {% if message.author.profile_picture %}
+                {% if message.author.profile_photo %}
                 <img src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
                 {% else %}
                 <img src="{% static 'images/default_profile.png' %}" alt="Default profile">

@@ -98,7 +98,7 @@ class LoadThreadMessages(LoginRequiredMixin,View):
 
     def get(self,request,*args,**kwargs):
         thread_id = kwargs.get("thread_id")
-        thread = get_object_or_404(ChatThread,pk = thread_id)
+        thread = get_object_or_404(ChatThread.objects.select_related('user1','user2'),pk = thread_id)
         messages = ThreadMessage.objects.filter(thread = thread).select_related("author").order_by('created_at')[:50]
         other_user = thread.user1 if request.user.id == thread.user2.id else thread.user2
         form = self.form_class()
