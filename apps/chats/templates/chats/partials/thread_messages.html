@@ -23,7 +23,7 @@
     {% if message.author == other_user %}
     <div class="chat chat-start">
         <div class="chat-header">
-            <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+            <time class="text-xs opacity-50">{{ message.created_at }}</time>
         </div>
         <div class="chat-bubble text-sm xl:text-base">
             {{ message.body }}
@@ -32,7 +32,7 @@
     {% else %}
     <div class="chat chat-end">
         <div class="chat-header">
-            <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+            <time class="text-xs opacity-50">{{ message.created_at }}</time>
         </div>
         <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
             {{ message.body }}
@@ -43,7 +43,7 @@
     {% endfor %}
 </div>
 
-<form class="relative" x-data hx-ext="ws" ws-connect="/ws/chats/threads/{{ thread_id }}/" ws-send @htmx:ws-after-message="$refs.thread_messages.scrollTo(0, $refs.thread_messages.scrollHeight); $el.reset()">
+<form class="relative" x-data hx-ext="ws" ws-connect="/ws/chats/users/{{ request.user.id }}/{{ other_user.id }}/" ws-send @htmx:ws-after-message="$refs.thread_messages.scrollTo(0, $refs.thread_messages.scrollHeight); $el.reset()">
     {{ form.body }}
     {% partialdef send-button inline %}
     <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-500 rounded-2xl p-1.5">

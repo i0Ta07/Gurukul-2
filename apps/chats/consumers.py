@@ -87,7 +87,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
 class ThreadConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        self.thread_id = self.scope["url_route"]["kwargs"]["thread_id"]
+        self.user1_id = self.scope["url_route"]["kwargs"]["user1_id"]
+        self.user2_id = self.scope["url_route"]["kwargs"]["user2_id"]
         self.user = self.scope["user"]
         self.room_group_name = None
 
@@ -95,20 +96,10 @@ class ThreadConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
-        try:
-            self.thread = await ChatThread.objects.select_related('user1','user2').aget(pk = self.thread_id)
-        except ChatThread.DoesNotExist:
-            await self.close(4004)
-            return
-        
-        belong_to_thread = (self.user.id != self.thread.user1 and self.user.id != self.thread.user2)
-
-        if not belong_to_thread:
-            await self.close(code=4003)
-            return
+        self.thread = await sync_to_async(ChatThread.get_or_create_thread)(sender_id=self.user1_id,receiver_id=self.user2_id)
 
         self.other_user = self.thread.user2 if self.user == self.thread.user1 else self.thread.user1
-        self.room_group_name = f"thread_{self.thread_id}"
+        self.room_group_name = f"thread_{self.thread.id}"
 
         await self.channel_layer.group_add(
             self.room_group_name,

@@ -395,7 +395,7 @@ class StreamNotifications(View):
                 async def cleanup():
                     await channel_layer.group_discard(group_name,channel_name)
                     cache.adelete(key)
-                    user.last_seen = timezone.now() - timedelta(seconds=30)
+                    user.last_seen = timezone.now()
                     await user.asave(update_fields=["last_seen"])
                     
                 asyncio.create_task(cleanup())

@@ -22,7 +22,7 @@
         </div>
         <div class="chat-header">
             {{ message.author.get_full_name }} ({{ message.author.username }})
-            <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+            <time class="text-xs opacity-50">{{ message.created_at }}</time>
         </div>
         <div class="chat-bubble text-sm xl:text-base">
             {{ message.body }}
@@ -31,7 +31,7 @@
     {% else %}
     <div class="chat chat-end">
         <div class="chat-header">
-            <time class="text-xs opacity-50">{{ message.created_at|naturaltime }}</time>
+            <time class="text-xs opacity-50">{{ message.created_at }}</time>
         </div>
         <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
             {{ message.body }}

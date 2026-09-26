@@ -64,7 +64,7 @@ class ChatThread(models.Model):
                 name='unique_users_thread'
             ),
             models.CheckConstraint(
-                condition=Q(user1__gte = F('user2')),
+                condition=Q(user1__lte = F('user2')),
                 name= "user1_lte_user2"
             )
         ]
@@ -78,10 +78,10 @@ class ChatThread(models.Model):
             raise ValidationError("You cannot initiate a chat with yourself.")
 
     @classmethod
-    def create_thread(cls, sender_id, receiver_id): # Thread.get_or_create_thread
+    def get_or_create_thread(cls, sender_id, receiver_id): # Thread.get_or_create_thread
         # Always order the users so the smaller ID is user1
-        sender_id, receiver_id = (sender_id, receiver_id) if sender_id < receiver_id else (receiver_id, sender_id)
-        thread = cls.objects.create(user1_id=sender_id, user2_id=receiver_id)
+        user1_id, user2_id = (sender_id, receiver_id) if sender_id < receiver_id else (receiver_id, sender_id)
+        thread, created = cls.objects.select_related("user1", "user2").get_or_create(user1_id=user1_id, user2_id=user2_id,)
         return thread # thread.save() to trigger auto_add during websocket disconnection.
 
 class ThreadMessage(models.Model):
