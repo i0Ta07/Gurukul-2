@@ -82,7 +82,7 @@ class ChatThread(models.Model):
         # Always order the users so the smaller ID is user1
         user1_id, user2_id = (sender_id, receiver_id) if sender_id < receiver_id else (receiver_id, sender_id)
         thread, created = cls.objects.select_related("user1", "user2").get_or_create(user1_id=user1_id, user2_id=user2_id,)
-        return thread # thread.save() to trigger auto_add during websocket disconnection.
+        return thread,created # thread.save() to trigger auto_add during websocket disconnection.
 
 class ThreadMessage(models.Model):
     thread = models.ForeignKey(

@@ -32,3 +32,10 @@ class RoomMessageForm(forms.ModelForm):
     class Meta:
         model = RoomMessage
         fields = ['body']
+
+class SearchUserForm(forms.Form):
+    username = forms.CharField(max_length=150 ,required=True,widget=forms.TextInput(attrs={
+        'placeholder': 'Search for users by username',
+        'class': 'form-input h-13'
+        })
+    )

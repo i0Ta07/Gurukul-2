@@ -96,7 +96,7 @@ class ThreadConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
-        self.thread = await sync_to_async(ChatThread.get_or_create_thread)(sender_id=self.user1_id,receiver_id=self.user2_id)
+        self.thread,_ = await sync_to_async(ChatThread.get_or_create_thread)(sender_id=self.user1_id,receiver_id=self.user2_id)
 
         self.other_user = self.thread.user2 if self.user == self.thread.user1 else self.thread.user1
         self.room_group_name = f"thread_{self.thread.id}"

@@ -10,6 +10,10 @@ We will use django channels that will upgrade our short lived HTTP connection to
 
 We have made a seperate but similar UI to the desktop setup. It used the same partials as the Desktop but we have used x-id to dynamically assign the ID to chat-window. When the request is made from either small screen or large screen, the target will be based on the closest `x-id="['chat-window']"` resolved by Alpine and threads or rooms will be replaced there. In mobile, we will have to replace the same chat-window in which threads were shown to load conversations. Therefore inside threads we have `:hx-target="'#' + $id('chat-window')"` which will target the closest chat-window. For desktop, there is a seperate chat-window but for mobile everything happens inside a chat-window.
 
+### List Windows to replace search-user data
+
+Similarly to chat-window we have created the `x-id="['list-window']"`,to replace the search user partial to the closest list window available. Now the threads and rooms list also target the list-window.
+
 ### Active chat backgroud
 
 This is true beauty, I have never seen it anything like it. the parent container get a `x-data= "{active: null }"`. Now each thread gets `id = {{ thread.id}}  @click="active = {{ thread.id }}" :class="bg=gray-800: active==={{ thread.id }}"`. === checks both the type and value. Now when the user clicks on the thread `active = clicked_thread_id` which makes `active==={{ thread.id }}` = true which in turn makes bg-gray-800 = true and we get our gray background on selected thread. Truely master piece.
@@ -49,3 +53,4 @@ One way we can implement is when we make the SSE connection for send-notificatio
 * Load more messages as user scrolls up in the chat.
 * Implement last_seen and online in threads and online_count in groups.
 * Implement edit and delete message.
+* Implement delete thread.
