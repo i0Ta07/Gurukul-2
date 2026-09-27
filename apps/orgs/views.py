@@ -26,6 +26,7 @@ from django.template.loader import render_to_string
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.views import View
+from django.db.models import Count
 
 class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
     template_name = "orgs/view_orgs_and_classrooms.html"
@@ -240,6 +241,24 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminR
                 for user in users
             ]
         )
+        counts = (
+            OrgInvitation.objects
+            .filter(to_user_id__in=[inv.to_user_id for inv in created_invitations])
+            .values("to_user_id") # group by to_user_id
+            .annotate(count=Count("id")) # count invitation rows in each group
+        )
+        channel_layer = get_channel_layer()
+        for obj in counts:
+            html = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":obj["count"]})
+            async_to_sync(channel_layer.group_send)(
+                f"user_notifications_{obj['to_user_id']}",
+                {
+                    "type":"sse",
+                    "event_name": "invitation_count",
+                    "html": html.replace('\n','')
+                }
+            )
+
         messages.success(request,f"Sent {len(created_invitations)} invitations.")
         return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':SendInvitationForm(),**kwargs})
 
