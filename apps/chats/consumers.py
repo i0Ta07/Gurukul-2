@@ -4,6 +4,8 @@ from apps.classes.models import ClassMembership
 from apps.chats.models import ChatThread, RoomMessage,ChatRoom, ThreadMessage
 import json
 from asgiref.sync import sync_to_async
+from django.utils.dateformat import format
+from django.utils import timezone
 
 class RoomConsumer(AsyncWebsocketConsumer):
 
@@ -61,25 +63,23 @@ class RoomConsumer(AsyncWebsocketConsumer):
         # Send message to room group
         await self.channel_layer.group_send(
             # cannot send the message django instance, only JSON-serializable
-            self.room_group_name, {"type": "room.message", "message_id": message.id}
+            self.room_group_name, {"type": "room.message", "context": { 
+                "message": {'id':message.id,'body':message.body,'created_at':format(timezone.localtime(message.created_at),"j M, Y, g:i A"),'is_edited':message.is_edited,'is_editable':True,'author':{'id':message.author_id,'get_full_name':message.author.get_full_name(),'username':message.author.username,'profile_photo':{'url':message.author.profile_photo.url}}},
+                }
+            }
         )
 
     # Receive message from room group
     async def room_message(self, event):
-        message_id = event["message_id"]
-        try:
-            message = await RoomMessage.objects.aget(pk= message_id)
-        except RoomMessage.DoesNotExist:
-            await self.close(4004)
-            return
+        context = event["context"]
         
         html = await sync_to_async(render_to_string)(
             "chats/partials/ws_room_message.html",
-            context={"message": message,'current_user_id':self.user.id}
+            context={**context,'current_user_id':self.user.id}
         )
         # Send message to each WebSocket connection in the group. 
         await self.send(text_data=html)
-
+    
     async def disconnect(self, close_code):
         # Leave room group. Add logging with code.
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name) 
@@ -126,20 +126,21 @@ class ThreadConsumer(AsyncWebsocketConsumer):
         await self.thread.asave(update_fields=["updated_at"])
 
         await self.channel_layer.group_send(
-            self.room_group_name, {"type": "thread.message", "message_id": message.id}
+            self.room_group_name, {"type": "thread.message", 
+            "context": {
+                "message": {'id':message.id,'body':message.body,'created_at':format(timezone.localtime(message.created_at),"j M, Y, g:i A"),'is_edited':message.is_edited,'is_editable':True,'author':{'id':message.author_id}},
+                }
+            }
         )
 
+    # Other user is webscoket specific connection data that is changed as per the websocket but the message is a shared entity.
+    #  Hence we don't render the message inside recieve but rather leave it specific to each connection.
     async def thread_message(self, event):
-        message_id = event["message_id"]
-        try:
-            message = await ThreadMessage.objects.aget(pk= message_id)
-        except ThreadMessage.DoesNotExist:
-            await self.close(4004)
-            return
+        context = event["context"]
 
         html = await sync_to_async(render_to_string)(
             "chats/partials/ws_thread_message.html",
-            context={"message": message,'other_user':self.other_user}
+            context= {**context,'other_user':self.other_user}
         )
         await self.send(text_data=html)
 
