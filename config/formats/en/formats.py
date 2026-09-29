@@ -1,0 +1,3 @@
+DATETIME_FORMAT  = "j M, Y, g:i A"
+DATE_FORMAT = "j M, Y"
+TIME_FORMAT = "g:i A"

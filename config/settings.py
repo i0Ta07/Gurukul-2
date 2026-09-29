@@ -125,6 +125,8 @@ ASGI_APPLICATION = "config.asgi.application"
 
 MAX_DEPTH = 6
 
+FORMAT_MODULE_PATH = 'config.formats'
+
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
