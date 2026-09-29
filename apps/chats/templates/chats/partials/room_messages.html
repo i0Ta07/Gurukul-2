@@ -4,7 +4,7 @@
 <h1 class="text-center text-base xl:text-2xl">{{ room_name }}</h1>
 <p class="text-center mb-2 text-xs xl:text-base">Messages are automatically deleted after 30 days.</p>
 
-<div class="flex flex-col overflow-y-auto scrollbar-none min-h-0 flex-1" x-ref="room_messages" id="room-messages" x-init="$el.scrollTo(0, $el.scrollHeight)">
+<div class="flex flex-col overflow-y-auto scrollbar-none min-h-0 flex-1" id="room-messages" x-init="$el.scrollTo(0, $el.scrollHeight)" x-data="{active_dropdown : null}">
     {% for message in messages %}
     {% partialdef send-room-message inline %}
     {% if message.author.id != current_user_id %}
@@ -28,17 +28,13 @@
         </div>
         <div class="chat-footer opacity-50">
             <time class="text-xs ">{{ message.created_at }}</time>
+            {% if message.is_edited %}
+            Edited
+            {% endif %}
         </div>
     </div>
     {% else %}
-    <div class="chat chat-end">
-        <div class="chat-header opacity-50">
-            <time class="text-xs">{{ message.created_at }}</time>
-        </div>
-        <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
-            {{ message.body }}
-        </div>
-    </div>
+    {% include 'chats/partials/thread_messages.html#user-message' %}
     {% endif %}
     {% endpartialdef send-room-message %}
     {% empty %}
@@ -49,7 +45,8 @@
 </div>
 
 <!--Use kebab case not camel case for HTMX hx-on events and alpine-->
-<form class="relative" x-data hx-ext="ws" ws-connect="/ws/chats/rooms/{{ classroom_id }}/" ws-send @htmx:ws-after-message="$refs.room_messages.scrollTo(0, $refs.room_messages.scrollHeight); $el.reset()">
+<form class="relative" x-data hx-ext="ws" ws-connect="/ws/chats/rooms/{{ classroom_id }}/" ws-send @htmx:ws-after-message="document.getElementById('room-messages').scrollTo(0, document.getElementById('room-messages').scrollHeight); $el.reset()">
     {{ form.body }}
     {% include 'chats/partials/thread_messages.html#send-button' %}
 </form>
+{% include 'chats/partials/thread_messages.html#message-modal' %}

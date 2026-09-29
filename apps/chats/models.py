@@ -30,6 +30,9 @@ class RoomMessage(models.Model):
         related_name="room_messages",
         related_query_name="room_message"
     )
+    is_edited = models.BooleanField(
+        default=False,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -96,6 +99,9 @@ class ThreadMessage(models.Model):
         on_delete=models.CASCADE,
         related_name="messages",
         related_query_name="message"
+    )
+    is_edited = models.BooleanField(
+        default=False,
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -49,8 +49,7 @@ One way we can implement is when we make the SSE connection for send-notificatio
 
 ### To do list
 
-* Active search HTMX to search for users.
 * Load more messages as user scrolls up in the chat.
-* Implement last_seen and online in threads and online_count in groups.
+* Implement online_count in groups.
 * Implement edit and delete message.
 * Implement delete thread.

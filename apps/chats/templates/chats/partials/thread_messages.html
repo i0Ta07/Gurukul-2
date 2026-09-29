@@ -17,27 +17,54 @@
     {% endif %}
     <p>Messages are automatically deleted after 7 days.</p>
 </div>
-<div class="flex flex-col flex-1 scrollbar-none overflow-y-auto min-h-0"  x-init="$el.scrollTo(0, $el.scrollHeight)" x-ref="thread_messages" id="thread-messages">
+<div class="flex flex-col flex-1 scrollbar-none overflow-y-auto min-h-0" x-data="{active_dropdown : null}" x-init="$el.scrollTo(0, $el.scrollHeight)" id="thread-messages" >
     {% for message in messages %}
     {% partialdef send-thread-message inline %}
-    {% if message.author == other_user %}
-    <div class="chat chat-start">
+    {% if message.author.id == other_user.id %}
+    <div class="chat chat-start"  id="{{ message.id }}">
         <div class="chat-header">
             <time class="text-xs opacity-50">{{ message.created_at }}</time>
         </div>
         <div class="chat-bubble text-sm xl:text-base">
             {{ message.body }}
         </div>
+        {% if message.is_edited %}
+        <div class="chat-footer opacity-50">
+            Edited
+        </div>
+        {% endif %}
     </div>
     {% else %}
-    <div class="chat chat-end">
+    {% partialdef user-message inline  %}
+    <div class="chat chat-end" id="{{ message.id }}" >
         <div class="chat-header">
             <time class="text-xs opacity-50">{{ message.created_at }}</time>
         </div>
-        <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
+        <div class="chat-bubble text-sm xl:text-base chat-bubble-primary relative" @contextmenu.prevent="active_dropdown = {{ message.id }}">
             {{ message.body }}
+            {% if message.is_editable %}
+            <div  x-cloak  x-transition @click.outside="active_dropdown = null" class="absolute bottom-0 right-0 mb-2 rounded-2xl shadow-lg z-50 bg-gray-900" x-show="active_dropdown === {{ message.id }}">
+                <ul class="p-2 text-xs xl:text-sm text-body font-medium" >
+                    <li @click="active_dropdown = null">
+                        <a hx-get="{% if not room_name %}{% url 'edit-thread-message' thread_message_id=message.id %}{% else %}{% url 'edit-room-message' room_message_id=message.id %}{% endif %}" hx-swap="innerHTML" @click="message_modal.showModal();" hx-target="#modal_container" class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg">Edit</a>
+                    </li>
+                    <li @click="active_dropdown = null">
+                        <a class=" inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-500 hover:text-white hover:rounded-lg">Delete</a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
         </div>
+        {% if message.is_edited %}
+        <div class="chat-footer opacity-50">
+            Edited
+        </div>
+        {% endif %}
+        {% if message.is_editable %}
+        <img class="size-3" src="{% static 'chats/icons/svg/three-dots-vertical.svg' %}" alt="menu" @click="active_dropdown = {{ message.id }}">
+        {% endif %}
     </div>
+    {% endpartialdef user-message %}
     {% endif %}
     {% endpartialdef send-thread-message %}
     {% empty %}
@@ -47,7 +74,7 @@
     {% endfor %}
 </div>
 
-<form class="relative" x-data hx-ext="ws" ws-connect="/ws/chats/users/{{ request.user.id }}/{{ other_user.id }}/" ws-send @htmx:ws-after-message="$refs.thread_messages.scrollTo(0, $refs.thread_messages.scrollHeight); $el.reset()">
+<form class="relative" hx-ext="ws" ws-connect="/ws/chats/users/{{ request.user.id }}/{{ other_user.id }}/" ws-send @htmx:ws-after-message="document.getElementById('thread-messages').scrollTo(0, document.getElementById('thread-messages').scrollHeight); $el.reset()">
     {{ form.body }}
     {% partialdef send-button inline %}
     <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-500 rounded-2xl p-1.5">
@@ -55,3 +82,16 @@
     </button>
     {% endpartialdef send-button %}
 </form>
+{% partialdef message-modal inline %}
+<dialog id="message_modal" class="modal modal-bottom sm:modal-middle" @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <div id="modal_container"></div>
+    </div>                
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% endpartialdef message-modal %}
