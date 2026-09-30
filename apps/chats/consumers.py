@@ -60,19 +60,22 @@ class RoomConsumer(AsyncWebsocketConsumer):
         message = await RoomMessage.objects.acreate(body = body,author = self.user,room = self.room)
         await self.room.asave(update_fields=["updated_at"])
 
+        room_context = { 
+            "message": {'id':message.id,'body':message.body,'created_at':format(timezone.localtime(message.created_at),"j M, Y, g:i A"),'is_edited':message.is_edited,'is_editable':True,'author':{'id':message.author_id,'get_full_name':message.author.get_full_name(),'username':message.author.username,}},
+            'message_type':"room"
+            }
+        if message.author.profile_photo:
+            room_context['message']['author']['profile_photo'] = {'url':message.author.profile_photo.url}
         # Send message to room group
         await self.channel_layer.group_send(
             # cannot send the message django instance, only JSON-serializable
-            self.room_group_name, {"type": "room.message", "context": { 
-                "message": {'id':message.id,'body':message.body,'created_at':format(timezone.localtime(message.created_at),"j M, Y, g:i A"),'is_edited':message.is_edited,'is_editable':True,'author':{'id':message.author_id,'get_full_name':message.author.get_full_name(),'username':message.author.username,'profile_photo':{'url':message.author.profile_photo.url}}},
-                }
+            self.room_group_name, {"type": "room.message", "context": room_context
             }
         )
 
     # Receive message from room group
     async def room_message(self, event):
         context = event["context"]
-        
         html = await sync_to_async(render_to_string)(
             "chats/partials/ws_room_message.html",
             context={**context,'current_user_id':self.user.id}
@@ -137,6 +140,7 @@ class ThreadConsumer(AsyncWebsocketConsumer):
             self.room_group_name, {"type": "thread.message", 
             "context": {
                 "message": {'id':message.id,'body':message.body,'created_at':format(timezone.localtime(message.created_at),"j M, Y, g:i A"),'is_edited':message.is_edited,'is_editable':True,'author':{'id':message.author_id}},
+                'message_type':"thread"
                 }
             }
         )

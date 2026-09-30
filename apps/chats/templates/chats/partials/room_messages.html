@@ -8,14 +8,14 @@
     {% for message in messages %}
     {% partialdef send-room-message inline %}
     {% if message.author.id != current_user_id %}
-    <div class="chat chat-start">
+    <div class="chat chat-start" id="{{ message.id }}">
         <div class="chat-image avatar">
-            <div class="size-12 p-1 rounded-full border border-gray-700">
+            <div>
                 <a href="#"> <!--Add profile-->
                 {% if message.author.profile_photo %}
-                <img src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
+                <img class="size-12 p-1 rounded-full border border-gray-700" src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
                 {% else %}
-                <img src="{% static 'images/default_profile.png' %}" alt="Default profile">
+                <img class="size-12 p-1 rounded-full border border-gray-700" src="{% static 'images/default_profile.png' %}" alt="Default profile">
                 {% endif %}
                 </a>
             </div>
@@ -27,10 +27,10 @@
             {{ message.body }}
         </div>
         <div class="chat-footer opacity-50">
-            <time class="text-xs ">{{ message.created_at }}</time>
             {% if message.is_edited %}
             Edited
             {% endif %}
+            <time class="text-xs ">{{ message.created_at }}</time>
         </div>
     </div>
     {% else %}
