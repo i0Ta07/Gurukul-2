@@ -1,0 +1,36 @@
+{% load static %}
+{% if message.author.id != current_user_id %}
+<div class="chat chat-start opacity-50" id="{{ message.id }}" hx-oob-swap="outerHTML">
+    <div class="chat-image avatar">
+        <div>
+            <a href="#"> <!--Add profile-->
+                {% if message.author.profile_photo %}
+                <img class="size-12 p-1 rounded-full border border-gray-700"
+                    src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
+                {% else %}
+                <img class="size-12 p-1 rounded-full border border-gray-700"
+                    src="{% static 'images/default_profile.png' %}" alt="Default profile">
+                {% endif %}
+            </a>
+        </div>
+    </div>
+    <div class="chat-header">
+        {{ message.author.get_full_name }} ({{ message.author.username }})
+    </div>
+    <div class="chat-bubble text-sm xl:text-base">
+        <i>This message was deleted.</i> 
+    </div>
+    <div class="chat-footer">
+        <time class="text-xs ">{{ message.created_at }}</time>
+    </div>
+</div> 
+{% else %}
+<div class="chat chat-end opacity-50" id="{{ message.id }}" hx-swap-oob="outerHTML">
+    <div class="chat-header">
+        <time class="text-xs ">{{ message.created_at }}</time>
+    </div>
+    <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
+        <i>You deleted this message.</i>
+    </div>
+</div>
+{% endif %}

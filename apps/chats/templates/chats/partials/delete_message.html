@@ -1,0 +1,13 @@
+<form hx-post="{% if thread_message_id %}{% url 'delete-thread-message' thread_message_id=thread_message_id %}{% else %}{% url 'delete-room-message' room_message_id=room_message_id %}{% endif %}"
+ hx-target="#modal_container" hx-swap="innerHTML" @message-deleted="message_modal.close();">
+    <div class="flex flex-col items-center gap-1">
+        <h1>Delete Message</h1>
+        <div class="flex gap-3 justify-center items-center text-md md:text-lg py-3 px-6 w-full">
+            <p>Are you sure you want to delete this message.</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="base-button  bg-red-500 hover:bg-red-700 w-50" type="submit">Delete for everyone</button>
+            <button class="base-button bg-blue-500 hover:bg-blue-700  w-50" @click="message_modal.close();" type="button">Take me back</button>
+        </div>
+    </div>
+</form>

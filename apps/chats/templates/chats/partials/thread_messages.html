@@ -46,10 +46,12 @@
             <div  x-cloak  x-transition @click.outside="active_dropdown = null" class="absolute bottom-0 right-0 mb-2 rounded-2xl shadow-lg z-50 bg-gray-900" x-show="active_dropdown === {{ message.id }}">
                 <ul class="p-2 text-xs xl:text-sm text-body font-medium" >
                     <li @click="active_dropdown = null">
-                        <a hx-get="{% if message_type == 'thread' or thread_id %}{% url 'edit-thread-message' thread_message_id=message.id %}{% elif message_type == 'room' or room_name %}{% url 'edit-room-message' room_message_id=message.id %}{% endif %}" hx-swap="innerHTML" @click="message_modal.showModal();" hx-target="#modal_container" class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg">Edit</a>
+                        <a hx-get="{% if message_type == 'thread' or thread_id %}{% url 'edit-thread-message' thread_message_id=message.id %}{% elif message_type == 'room' or room_name %}{% url 'edit-room-message' room_message_id=message.id %}{% endif %}" 
+                        hx-swap="innerHTML" @click="message_modal.showModal();" hx-target="#modal_container" class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-500 hover:text-white hover:rounded-lg">Edit</a>
                     </li>
                     <li @click="active_dropdown = null">
-                        <a class=" inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-500 hover:text-white hover:rounded-lg">Delete</a>
+                        <a hx-get="{% if message_type == 'thread' or thread_id %}{% url 'delete-thread-message' thread_message_id=message.id %}{% elif message_type == 'room' or room_name %}{% url 'delete-room-message' room_message_id=message.id %}{% endif %}"
+                        hx-swap="innerHTML" @click="message_modal.showModal();" hx-target="#modal_container" class=" inline-flex items-center w-full p-2 text-gray-200 hover:bg-red-500 hover:text-white hover:rounded-lg">Delete</a>
                     </li>
                 </ul>
             </div>

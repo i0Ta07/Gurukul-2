@@ -90,6 +90,14 @@ class RoomConsumer(AsyncWebsocketConsumer):
             context={**context,'current_user_id':self.user.id,'id':context['message']['id']}
         )
         await self.send(text_data=html)   
+
+    async def delete_message(self,event):
+        context = event['context']
+        html = await sync_to_async(render_to_string)(
+            "chats/partials/ws_delete_room_message.html",
+            context={**context,'current_user_id':self.user.id}
+        )
+        await self.send(text_data=html)
     
     async def disconnect(self, close_code):
         # Leave room group. Add logging with code.
@@ -161,6 +169,14 @@ class ThreadConsumer(AsyncWebsocketConsumer):
         html = await sync_to_async(render_to_string)(
             "chats/partials/ws_edit_thread_message.html",
             context={**context,'other_user':self.other_user,'id':context['message']['id']}
+        )
+        await self.send(text_data=html)
+
+    async def delete_message(self,event):
+        context = event['context']
+        html = await sync_to_async(render_to_string)(
+            "chats/partials/ws_delete_thread_message.html",
+            context={**context,'other_user':self.other_user,}
         )
         await self.send(text_data=html)
 

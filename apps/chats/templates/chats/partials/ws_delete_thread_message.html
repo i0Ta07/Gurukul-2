@@ -1,0 +1,19 @@
+{% if message.author.id == other_user.id %}
+<div class="chat chat-start opacity-50" id="{{ message.id }}" hx-swap-oob="outerHTML">
+    <div class="chat-header">
+        <time class="text-xs">{{ message.created_at }}</time>
+    </div>
+    <div class="chat-bubble text-sm xl:text-base">
+       <i> This message was deleted.</i>
+    </div>
+</div>
+{% else %}
+<div class="chat chat-end opacity-50" id="{{ message.id }}" hx-swap-oob="outerHTML">
+    <div class="chat-header">
+        <time class="text-xs">{{ message.created_at }}</time>
+    </div>
+    <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
+        <i>You deleted this message.</i>
+    </div>
+</div>
+{% endif %}

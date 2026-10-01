@@ -178,7 +178,7 @@ class EditMessage(LoginRequiredMixin,View):
         thread_message_id = kwargs.get('thread_message_id')
         if thread_message_id:
             message =  get_object_or_404(ThreadMessage.objects.select_related('author'),pk= thread_message_id)
-        if not thread_message_id:
+        else:
             room_message_id = kwargs.get('room_message_id')
             message = get_object_or_404(RoomMessage.objects.select_related('author'),pk = room_message_id)
 
@@ -200,8 +200,7 @@ class EditMessage(LoginRequiredMixin,View):
         thread_message_id = kwargs.get('thread_message_id')
         if thread_message_id:
             message = get_object_or_404(ThreadMessage.objects.select_related('author','thread'),pk=thread_message_id)
-        
-        if not thread_message_id:
+        else:
             room_message_id = kwargs.get('room_message_id')
             message = get_object_or_404(RoomMessage.objects.select_related('author','room__classroom'),pk=room_message_id)
 
@@ -253,3 +252,71 @@ class EditMessage(LoginRequiredMixin,View):
         response  = HttpResponse("",status= 200)
         response['HX-Trigger'] = 'message-edited'
         return response
+
+class DeleteMessage(LoginRequiredMixin,View):
+    template_name = "chats/partials/delete_message.html"
+
+    def get(self,request,*args,**kwargs):
+        thread_message_id = kwargs.get('thread_message_id')
+        if thread_message_id:
+            message =  get_object_or_404(ThreadMessage.objects.select_related('author'),pk= thread_message_id)
+        else:
+            room_message_id = kwargs.get('room_message_id')
+            message = get_object_or_404(RoomMessage.objects.select_related('author'),pk = room_message_id)
+
+        if message.created_at <= timezone.now() - timedelta(minutes=15):
+            return HttpResponse(
+                "<p class='text-center'>You can only delete a message before 15 minutes.</p>",status=200,)
+    
+        if message.author.id != request.user.id:
+            return HttpResponse(
+                "<p class='text-center'>You are not the author of this message, hence you cannot delete it.</p>",status=200,)
+        
+        return render(request,self.template_name,{**kwargs})
+
+    def post(self,request,*args,**kwargs):
+        thread_message_id = kwargs.get('thread_message_id')
+        if thread_message_id:
+            message =  get_object_or_404(ThreadMessage.objects.select_related('author'),pk= thread_message_id)
+        else:
+            room_message_id = kwargs.get('room_message_id')
+            message = get_object_or_404(RoomMessage.objects.select_related('author'),pk = room_message_id)
+
+        if message.created_at <= timezone.now() - timedelta(minutes=15):
+            return HttpResponse(
+                "<p class='text-center'>You can only delete a message before 15 minutes.</p>",status=200,)
+    
+        if message.author.id != request.user.id:
+            return HttpResponse(
+                "<p class='text-center'>You are not the author of this message, hence you cannot delete it.</p>",status=200,)
+
+        if thread_message_id:
+            room_group_name = f"thread_{message.thread.id}"
+            payload = {'type':'delete.message',
+                "context": {
+                    "message": {'id':message.id,'created_at':format(timezone.localtime(message.created_at),"j M, Y, g:i A"),'author':{'id':message.author_id}},
+                    "message_type":"thread"
+                },
+            }
+        else:
+            room_group_name = f"room_{message.room.classroom.id}"
+            room_context = { 
+                "message": {'id':message.id,'created_at':format(timezone.localtime(message.created_at),"j M, Y, g:i A"),'author':{'id':message.author_id,'get_full_name':message.author.get_full_name(),'username':message.author.username,}},
+                'message_type':"room"
+                }
+            if message.author.profile_photo:
+                room_context['message']['author']['profile_photo'] = {'url':message.author.profile_photo.url}
+            payload = {"type": "delete.message",
+                'context': room_context
+            }
+            
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            room_group_name,
+            payload 
+        )
+        _,_  = message.delete()
+        response  = HttpResponse("",status= 200)
+        response['HX-Trigger'] = 'message-deleted'
+        return response
+        

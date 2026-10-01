@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.chats.views import ChatHome,ListUsers,ListRooms,LoadThreadMessages,LoadRoomMessages,SearchUsers,EditMessage
+from apps.chats.views import ChatHome,ListUsers,ListRooms,LoadThreadMessages,LoadRoomMessages,SearchUsers,EditMessage,DeleteMessage
 
 urlpatterns = [
 
@@ -12,5 +12,7 @@ urlpatterns = [
     path("search/users/<int:other_user_id>/",LoadThreadMessages.as_view(), name="search-chat"),
     path("edit/thread/message/<int:thread_message_id>/",EditMessage.as_view(), name="edit-thread-message"),
     path("edit/room/message/<int:room_message_id>/",EditMessage.as_view(), name="edit-room-message"),
+    path("delete/thread/message/<int:thread_message_id>/",DeleteMessage.as_view(), name="delete-thread-message"),
+    path("delete/room/message/<int:room_message_id>/",DeleteMessage.as_view(), name="delete-room-message"),
 
 ]
