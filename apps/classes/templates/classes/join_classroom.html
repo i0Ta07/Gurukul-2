@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Join {{ classroom_name }}{% endblock %}
+
+{% block content %}
+
+<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
+    {% partialdef join-classroom inline %}
+    <title>Join {{ classroom_name }}</title>
+    <div class="flex items-center justify-center flex-1">
+        <div class="flex flex-col md:w-lg text-center bordered-card gap-3">
+            <h1 class="text-center">{{ classroom_name }}</h1>
+            <div class="flex flex-col font-semibold text-lg">
+                <p>Owner: {{ owner_name }}</p>
+                <p>Teachers:
+                {% for teacher in teachers %}
+                {{teacher.user__first_name}} {{teacher.user__last_name}},
+                {% endfor %}
+                </p>
+                <p>
+                    Hierarchy:
+                    {% for anc in ancestors %}
+                    {{ anc.name }} |
+                    {% endfor %}
+                    {{ classroom_name }}
+                </p>
+                <p>Age: Created {{ created_at|naturaltime }}</p>
+                <p>Student Count: {{ student_count }}</p>
+            </div>
+            <form hx-post="{% url 'join-classroom' code=code %}">
+                <button class="base-button  bg-green-700 hover:bg-green-800 font-bold" type="submit">Join</button>
+            </form>
+        </div>
+    </div>
+    {% endpartialdef join-classroom %}
+</div>
+{% endblock content %}

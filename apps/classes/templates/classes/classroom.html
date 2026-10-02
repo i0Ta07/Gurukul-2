@@ -7,7 +7,18 @@
 <div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
     {% partialdef classroom inline %}
     <title>{{ classroom_name }}</title>
-    <h1>{{ role }}</h1>
+    <div class="flex flex-col gap-1">
+        <div class="flex justify-between">
+            <div class="flex gap-1 items-center">
+                <h1>{{ classroom_name }}</h1>
+                {% if role != "Student" %}
+                <img class="size-6" src="{% static  'classes/icons/svg/link.svg' %}" alt="link" title="link">
+                <img class="size-6" src="{% static  'classes/icons/svg/qr-code.svg' %}" alt="qr-code" title="qr-code">
+                {% endif %}
+            </div>
+            <p class="font-semibold text-xl">{{ role }}</p>
+        </div>
+    </div>
     {% endpartialdef classroom %}
 </div>
 

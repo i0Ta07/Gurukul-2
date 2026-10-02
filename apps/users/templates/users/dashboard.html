@@ -10,9 +10,8 @@
         <h1>Welcome to Dashboard page</h1>
         {% if request.user.user_type == 'T' %}
         <a href="{% url 'view-root-orgs'  %}" class="base-button w-fit bg-blue-500 hover:bg-blue-700">View Orgs</a>
-        {% elif request.user.user_type == 'S' %}
-        <a href="{% url 'list-classrooms'  %}" class="base-button w-fit bg-blue-500 hover:bg-blue-700">View Classrooms</a>
         {% endif %}
+        <a href="{% url 'list-classrooms'  %}" class="base-button w-fit bg-blue-500 hover:bg-blue-700">View Classrooms</a>
     </div>
     {% endpartialdef %}    
 </div>

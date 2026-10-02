@@ -50,6 +50,8 @@ python manage.py tailwind update
 * Created a cron-job that deletes the expired invitations using django-celery-beat.
 * Changed sync PasswordReset email to async.
 * Added Honcho to manage subprocess more efficiently during devlopment by creating two Procfiles. The first handles the core web and Tailwind processes, while the second handles the Celery processes. Added as `uv add --dev honcho`, will use Kubernetes during production. Use `honcho start -f Procfile`.
+* Configure permissions and class variables using Mixins.
+* Windows File system UI/UX.
 
 ## Rules
 
@@ -86,6 +88,10 @@ python manage.py tailwind update
 * Model.objects.create save the object in the DB, use Model(kwargs) to create instance, then full_clean() and then save.
 
 * No need to add `{% csrf_token %}` on **HTMX post requests**, since we added `<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>` inside our base.html, we only have specify csrf token on normal django POST forms. If you are adding a fallback method="post" method then you have to specify `{% csrf_token %}`.
+
+* Remember to use update_fields whenever updating an object. For profile_photo and code especially since they depend on update_fields.
+
+* Whenever you are sending a message.success in a POST view, you have to include "partials/messages.html" to render those messages. If you want to render form errors you have to include form_errors.html partial. Using create_message_and_redirect we have included messages.html partial in base.html
 
 ## For Production
 

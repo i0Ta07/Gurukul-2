@@ -51,5 +51,11 @@ One way we can implement is when we make the SSE connection for send-notificatio
 
 * Load more messages as user scrolls up in the chat.
 * Implement online_count in groups.
-* Implement edit and delete message.
 * Implement delete thread.
+* Delete QR code and profile picture when instance is deleted.
+
+### Extra features
+
+* Add last_seen based on each socket disconnect and calculate the unread messages count. For classroom it will live in ClassMembership and for thread we have to add inside the thread itself and make sure user1_last_seen is actually user1 using user1.id < user.2 condition.
+
+* To add feature of scroll to unread messages, we have to get last_message read based on the last_seen of the websocket. After that add "10 unread messages" using HTMX afterend. You ac scroll till a specific id. This makes the MVP not a MVP but surely a future feature.
