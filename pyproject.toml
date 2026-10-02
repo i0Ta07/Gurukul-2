@@ -22,6 +22,7 @@ dependencies = [
     "psycopg2-binary>=2.9.12",
     "python-magic>=0.4.27",
     "python-magic-bin>=0.4.14",
+    "qrcode[pil]>=8.2",
     "redis>=8.0.0",
     "social-auth-app-django>=5.9.0",
 ]

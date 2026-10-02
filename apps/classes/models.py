@@ -1,10 +1,12 @@
 from django.db import models
-import uuid
+import uuid,os
 from apps.users.models import User
 from apps.orgs.models import Organization
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+from config.utils import create_qr_code
+from django.core.exceptions import ValidationError
 
 class Classroom(models.Model):
     name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)])
@@ -25,17 +27,41 @@ class Classroom(models.Model):
         related_query_name='owned_classroom'
     )
 
+    def classroom_directory_path(instance,filename):
+        _, extension = os.path.splitext(filename)
+        return f"classrooms/QRs/{uuid.uuid4()}{extension.lower()}"
+    
+    qr_code = models.ImageField(
+        upload_to = classroom_directory_path,
+    )
+
     # When changing the name,we have to change the slug too
     def save(self,*args, **kwargs):
         # Not calling self.full_clean(), since we will create using forms, 
         # if mentioned it will be called twice once in form.is_valid() and one in save.
+        update_fields = kwargs.get("update_fields")
         
         self.slug = slugify(self.name)
-        if (
-            update_fields := kwargs.get("update_fields")
-        ) is not None and "name" in update_fields:
+        if update_fields is not None and "name" in update_fields:
             kwargs["update_fields"] = {"slug"}.union(update_fields)
-        super().save(*args,**kwargs)
+
+        code_being_updated =  update_fields is not None and "code" in update_fields
+
+        old_qr_code = None
+        if self.pk and code_being_updated:
+            old_qr_code = Classroom.objects.get(pk=self.pk).qr_code
+            kwargs["update_fields"] = {"qr_code"}.union(update_fields)
+
+        if not self.pk or code_being_updated:
+            website_context = kwargs.pop("website_context", None) # consume additional kwargs
+            link = f"{website_context['protocol']}://{website_context['domain']}/classes/join/{self.code}"
+            qr_code = create_qr_code(text= link)
+            self.qr_code = qr_code
+
+        super().save(*args, **kwargs)
+
+        if old_qr_code and self.qr_code.name != old_qr_code.name:
+            old_qr_code.delete(save=False)
 
     def __str__(self):
         return f"{self.name} ({self.parent.name})"
@@ -78,7 +104,11 @@ class ClassMembership(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} in {self.classroom.name}"
-    
+
+    def clean(self):
+        if self.user_id == self.classroom.owner.id:
+            raise ValidationError("Owners cannot have Memberships.")
+
     class Meta:
         constraints = [
             models.UniqueConstraint(

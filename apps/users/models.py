@@ -7,6 +7,8 @@ from PIL import Image
 from django.contrib.sessions.backends.db import SessionStore as DBStore
 from django.contrib.sessions.base_session import AbstractBaseSession
 from django.db import models
+from io import BytesIO
+from django.core.files.base import ContentFile
 
 class User(AbstractUser):
     email = models.EmailField(_('Email Address'),unique=True, blank=False)
@@ -27,7 +29,7 @@ class User(AbstractUser):
 
     def user_directory_path(instance, filename):
         _, extension = os.path.splitext(filename)
-        return f"profile_photos/{instance.id}/{uuid.uuid4()}{extension.lower()}"
+        return f"users/profile_photos/{instance.id}/{uuid.uuid4()}{extension.lower()}"
 
     profile_photo = models.ImageField(
         # If the image is None show the default from static
@@ -44,24 +46,39 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.user_type})"
-    
+
     def save(self, *args, **kwargs):
-        # we use self.pk to check if the object is created or modified. Modified objects 
-        # already have pk but created ones get thiers pk when saved in DB.
-        if self.pk:
-            old_obj = User.objects.get(pk=self.pk)
-            # If a new file is being uploaded, delete the old file
-            if old_obj.profile_photo and self.profile_photo != old_obj.profile_photo:
-                old_obj.profile_photo.delete(save=False)
-                
+        update_fields = kwargs.get("update_fields")
+        photo_being_updated = (
+            update_fields is None or "profile_photo" in update_fields
+        )
+
+        old_photo = None
+
+        if self.pk and photo_being_updated:
+            old_photo = User.objects.get(pk=self.pk).profile_photo
+
+        if self.profile_photo and photo_being_updated: # Here self refers to the new object in memory
+            image = Image.open(self.profile_photo)
+            image.thumbnail((100, 100))
+
+            buffer = BytesIO()
+            image.save(buffer, format="PNG")
+            buffer.seek(0)
+
+            self.profile_photo = ContentFile(
+                buffer.getvalue(),
+                name="profile_photo.png",
+            )
+
         super().save(*args, **kwargs)
 
-        if self.profile_photo:
-            img = Image.open(self.profile_photo.path)
-
-            if img.height > 100 or img.width > 100:
-                img.thumbnail((100, 100))
-                img.save(self.profile_photo.path)
+        if (
+            photo_being_updated
+            and old_photo
+            and old_photo.name != self.profile_photo.name # If no updated_fields are provided, this prevents from deleting the old image.
+        ):
+            old_photo.delete(save=False)
 
 
 class CustomSession(AbstractBaseSession):

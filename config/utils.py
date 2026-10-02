@@ -5,6 +5,10 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.template.loader import render_to_string
 from config.tasks import send_email_task
+import qrcode
+from io import BytesIO
+from django.core.files.base import ContentFile
+from django.contrib.sites.shortcuts import get_current_site
 
 # Session
 from apps.users.models import CustomSession
@@ -53,3 +57,31 @@ def logout_user_from_all_devices(request, user):
     # Clear the cookie/session for the current request context
     logout(request)
 
+def create_qr_code(text: str):
+    qr = qrcode.QRCode(
+        box_size=10,
+        border=4,
+    )
+
+    qr.add_data(text)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = BytesIO() # Write the file to memory
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    # Returns a in-memory file as if it was saved in physical memory.
+    # FileField/ImageField needs physical files.
+    return ContentFile(buffer.getvalue(), name="qr_code.png")
+
+def get_website_context(request,token:str | None = None):
+    context = {
+        'domain':get_current_site(request).domain,
+        'protocol':'https' if request.is_secure() else 'http'        
+    }
+    if token:
+        context['token'] = token
+
+    return context

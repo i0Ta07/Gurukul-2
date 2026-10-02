@@ -1,7 +1,6 @@
 
 import secrets
 from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
-from django.contrib.sites.shortcuts import get_current_site
 
 # Base 64 encoding 
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -45,13 +44,6 @@ def unsign_str(signed:str,salt:str,max_age= 300):
 
 def get_changeEmail_key(user_id):
     return f'change_email:user:{user_id}'
-
-def get_website_context(request,token:str):
-    return  {
-        'domain':get_current_site(request).domain,
-        'token':token,
-        'protocol':'https' if request.is_secure() else 'http'
-    }
 
 def get_user_online_key(user_id):
     return f"users:online:{user_id}"

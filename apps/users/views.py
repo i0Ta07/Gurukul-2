@@ -33,8 +33,9 @@ from django.core.cache import cache
 from apps.users.utils import (
     get_changeEmail_key,get_register_token_key,
     get_hex_token,encode_user_id,sign_str,unsign_str,
-    decode_user_id,get_website_context,get_user_online_key
+    decode_user_id,get_user_online_key
 )
+from config.utils import get_website_context
 from apps.users.models import User
 from apps.orgs.models import OrgInvitation
 from django.contrib.auth.views import (
@@ -129,7 +130,7 @@ class CompleteRegistrationView(View):
         val = cache.get(key)
 
         if not val:
-            return create_message_and_redirect(request,message=f'Invalid or expired link. Kindly register again',url='register-email')
+            return create_message_and_redirect(request,message=f'Invalid or expired link. Kindly register again',url='register-email',code="error")
 
         # Update TTL, only if it is not updated once, else every reload updates the TTL
         self.initial['email'] = val['email']
@@ -332,7 +333,7 @@ class CompleteEmailUpdate(View):
 
         try:
             user.email = new_email
-            user.save()
+            user.save(update_fields={"email"})
         except IntegrityError: # Throws IntegrityError if race conditions are met.
             return create_message_and_redirect(request=request,message='Email is already in use by another account.',url="users-home",code='error')
 
@@ -394,7 +395,7 @@ class StreamNotifications(View):
 
                 async def cleanup():
                     await channel_layer.group_discard(group_name,channel_name)
-                    cache.adelete(key)
+                    await cache.adelete(key)
                     user.last_seen = timezone.now()
                     await user.asave(update_fields=["last_seen"])
                     
