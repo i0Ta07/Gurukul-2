@@ -28,7 +28,7 @@ class ClassroomOwnerOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrganizatio
             )
         )
         if not self.role:
-            return create_message_and_redirect(request,message="Only classroom owner, Organization's Admins/Owners can perform this action.")
+            return create_message_and_redirect(request,message="Only classroom owner, Organization's Admins/Owners can perform this action.",url="users-dashboard",code="error")
         return super().dispatch(request, *args, **kwargs)
 
 class ClassroomOwnerTeacherOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrganizationMixin):
@@ -48,7 +48,7 @@ class ClassroomOwnerTeacherOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrga
         )
 
         if not self.role:
-            return create_message_and_redirect(request,message="Only classroom owners/teachers, Organization's Admins/Owners can perform this action.")
+            return create_message_and_redirect(request,message="Only classroom owners/teachers, Organization's Admins/Owners can perform this action.",url="users-dashboard",code="error")
 
         return super().dispatch(request, *args, **kwargs)
     
@@ -57,7 +57,7 @@ class ClassroomStudentRequired(ClassroomRequiredMixin):
         classroom = self.get_classroom()
         self.role = is_student(classroom = classroom, student = request.user)
         if not self.role:
-            return create_message_and_redirect(request,message="Only students that are part of this classroom can perform this action.")
+            return create_message_and_redirect(request,message="Only students that are part of this classroom can perform this action.",url="users-dashboard",code="error")
         return super().dispatch(request, *args, **kwargs)
 
 class ClassroomMembershipRequired(ClassroomRequiredMixin):
@@ -65,5 +65,5 @@ class ClassroomMembershipRequired(ClassroomRequiredMixin):
         classroom = self.get_classroom()
         self.role = is_member(classroom=classroom,user= request.user)
         if not self.role:
-            return create_message_and_redirect(request,message="Only users that are part of the classroom can perform this action.")
+            return create_message_and_redirect(request,message="Only users that are part of the classroom can perform this action.",url="users-dashboard",code="error")
         return super().dispatch(request, *args, **kwargs)

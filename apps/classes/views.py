@@ -93,7 +93,7 @@ class RenameClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgA
         except ValidationError as e:
             form.add_error(field=None,error=e.message)
             return render_error_inside_modal(request,self.template_name,{'form':form,**kwargs})
-        classroom.save()
+        classroom.save(update_fields={"name"})
         if self.role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
             row_context = {
                 "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path),'role':self.role,**kwargs

@@ -27,7 +27,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         is_member = await ClassMembership.objects.filter(classroom_id=self.classroom_id, user_id=self.user.id).aexists()
 
         if not is_member:
-            is_owner = (self.room.classroom.owner.id == self.user.id)
+            is_owner = (self.room.classroom.owner_id == self.user.id)
 
             if not is_owner:
                 await self.close(code=4003)

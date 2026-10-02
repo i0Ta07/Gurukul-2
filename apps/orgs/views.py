@@ -532,7 +532,7 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
                 **kwargs,"form":form,"root_org_view":is_root, "child_org_view":not(is_root)
             })
             
-        org.save()
+        org.save(update_fields={"name"})
         if is_root:
             row_context = {
                 "org":build_slug(instance=org,parent_org_path="",role=OrgUserType.OWNER),
