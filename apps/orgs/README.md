@@ -56,12 +56,7 @@ Open the prefilled form inside the modal and perform validations. If failed re-r
 
 ## To do
 
-* Add Rename to orgs and classrooms.
-
-* Change `org_path` to `parent_org_path` and `org_id` to `parent_org_id`. Some `org_id` remain `org_id`, only those of parent will change.
-
 * In several views we could get specific attributes from the object instead of the whole instance.
-* Retrieving current org at several place use the get_root_current_org function to get both the root org and current org.
 
 ## Remember
 

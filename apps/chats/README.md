@@ -32,6 +32,12 @@ We have used htmx websocket extension and django-channels. We use redis for chan
 
 3. Inside the handler we will get the message_id and create a `aget()` request to fetch message object and create a html partial using it using render_to_string to send the response to each channel using send()
 
+#### How consumers work?
+
+1. connect() method is connection specific,each user connect to the group with their own connection(channel). If you define self.user here then it will be the user with that connection.
+2. When someone sends data to their websocket connection that is handled by receive(), it is also specific to their connection in which they are the self.scope['user']. This message can be broadcasted to the whole group using the event like thread.message().
+3. This thread.message is specific to each channel in the group, it sends out the message to all the channels inside the group. Here self.scope['user'] will give you the user of that respective channel. It gives information with respect to the connection of that channel.
+
 ### Transitions
 
 Added meta tag to base.html to set `content='{"globalViewTransitions": true}'` before HTMX script is loaded.
@@ -47,15 +53,20 @@ One and only way I think to possibly update the correct last_seen is during a di
 
 One way we can implement is when we make the SSE connection for send-notifications we can set the user status online by storing as users:online:{user_id} = True in redis and when we disconnect we can remove the key and set the last_seen to timezone.now()
 
+### Public profile
+
+It will be based on the username and not the user_id, that is a security issue.
+
 ### To do list
 
-* Load more messages as user scrolls up in the chat.
-* Implement online_count in groups.
-* Implement delete thread.
-* Delete QR code and profile picture when instance is deleted.
+* Implement online_count in groups. We could store the value in redis and change it on connect() and disconnect().
 
 ### Extra features
 
 * Add last_seen based on each socket disconnect and calculate the unread messages count. For classroom it will live in ClassMembership and for thread we have to add inside the thread itself and make sure user1_last_seen is actually user1 using user1.id < user.2 condition.
 
 * To add feature of scroll to unread messages, we have to get last_message read based on the last_seen of the websocket. After that add "10 unread messages" using HTMX afterend. You ac scroll till a specific id. This makes the MVP not a MVP but surely a future feature.
+
+* Implement delete thread, have to add some extra columns.
+
+* Incase of more messags implement loading more messages as user scrolls up in the chat.

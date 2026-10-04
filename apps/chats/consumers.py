@@ -153,8 +153,8 @@ class ThreadConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    # Other user is webscoket specific connection data that is changed as per the websocket but the message is a shared entity.
-    #  Hence we don't render the message inside recieve but rather leave it specific to each connection.
+    # Other user is websocket specific connection data that is changed for each websocket connection but the message is a shared entity.
+    # Hence we don't render the message inside recieve but rather leave it specific to each connection.
     async def thread_message(self, event):
         context = event["context"]
 

@@ -43,7 +43,7 @@ class ListUsers(LoginRequiredMixin, View):
                 last_message_time=Subquery(latest_thread_msg.values('created_at')[:1]),
                 last_message_author_id = Subquery(latest_thread_msg.values('author_id')[:1])
             )
-            .order_by('-updated_at')[:25]
+            .order_by('-updated_at')
         )
         for thread in threads:
             thread.other_user = thread.user2 if request.user == thread.user1 else thread.user1
@@ -83,7 +83,7 @@ class ListRooms(LoginRequiredMixin, View):
                 last_message_author_first_name=Subquery(latest_room_msg.values('author__first_name')[:1]),
                 last_message_author_last_name=Subquery(latest_room_msg.values('author__last_name')[:1]),
             )
-            .order_by('-updated_at').distinct()[:25]
+            .order_by('-updated_at').distinct()
         )
 
         for room in rooms: 

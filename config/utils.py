@@ -14,14 +14,14 @@ from django.contrib.sites.shortcuts import get_current_site
 from apps.users.models import CustomSession
 from django.contrib.auth import logout
 
-def create_message_and_redirect(request, message: str, url: str, code: Literal['info', 'success', 'error', 'warning'] = 'error'):
+def create_message_and_redirect(request, message: str, url: str,url_kwargs:dict|None = None, code: Literal['info', 'success', 'error', 'warning'] = 'error'):
     """Create the message and redirects to the given URL."""
     getattr(messages, code)(request, message)
-    target = reverse(url)
+    target = reverse(url, kwargs=url_kwargs or {})
 
     if request.htmx:
         response = HttpResponse(status=200)
-        response["HX-Redirect"] = target
+        response["HX-Redirect"] = target # need absoulete URL hence using reverse
         return response
 
     return redirect(target)

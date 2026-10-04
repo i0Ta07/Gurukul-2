@@ -7,5 +7,3 @@
 * The owner and admin of the org can access the class even if they are not the owner of the class.
 
 ## To do
-
-* Implement studennt joining the class.

@@ -67,13 +67,9 @@ python manage.py tailwind update
 * At some places we could directly assign the obj_id without actually fetching the entire obj.
 * If social auth is cancelled error is raised, should have been back to login or open the auth in new window and close it if cancelled or completed.
 
-## Pending decisons
+## To do
 
-* Decide whether to keep the bio, phone and DOB. Since this is not a social website we will not need show profiles of user. We may add a chat feature for teachers in a organization. For that we will need a username. Even if chat is added we dont need to show bio, phone and DOB.
-
-* To remove title from individual pages, since we have to update the title in every htmx request seperately. We can just use **Gurukul** as a title for every page.
-
-* There are repeated business checks inside the Model's clean methods that are already checked in the View. Should be removed?
+* Remove DOB, pone but keep bio.
 
 ## Remember
 
@@ -92,6 +88,8 @@ python manage.py tailwind update
 * Remember to use update_fields whenever updating an object. For profile_photo and code especially since they depend on update_fields.
 
 * Whenever you are sending a message.success in a POST view, you have to include "partials/messages.html" to render those messages. If you want to render form errors you have to include form_errors.html partial. Using create_message_and_redirect we have included messages.html partial in base.html
+
+* Add checks in view and inside the model clean too or even constraints if possible. This enuure integrity at db level.
 
 ## For Production
 

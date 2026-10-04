@@ -157,7 +157,7 @@ class JoinClassroom(LoginRequiredMixin,View):
         classroom = get_object_or_404(Classroom.objects.select_related('owner','parent'), code = code)
         if ClassMembership.objects.filter(user_id=request.user.id,classroom_id = classroom.id).exists():
             return create_message_and_redirect(request,message="You are already a member of this classroom.",url="users-dashboard",code="info")
-        if request.user.id == classroom.owner.id:
+        if request.user.id == classroom.owner_id:
             return create_message_and_redirect(request,message="Owners cannot join the classroom.",url='users-dashboard',code="info")
         teachers = ClassMembership.objects.filter(user__user_type = User.UserType.TEACHER,classroom_id=classroom.id).values('user__first_name','user__last_name')
         student_count = ClassMembership.objects.filter(user__user_type = User.UserType.STUDENT,classroom_id=classroom.id).count()
@@ -169,7 +169,7 @@ class JoinClassroom(LoginRequiredMixin,View):
         classroom = get_object_or_404(Classroom.objects.select_related('owner','parent'), code = code)
         if ClassMembership.objects.filter(user_id=request.user.id,classroom_id = classroom.id).exists():
             return create_message_and_redirect(request,message="You are already a member of this classroom.",url="users-dashboard",code="info")
-        if request.user.id == classroom.owner.id:
+        if request.user.id == classroom.owner_id:
             return create_message_and_redirect(request,message="Owners cannot join the classroom.",url='users-dashboard',code="info")
 
         membership = ClassMembership(user_id = request.user.id, classroom_id = classroom.id)
