@@ -18,8 +18,7 @@
             </a>
             {% endif %}
             <a href="{% url 'chat-home' %}" hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
-                <div class="avatar indicator" hx-swap="innerHTML" hx-target="this" sse-swap="message_count">
-                    <span class="indicator-item badge badge-sm badge-info p-1">100</span>
+                <div class="avatar indicator">
                     <img class="size-6 xl:size-8" src="{% static 'chats/icons/png/chats.png' %}" alt="Chats">
                 </div>
             </a>

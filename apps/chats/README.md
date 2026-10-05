@@ -59,14 +59,10 @@ It will be based on the username and not the user_id, that is a security issue.
 
 ### To do list
 
-* Implement online_count in groups. We could store the value in redis and change it on connect() and disconnect().
-
 ### Extra features
 
 * Add last_seen based on each socket disconnect and calculate the unread messages count. For classroom it will live in ClassMembership and for thread we have to add inside the thread itself and make sure user1_last_seen is actually user1 using user1.id < user.2 condition.
-
 * To add feature of scroll to unread messages, we have to get last_message read based on the last_seen of the websocket. After that add "10 unread messages" using HTMX afterend. You ac scroll till a specific id. This makes the MVP not a MVP but surely a future feature.
-
 * Implement delete thread, have to add some extra columns.
-
+* Implement online_count in groups. We could store the value in redis and change it on connect() and disconnect().
 * Incase of more messags implement loading more messages as user scrolls up in the chat.

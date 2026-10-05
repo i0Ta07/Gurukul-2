@@ -1,6 +1,6 @@
 from config.utils import create_message_and_redirect
 from django.contrib import messages
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.db import IntegrityError
 import asyncio
@@ -411,3 +411,14 @@ class StreamNotifications(View):
         response["X-Accel-Buffering"] = "no"
 
         return response
+
+class PublicProfile(LoginRequiredMixin,View):
+    def get(self,request,*args,**kwargs):
+        other_user_id = kwargs.get('other_user_id')
+        if other_user_id == request.user.id:
+            return redirect("users-profile")
+        other_user = get_object_or_404(User,pk=other_user_id)
+        context = {'other_user':other_user}
+        if request.htmx:
+            return render(request,template_name="users/profile/public_profile.html#public-profile",context=context)
+        return render(request,template_name="users/profile/public_profile.html",context=context)

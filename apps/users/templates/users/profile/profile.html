@@ -11,7 +11,6 @@
     <div class="grid items-center lg:grid-cols-2 gap-6 overflow-y-auto scrollbar-none">
         <div id="profile-form">
             {% partialdef profile-form inline %} <!-- Update the form, any form errors and page messages. -->
-
             <form enctype="multipart/form-data" hx-post="{% url 'users-profile' %}" hx-swap="innerHTML"  hx-target="#profile-form" class="space-y-5 w-full max-w-4xl" x-data="{ saving: false }" @submit="saving = true">
                 {% if can_change_password %}
                 <div class="flex justify-end w-full">

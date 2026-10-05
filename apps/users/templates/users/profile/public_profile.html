@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ other_user.username }}{% endblock title %}
+
+{% block content %}
+<div class="page-container " id="page-container">
+    {% partialdef public-profile inline %}
+    <title>{{ other_user.username }}</title>
+    <div class="flex flex-col justify-center items-center flex-1">
+        <div class="bordered-card max-w-lg flex flex-col justify-center items-center gap-2">
+            <div class="flex gap-3 justify-center items-center mb-2">
+                {% if other_user.profile_photo %}
+                <img class="size-15 p-1 rounded-full ring-2 ring-gray-500" src="{{ other_user.profile_photo.url }}"
+                    alt="Profile Picture">
+                {% else %}
+                <img class="size-15 p-1 rounded-full ring-2 ring-gray-500"
+                    src="{% static 'images/default_profile.png' %}" alt="Default profile">
+                {% endif %}
+                <h1>{{ other_user.get_full_name }}</h1>
+            </div>
+            <div class="font-semibold text-xl text-center">
+                <p>Username: <i>{{ other_user.username }}</i> ({{ other_user.get_user_type_display }})</p>
+                {% if other_user.bio %}
+                <p>Bio:{{ other_user.bio }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endpartialdef public-profile %}
+</div>
+{% endblock content %}

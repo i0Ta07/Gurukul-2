@@ -9,6 +9,7 @@ from .views import (
     UpdateProfile,
     CompleteEmailUpdate,
     StreamNotifications,
+    PublicProfile
 )
 
 urlpatterns = [
@@ -17,6 +18,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page='login'),name='logout'),
     path('dashboard/',Dashboard.as_view(), name='users-dashboard'),
     path('profile/',UpdateProfile.as_view(), name='users-profile'),
+    path('view/profile/<int:other_user_id>',PublicProfile.as_view(),name='public-profile'),
     path('verify-email/<str:token>',CompleteEmailUpdate.as_view(), name='verify-email'),
     path('register-email/',view = RegisterEmailView.as_view(),name= 'register-email'),
     path('register/complete/<str:token>/',view = CompleteRegistrationView.as_view(), name= 'complete-register-token'),

@@ -3,7 +3,7 @@
 <div class="chat chat-start opacity-50" id="{{ message.id }}" hx-oob-swap="outerHTML">
     <div class="chat-image avatar">
         <div>
-            <a href="#"> <!--Add profile-->
+            <a hx-get="{% url 'public-profile' other_user_id=message.author.id %}" hx-target="#page-container" hx-swap="innerHTML">
                 {% if message.author.profile_photo %}
                 <img class="size-12 p-1 rounded-full border border-gray-700"
                     src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
