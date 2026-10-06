@@ -9,7 +9,8 @@
         </a>
     </div>
     <div class="relative flex items-center text-white" x-data="{ open_dropdown: false }" hx-ext="sse"  sse-connect="{% url 'stream-notifications' %}">
-        <div class="flex items-center justify-center gap-x-3">
+        <div sse-swap="notifications-messages" hx-swap="beforeend" hx-target="this"></div>
+        <div class="flex items-center justify-center gap-x-2">
             {% if request.user.user_type == 'T' %}
             <a href="{% url 'view-invitations' %}" hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
                 <div class="avatar indicator"  hx-swap="innerHTML" hx-target="this" sse-swap="invitation_count">
@@ -17,12 +18,17 @@
                 </div>
             </a>
             {% endif %}
+            <a href="#" hx-get="#" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
+                <div class="avatar indicator">
+                    <img class="size-5 xl:size-7" src="{% static 'icons/svg/notification-bell.svg' %}" alt="Notification-bell">
+                </div>
+            </a>
             <a href="{% url 'chat-home' %}" hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
                 <div class="avatar indicator">
                     <img class="size-6 xl:size-8" src="{% static 'chats/icons/png/chats.png' %}" alt="Chats">
                 </div>
             </a>
-            <button @click="open_dropdown = ! open_dropdown" type="button" class="  flex text-sm rounded-full focus:ring-2">
+            <button @click="open_dropdown = ! open_dropdown" type="button" class="flex text-sm rounded-full ring-2 ring-gray-500 focus:ring-amber-400">
                 {% if user.profile_photo %}
                 <img class="size-8 xl:size-10 p-1 rounded-full" src="{{ user.profile_photo.url }}" alt="Profile Picture">
                 {% else %}

@@ -201,13 +201,22 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequi
 
             count = OrgInvitation.objects.filter(to_user_id=user.id).count()
             channel_layer = get_channel_layer()
-            html = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
+            invitation_notification = render_to_string(template_name = "partials/notifications.html",context={'notification':{'body':f'Invitation from {invitation.from_user.get_full_name()} to join {invitation.org.name}','code':'info'},})
+            invitation_count = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
             async_to_sync(channel_layer.group_send)(
                 f"user_notifications_{user.id}",
                 {
                     "type":"sse",
                     "event_name": "invitation_count",
-                    "html": html.replace('\n','')
+                    "html": invitation_count.replace('\n','')
+                }
+            )
+            async_to_sync(channel_layer.group_send)(
+                f"user_notifications_{user.id}",
+                {
+                    "type":"sse",
+                    "event_name": "notifications-messages",
+                    "html": invitation_notification.replace('\n','')
                 }
             )
 
