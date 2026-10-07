@@ -43,24 +43,30 @@ class Classroom(models.Model):
         
         self.slug = slugify(self.name)
         if update_fields is not None and "name" in update_fields:
-            kwargs["update_fields"] = {"slug"}.union(update_fields)
+            update_fields = {"slug"}.union(update_fields)
 
-        code_being_updated =  update_fields is not None and "code" in update_fields
+        # always use update_fields when recreating code.
+        classroom_code_being_updated =  update_fields is not None and "code" in update_fields
 
         old_qr_code = None
-        if self.pk and code_being_updated:
+        if self.pk and classroom_code_being_updated:
             old_qr_code = Classroom.objects.get(pk=self.pk).qr_code
-            kwargs["update_fields"] = {"qr_code"}.union(update_fields)
+            update_fields = {"qr_code"}.union(update_fields)
 
-        if not self.pk or code_being_updated:
+        if not self.pk or classroom_code_being_updated: # If new obj is created or we flushed the classroom
             website_context = kwargs.pop("website_context", None) # consume additional kwargs
+            if not website_context:
+                raise ValidationError("Cannot create/update QR without website_context inside save method")
             link = f"{website_context['protocol']}://{website_context['domain']}/classes/join/{self.code}"
             qr_code = create_qr_code(text= link)
             self.qr_code = qr_code
 
+        if update_fields:
+            kwargs['update_fields'] = update_fields
+
         super().save(*args, **kwargs)
 
-        if old_qr_code and self.qr_code.name != old_qr_code.name:
+        if old_qr_code:
             old_qr_code.delete(save=False)
 
     def __str__(self):

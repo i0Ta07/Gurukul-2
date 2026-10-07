@@ -267,7 +267,8 @@ class UpdateProfile(LoginRequiredMixin,View):
         
         # Check which field has changed and save that. If Email is changed, verfication is required.
         if "email" not in form.changed_data:
-            form.save()
+            instance = form.save(commit=False)
+            instance.save(update_fields=form.changed_data) # Always use update fields when updating objects
             messages.success(request,"Profile Updated successfully")
             return render(request, get_template(request), context)
 

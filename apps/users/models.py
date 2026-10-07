@@ -50,12 +50,12 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         update_fields = kwargs.get("update_fields")
         photo_being_updated = (
-            update_fields is None or "profile_photo" in update_fields
+            update_fields is not None and "profile_photo" in update_fields # If photo is getting updated
         )
 
         old_photo = None
 
-        if self.pk and photo_being_updated:
+        if self.pk and photo_being_updated: # If one photo already exists and new photo is being updated
             old_photo = User.objects.get(pk=self.pk).profile_photo
 
         if self.profile_photo and photo_being_updated: # Here self refers to the new object in memory
@@ -71,15 +71,10 @@ class User(AbstractUser):
                 name="profile_photo.png",
             )
 
-        super().save(*args, **kwargs)
+        super().save(*args, **kwargs) # save self.profile_photo
 
-        if (
-            photo_being_updated
-            and old_photo
-            and old_photo.name != self.profile_photo.name # If no updated_fields are provided, this prevents from deleting the old image.
-        ):
+        if old_photo:
             old_photo.delete(save=False)
-
 
 class CustomSession(AbstractBaseSession):
     # Add a dedicated, indexed column for the user ID
@@ -107,3 +102,14 @@ class SessionStore(DBStore):
             user_id = None
         obj.user_id = user_id
         return obj
+
+class Notification(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        related_query_name="notification"
+    )
+    body = models.CharField(max_length=150)
+    is_seen = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
