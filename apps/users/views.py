@@ -62,9 +62,6 @@ class Dashboard(LoginRequiredMixin,View):
 
     def get(self,request, *args, **kwargs,):
         context = {}
-        if request.user.user_type == User.UserType.TEACHER:
-            count = OrgInvitation.objects.filter(to_user_id = request.user.id).count()
-            context['invitation_count'] = count
         if request.htmx:
             return render(request,'users/dashboard.html#dashboard',context)
         return render(request,self.template_name,context)

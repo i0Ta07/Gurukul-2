@@ -54,6 +54,10 @@ DaisyUI came in clutch with the `indicator` class, we will hx-trigger="every 60s
 
 Open the prefilled form inside the modal and perform validations. If failed re-render the form inside the modal.
 
+### Context Processors
+
+When we have to add some context to every template in the app. such as notification count, invitation count in the navbar.
+
 ## To do
 
 * In several views we could get specific attributes from the object instead of the whole instance.

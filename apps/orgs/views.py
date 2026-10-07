@@ -19,6 +19,7 @@ from apps.orgs.utils import ( OrgUserType,
     )
 from apps.classes.utils import ClassUserType
 from django.core.cache import cache
+from apps.orgs.utils import get_invitation_count_key
 from django.contrib.auth.hashers import make_password,check_password
 from config.utils import send_email
 from config.settings import EMAIL_EXPIRY_DURATION
@@ -200,6 +201,10 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequi
             messages.success(request,"Request sent successfully")
 
             count = OrgInvitation.objects.filter(to_user_id=user.id).count()
+
+            # Update invitation count in cache
+            key = get_invitation_count_key(user_id = request.user.id)
+            cache.set(key,count,900) 
             channel_layer = get_channel_layer()
             invitation_notification = render_to_string(template_name = "partials/notifications.html",context={'notification':{'body':f'Invitation from {invitation.from_user.get_full_name()} to join {invitation.org.name}','code':'info'},})
             invitation_count = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
@@ -305,6 +310,9 @@ class CreateOrgMemberships(LoginRequiredMixin,TeacherRequiredMixin,View):
 
         user = request.user
         count = OrgInvitation.objects.filter(to_user_id=user.id).count()
+        # Update invitation count in cache
+        key = get_invitation_count_key(user_id = request.user.id)
+        cache.set(key,count,900)
         channel_layer = get_channel_layer()
         html = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
         async_to_sync(channel_layer.group_send)(

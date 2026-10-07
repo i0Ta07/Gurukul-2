@@ -311,3 +311,6 @@ def render_error_inside_modal(request,template_name,context):
     response["HX-Retarget"] = "#modal_container" 
     response["HX-Reswap"] = "innerHTML" 
     return response
+
+def get_invitation_count_key(user_id):
+    return f'users:{user_id}:invitation_count'
