@@ -112,6 +112,7 @@ class ClassMembership(models.Model):
         return f"{self.user.get_full_name()} in {self.classroom.name}"
 
     def clean(self):
+        super().clean()
         if self.user_id == self.classroom.owner.id:
             raise ValidationError("Owners cannot have Memberships.")
 
@@ -121,3 +122,21 @@ class ClassMembership(models.Model):
                 fields=["user", "classroom"], name="unique_class_membership"
             )
         ]
+
+class Announcement(models.Model):
+    body = models.CharField(max_length=300)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="announcements",
+        related_query_name="announcement"
+    )
+    classroom = models.ForeignKey(
+        Classroom,
+        on_delete=models.CASCADE,
+        related_name="announcements",
+        related_query_name="announcement"
+    )
+
+    # Clean the created_by authorization check using the mixin, 
