@@ -139,4 +139,7 @@ class Announcement(models.Model):
         related_query_name="announcement"
     )
 
+    def __str__(self):
+        return f"{self.classroom.name}: {self.id}"
+
     # Clean the created_by authorization check using the mixin, 

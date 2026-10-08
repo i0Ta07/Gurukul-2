@@ -61,6 +61,7 @@ When we have to add some context to every template in the app. such as notificat
 ## To do
 
 * In several views we could get specific attributes from the object instead of the whole instance.
+* In template remove subjects, or keep subjects remove Classes label.
 
 ## Remember
 
