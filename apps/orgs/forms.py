@@ -5,7 +5,7 @@ from apps.orgs.utils import validata_create_child_org
 from treebeard.forms import MoveNodeForm, movenodeform_factory
 from django.template.defaultfilters import filesizeformat
 from django.core.exceptions import ValidationError
-from config.validators import validate_file_mimetype
+from config.validators import excel_validator
 from django.forms import ModelChoiceField
 from django.core.validators import RegexValidator
 
@@ -60,7 +60,7 @@ class SendInvitationForm(forms.Form):
         required=False,
         label=_('Import from excel file (.xlsx). Size: 2MB'),
         widget=forms.FileInput(attrs={'class':"file-input"}),
-        validators=[validate_file_mimetype(allowed_mime_types=['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])]
+        validators=[excel_validator]
     )
     
     def clean_file(self):
@@ -101,6 +101,7 @@ class CreateAdminForm(forms.Form):
             .filter(org=root_org)
             .filter(admin__isnull=True)
         )
+
 class UserModelChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
         return f"{obj.teacher.get_full_name()}"

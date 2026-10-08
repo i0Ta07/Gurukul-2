@@ -7,7 +7,7 @@ from phonenumber_field.formfields import SplitPhoneNumberField
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from config.validators import validate_file_mimetype
+from config.validators import image_validator
 from django.template.defaultfilters import filesizeformat
 from django.contrib.auth.forms import PasswordResetForm
 from django.template.loader import render_to_string
@@ -192,7 +192,7 @@ class UpdateUserDetailsForm(forms.ModelForm):
         required=False
     )
     profile_photo = forms.ImageField(widget=forms.FileInput(attrs={'class': "file-input"}),
-        required=False,validators=[validate_file_mimetype(allowed_mime_types=['image/png', 'image/jpeg'])])
+        required=False,validators=[image_validator])
 
     bio = forms.CharField(max_length=100,strip=True,label=_('Bio'),required=False,widget=forms.Textarea(attrs={'placeholder':'About you',
     'class': 'form-input h-25'}))
