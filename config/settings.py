@@ -62,7 +62,7 @@ PROJECT_APPS = [
     'apps.orgs.apps.OrgsConfig',
     'apps.theme.apps.ThemeConfig',
     'apps.chats.apps.ChatsConfig',
-    'apps.content.apps.ContentConfig',
+    'apps.resources.apps.ResourcesConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
