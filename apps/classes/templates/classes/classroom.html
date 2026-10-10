@@ -1,22 +1,106 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 {% block title %}{{ classroom_name }}{% endblock %}
 
 {% block content %}
 
-<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
+<div class="page-container " id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
     {% partialdef classroom inline %}
     <title>{{ classroom_name }}</title>
-    <div class="flex flex-col gap-1">
-        <div class="flex justify-between">
-            <div class="flex gap-1 items-center">
-                <h1>{{ classroom_name }}</h1>
-                {% if role != "Student" %}
-                <img class="size-6" src="{% static  'classes/icons/svg/link.svg' %}" alt="link" title="link">
-                <img class="size-6" src="{% static  'classes/icons/svg/qr-code.svg' %}" alt="qr-code" title="qr-code">
-                {% endif %}
+    <div class="flex flex-col gap-1 flex-1 static overflow-y-auto">
+        <p class="badge badge-outline badge-error badge-sm xl:badge-lg absolute right-2 top-13 xl:top-18">{{ role }}</p>
+        <div class="flex gap-1 items-center justify-center">
+            <h1 class="text-2xl xl:text-4xl">{{ classroom_name }}</h1>
+            {% if request.user.user_type == "T" %}
+            <img class="size-6" src="{% static  'classes/icons/svg/link.svg' %}" alt="link" title="link">
+            <img class="size-6" src="{% static  'classes/icons/svg/qr-code.svg' %}" alt="qr-code" title="qr-code">
+            {% endif %}
+        </div>
+        <div class="flex flex-col xl:grid xl:grid-cols-2 flex-1 p-1 gap-1 xl:gap-5">
+            <div class="flex flex-col h-100 xl:h-full">
+                <div class="flex justify-between bg-blue-500 rounded-2xl py-1 xl:py-2 px-3">
+                    <p class="text-lg xl:text-2xl font-bold">Announcements</p>
+                    <div class="flex gap-1">
+                        {% if request.user.user_type == "T" %}
+                        <a href="#"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
+                        {% endif %}
+                        <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0">
+                    {% for ann in announcemnets %}
+                    <div class="flex flex-col">
+                        <hr class="text-gray-600 border">
+                        <p>{{ ann.body }}</p>
+                        <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ ann.created_by.get_full_name }} ({{ ann.created_at|naturaltime }})</p>
+                    </div>
+                    {% empty %}
+                    <div class="flex flex-col justify-center items-center flex-1">
+                        <p class="font-bold text-gray-500"><b><i>No announcemnets created</i></b></p>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-            <p class="font-semibold text-xl">{{ role }}</p>
+            <div class="grid grid-rows-2 gap-1">
+                <div class="flex flex-col h-100 xl:h-full">
+                    <div class="flex justify-between bg-blue-500 rounded-2xl py-1 xl:py-2 px-3">
+                        <p class="text-lg xl:text-2xl  font-bold">Resources</p>
+                         <div class="flex gap-1">
+                            {% if request.user.user_type == "T" %}
+                                <a href="#"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
+                            {% endif %}
+                            <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
+                         </div>
+                        
+                    </div>
+                    <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0">
+                        {% for res_mem in resource_memberships %}
+                        <div class="flex flex-col gap-0.5">
+                            <hr class="text-gray-600 border">
+                            <div class="flex justify-between">
+                                <div class="flex gap-1.5">
+                                    <p class="font-semibold">{{ res_mem.resource.title }}</p>
+                                    <p class="badge badge-outline badge-info badge-xs xl:badge-md ">{{res_mem.resource.get_type_display}}</p>
+                                </div>
+                                    {% if res_mem.resource.url %}
+                                    <a href="{{ res_mem.resource.url }}" target="_blank"
+                                        class="underline text-blue-500 font-bold">View</a>
+                                    {% elif res_mem.resource.file %}
+                                    <a href="{{ res_mem.resource.file.url }}" target="_blank"
+                                        class="underline text-blue-500 font-bold">View</a>
+                                    {% endif %}
+                            </div>
+                            <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ res_mem.created_by.get_full_name }}
+                                ({{ res_mem.created_at|naturaltime }})</p>
+                        </div>
+                        {% empty %}
+                        <div class="flex flex-col justify-center items-center flex-1">
+                            <p class="font-bold text-gray-500"><b><i>No resources attached</i></b></p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="flex flex-col h-100 xl:h-full">
+                    <div class="flex justify-between bg-blue-500 rounded-2xl py-1 xl:py-2 px-3">
+                        <p class="text-lg xl:text-2xl font-bold">Quizzes</p>
+                        <div class="flex gap-1">
+                            {% if request.user.user_type == "T" %}
+                                <a href="#"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
+                            {% endif %}
+                            <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0">
+                        {% for quiz in quizzes %}
+                        {% empty %}
+                        <div class="flex flex-col justify-center items-center flex-1">
+                            <p class="font-bold text-gray-500"><b><i>No quizzes attached</i></b></p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% endpartialdef classroom %}

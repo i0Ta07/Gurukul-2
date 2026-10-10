@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
-from apps.classes.models import ClassMembership, Classroom
+from apps.classes.models import Announcement, ClassMembership, Classroom
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
 from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired
 from django.shortcuts import get_object_or_404,render
@@ -13,6 +13,7 @@ from apps.orgs.utils import OrgUserType, render_error_inside_modal, build_slug
 from apps.classes.utils import ClassUserType
 from apps.chats.models import ChatRoom
 from django.db import transaction
+from apps.resources.models import ResourceClassMembership
 from apps.users.models import User
 from config.utils import create_message_and_redirect, get_website_context
 from django.db.models import Q
@@ -59,15 +60,7 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
         response['HX-Trigger'] = 'classroom-created'
         return response
 
-class ViewClassroomFromOrgs(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,View): # class membership for students. or membership of teacher or owner of class
-    template_name = "classes/classroom.html"
-    def get(self,request, *args,**kwargs):
-        role = self.role
-        classroom = self.get_classroom()
-        context = {"role":role,"classroom_name":classroom.name}
-        if request.htmx:
-            return render(request,"classes/classroom.html#classroom",context=context)
-        return render(request=request,template_name=self.template_name,context=context)
+
 
 class ViewClassroomDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     template_name = "classes/partials/view_classroom_details.html"
@@ -140,15 +133,22 @@ class ListClassrooms(LoginRequiredMixin,View):
             return render(request,"classes/list_classrooms.html#list-classrooms",context)
         return render(request,self.template_name,context)
 
-class ViewClassroomFromDashboard(LoginRequiredMixin, ClassroomMembershipRequired, View):
+class BaseClassroomView(LoginRequiredMixin,View):
     template_name = "classes/classroom.html"
     def get(self,request, *args,**kwargs):
         role = self.role
         classroom = self.get_classroom()
-        context = {"role":role,"classroom_name":classroom.name}
+        announcemnets = Announcement.objects.filter(classroom_id = classroom.id).select_related('created_by').order_by('-created_at')
+        resource_memberships = ResourceClassMembership.objects.filter(classroom_id =classroom.id).select_related('resource','created_by').order_by('-created_at')
+        context = {"role":role,"classroom_name":classroom.name,"announcemnets":announcemnets,'resource_memberships':resource_memberships}
         if request.htmx:
             return render(request,"classes/classroom.html#classroom",context=context)
         return render(request=request,template_name=self.template_name,context=context)
+
+class ViewClassroomFromOrgs(TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,BaseClassroomView): # class membership for students. or membership of teacher or owner of class
+    pass
+class ViewClassroomFromDashboard(ClassroomMembershipRequired,BaseClassroomView):
+    pass
 
 class JoinClassroom(LoginRequiredMixin,View):
     template_name = 'classes/join_classroom.html'
