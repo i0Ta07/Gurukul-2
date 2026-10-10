@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<div class="page-container" id="page-container" hx-history-elt>
+<div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
     {% partialdef view-root-config inline %}
     <title>{{ root_org_name }}</title>
     <div class="flex flex-col p-2 md:p-5 gap-5 min-h-0 flex-auto" x-data>
