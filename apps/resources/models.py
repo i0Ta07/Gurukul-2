@@ -89,6 +89,13 @@ class ResourceClassMembership(models.Model):
         related_name="memberships",
         related_query_name="membership"
     )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_resource_memberships",
+        related_query_name="created_resource_membership"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         constraints = [
