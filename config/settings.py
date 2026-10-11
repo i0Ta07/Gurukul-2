@@ -116,6 +116,7 @@ TEMPLATES = [
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
                 'apps.orgs.context_processors.invitation_count',
+                'apps.users.context_processors.notification_count',
             ],
         },
     },
