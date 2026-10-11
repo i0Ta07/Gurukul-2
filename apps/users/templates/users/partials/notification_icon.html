@@ -1,0 +1,6 @@
+{% load static %}
+
+{% if notification_count %}
+<span class="indicator-item badge badge-sm badge-info p-1">{{ notification_count }}</span>
+{% endif %}
+<img class="size-5 xl:size-7" src="{% static 'icons/svg/notification-bell.svg' %}" alt="Notification-bell">

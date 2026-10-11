@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from apps.users.models import Notification, User
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
@@ -26,4 +26,6 @@ class UserAdmin(DjangoUserAdmin):
     list_display = ('email','username', 'first_name','user_type', 'is_staff')
     search_fields = ('username','email',)
     ordering = ('email','username',)
+
+admin.site.register(Notification)
 

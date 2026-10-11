@@ -28,6 +28,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.views import View
 from django.db.models import Count
+from apps.users.utils import send_notifications
 
 class ViewRootOrgs(LoginRequiredMixin, TeacherRequiredMixin,View):
     template_name = "orgs/view_orgs_and_classrooms.html"
@@ -203,27 +204,21 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequi
             count = OrgInvitation.objects.filter(to_user_id=user.id).count()
 
             # Update invitation count in cache
-            key = get_invitation_count_key(user_id = request.user.id)
-            cache.set(key,count,900) 
+            key = get_invitation_count_key(user_id = user.id)
+            
+            if (cur_count := cache.get(key,None)) is not None and cur_count != count :
+                cache.set(key,count,900)
             channel_layer = get_channel_layer()
-            invitation_notification = render_to_string(template_name = "partials/notifications.html",context={'notification':{'body':f'Invitation from {invitation.from_user.get_full_name()} to join {invitation.org.name}','code':'info'},})
-            invitation_count = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
+            invitation_icon = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
             async_to_sync(channel_layer.group_send)(
                 f"user_notifications_{user.id}",
                 {
                     "type":"sse",
-                    "event_name": "invitation_count",
-                    "html": invitation_count.replace('\n','')
+                    "event_name": "invitation-count",
+                    "html": invitation_icon.replace('\n','')
                 }
             )
-            async_to_sync(channel_layer.group_send)(
-                f"user_notifications_{user.id}",
-                {
-                    "type":"sse",
-                    "event_name": "notifications-messages",
-                    "html": invitation_notification.replace('\n','')
-                }
-            )
+            async_to_sync(send_notifications)(users_id=[user.id],body=f'Invitation from {invitation.from_user.get_full_name()} to join {invitation.org.name}',code="info")
 
             # Render a fresh form
             return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':self.form_class(), **kwargs})
@@ -255,6 +250,8 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminR
                 for user in users
             ]
         )
+        async_to_sync(send_notifications)(users_id=[inv.to_user.id for inv in created_invitations],body=f'Invitation from {request.user.get_full_name()} to join {root_org.name}',code="info")
+
         counts = (
             OrgInvitation.objects
             .filter(to_user_id__in=[inv.to_user_id for inv in created_invitations])
@@ -263,13 +260,17 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminR
         )
         channel_layer = get_channel_layer()
         for obj in counts:
-            html = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":obj["count"]})
+            # Update invitation count in cache for only those who are online
+            key = get_invitation_count_key(user_id = obj['to_user_id'])
+            if (cur_count := cache.get(key,None)) is not None and cur_count != obj["count"] :
+                cache.set(key,obj["count"],900)
+            invitation_icon = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":obj["count"]})
             async_to_sync(channel_layer.group_send)(
                 f"user_notifications_{obj['to_user_id']}",
                 {
                     "type":"sse",
-                    "event_name": "invitation_count",
-                    "html": html.replace('\n','')
+                    "event_name": "invitation-count",
+                    "html": invitation_icon.replace('\n','')
                 }
             )
 
@@ -314,13 +315,13 @@ class CreateOrgMemberships(LoginRequiredMixin,TeacherRequiredMixin,View):
         key = get_invitation_count_key(user_id = request.user.id)
         cache.set(key,count,900)
         channel_layer = get_channel_layer()
-        html = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
+        invitation_icon = render_to_string(template_name="orgs/partials/invitation_icon.html",context={"invitation_count":count})
         async_to_sync(channel_layer.group_send)(
             f"user_notifications_{user.id}",
             {
                 "type":"sse",
-                "event_name": "invitation_count",
-                "html": html.replace('\n','')
+                "event_name": "invitation-count",
+                "html": invitation_icon.replace('\n','')
             }
         )
         

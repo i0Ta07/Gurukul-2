@@ -313,4 +313,4 @@ def render_error_inside_modal(request,template_name,context):
     return response
 
 def get_invitation_count_key(user_id):
-    return f'users:{user_id}:invitation_count'
+    return f'users:{user_id}:invitation-count'

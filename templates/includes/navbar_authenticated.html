@@ -9,18 +9,18 @@
         </a>
     </div>
     <div class="relative flex items-center text-white" x-data="{ open_dropdown: false }" hx-ext="sse"  sse-connect="{% url 'stream-notifications' %}">
-        <div sse-swap="notifications-messages" hx-swap="beforeend" hx-target="this"></div>
+        <div sse-swap="notification-messages" hx-swap="beforeend" hx-target="this"></div>
         <div class="flex items-center justify-center gap-x-2">
             {% if request.user.user_type == 'T' %}
             <a href="{% url 'view-invitations' %}" hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
-                <div class="avatar indicator"  hx-swap="innerHTML" hx-target="this" sse-swap="invitation_count">
+                <div class="avatar indicator"  hx-swap="innerHTML" hx-target="this" sse-swap="invitation-count">
                     {% include 'orgs/partials/invitation_icon.html' %}
                 </div>
             </a>
             {% endif %}
             <a href="#" hx-get="#" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
-                <div class="avatar indicator">
-                    <img class="size-5 xl:size-7" src="{% static 'icons/svg/notification-bell.svg' %}" alt="Notification-bell">
+                <div class="avatar indicator"  hx-swap="innerHTML" hx-target="this" sse-swap="notification-count">
+                    {% include 'users/partials/notification_icon.html' %}
                 </div>
             </a>
             <a href="{% url 'chat-home' %}" hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
