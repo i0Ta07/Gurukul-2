@@ -2,10 +2,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from apps.classes.models import Announcement, ClassMembership, Classroom
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
-from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired
+from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired
 from django.shortcuts import get_object_or_404,render
 from django.core.exceptions import ValidationError
-from apps.classes.forms import ClassroomNameForm
+from apps.classes.forms import AnnouncementForm, ClassroomNameForm
 from django.contrib import messages
 from django.views import View
 from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
@@ -17,6 +17,8 @@ from apps.resources.models import ResourceClassMembership
 from apps.users.models import User
 from config.utils import create_message_and_redirect, get_website_context
 from django.db.models import Q
+from asgiref.sync import async_to_sync
+from apps.users.utils import send_notifications,create_notifications, update_notification_icon
 
 
 # You can view all the classrooms in the present organization, but you can access if you are owner/admin or is the owner of the class.
@@ -140,7 +142,7 @@ class BaseClassroomView(LoginRequiredMixin,View):
         classroom = self.get_classroom()
         announcemnets = Announcement.objects.filter(classroom_id = classroom.id).select_related('created_by').order_by('-created_at')
         resource_memberships = ResourceClassMembership.objects.filter(classroom_id =classroom.id).select_related('resource','created_by').order_by('-created_at')
-        context = {"role":role,"classroom_name":classroom.name,"announcemnets":announcemnets,'resource_memberships':resource_memberships}
+        context = {"role":role,"classroom_name":classroom.name,"announcemnets":announcemnets,'resource_memberships':resource_memberships,"classroom_id":classroom.id}
         if request.htmx:
             return render(request,"classes/classroom.html#classroom",context=context)
         return render(request=request,template_name=self.template_name,context=context)
@@ -149,6 +151,37 @@ class ViewClassroomFromOrgs(TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOw
     pass
 class ViewClassroomFromDashboard(ClassroomMembershipRequired,BaseClassroomView):
     pass
+
+class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,LoginRequiredMixin,View):
+    template_name = "classes/partials/create_announcement.html"
+    form_class = AnnouncementForm
+
+    def get(self,request,*args,**kwargs):
+        form = self.form_class()
+        classroom = self.get_classroom()
+        context  = {"form":form,"classroom_id":classroom.id}
+        return render(request,template_name=self.template_name,context = context)
+
+    def post(self,request,*args,**kwargs):
+        form = self.form_class(request.POST)
+        classroom = self.get_classroom()
+        if not form.is_valid():
+            return render(request,template_name=self.template_name,context = {"form":form,"classroom_id":classroom.id})
+
+        announcement = form.save(commit=False)
+        announcement.created_by_id = request.user.id
+        announcement.classroom_id = classroom.id
+        users_id = list(ClassMembership.objects.filter(classroom_id = classroom.id,status = ClassMembership.Status.ACCEPTED).values_list('user_id',flat=True))
+        users_id.append(classroom.owner_id) # Add owner
+        users_id.remove(request.user.id) # remove current user
+        body = f"New Annoucement in {self._classroom.name} by {request.user.get_full_name()}"
+        async_to_sync(create_notifications)(users_id=users_id,body = body)
+        async_to_sync(send_notifications)(users_id=users_id,body=body)
+        async_to_sync(update_notification_icon)(users_id=users_id)
+        announcement.save()
+        response = render(request,template_name="classes/classroom.html#announcement",context = {'announcement':announcement})
+        response['HX-Trigger'] = 'announcement-created'
+        return response
 
 class JoinClassroom(LoginRequiredMixin,View):
     template_name = 'classes/join_classroom.html'

@@ -60,6 +60,14 @@ class ClassroomStudentRequired(ClassroomRequiredMixin):
             return create_message_and_redirect(request,message="Only students that are part of this classroom can perform this action.",url="users-dashboard",code="error")
         return super().dispatch(request, *args, **kwargs)
 
+class ClassroomOwnerTeacherRequired(ClassroomRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        classroom = self.get_classroom()
+        self.role = is_class_owner_or_teacher(classroom = classroom, user = request.user)
+        if not self.role:
+            return create_message_and_redirect(request,message="Only owner and teachers this classroom can perform this action.",url="users-dashboard",code="error")
+        return super().dispatch(request, *args, **kwargs)
+    
 class ClassroomMembershipRequired(ClassroomRequiredMixin):
     def dispatch(self,request,*args, **kwargs):
         classroom = self.get_classroom()

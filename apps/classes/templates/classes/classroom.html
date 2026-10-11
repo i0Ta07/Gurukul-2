@@ -5,10 +5,10 @@
 
 {% block content %}
 
-<div class="page-container " id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
+<div class="page-container " id="page-container" hx-history-elt>
     {% partialdef classroom inline %}
     <title>{{ classroom_name }}</title>
-    <div class="flex flex-col gap-1 flex-1 static overflow-y-auto">
+    <div class="flex flex-col gap-1 flex-1 static overflow-y-auto xl:overflow-visible xl:min-h-0" x-data>
         <p class="badge badge-outline badge-error badge-sm xl:badge-lg absolute right-2 top-13 xl:top-18">{{ role }}</p>
         <div class="flex gap-1 items-center justify-center">
             <h1 class="text-2xl xl:text-4xl">{{ classroom_name }}</h1>
@@ -17,24 +17,26 @@
             <img class="size-6" src="{% static  'classes/icons/svg/qr-code.svg' %}" alt="qr-code" title="qr-code">
             {% endif %}
         </div>
-        <div class="flex flex-col xl:grid xl:grid-cols-2 flex-1 p-1 gap-1 xl:gap-5">
-            <div class="flex flex-col h-100 xl:h-full">
+        <div class="flex flex-col xl:grid xl:grid-cols-2 flex-1 p-1 gap-1 xl:gap-5 min-h-0">
+            <div class="flex flex-col h-100 xl:h-full xl:min-h-0 flex-1">
                 <div class="flex justify-between bg-blue-500 rounded-2xl py-1 xl:py-2 px-3">
                     <p class="text-lg xl:text-2xl font-bold">Announcements</p>
                     <div class="flex gap-1">
                         {% if request.user.user_type == "T" %}
-                        <a href="#"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
+                        <a hx-get="{% url  'create-announcement' classroom_id=classroom_id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();" class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
                         {% endif %}
                         <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
                     </div>
                 </div>
-                <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0">
-                    {% for ann in announcemnets %}
+                <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0" id="announcements">
+                    {% for announcement in announcemnets %}
+                    {% partialdef announcement inline %}
                     <div class="flex flex-col">
                         <hr class="text-gray-600 border">
-                        <p>{{ ann.body }}</p>
-                        <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ ann.created_by.get_full_name }} ({{ ann.created_at|naturaltime }})</p>
+                        <p>{{ announcement.body }}</p>
+                        <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ announcement.created_by.get_full_name }} ({{ announcement.created_at|naturaltime }})</p>
                     </div>
+                    {% endpartialdef announcement %}
                     {% empty %}
                     <div class="flex flex-col justify-center items-center flex-1">
                         <p class="font-bold text-gray-500"><b><i>No announcemnets created</i></b></p>
@@ -43,7 +45,7 @@
                 </div>
             </div>
             <div class="grid grid-rows-2 gap-1">
-                <div class="flex flex-col h-100 xl:h-full">
+                <div class="flex flex-col h-100 xl:h-full min-h-0 flex-1">
                     <div class="flex justify-between bg-blue-500 rounded-2xl py-1 xl:py-2 px-3">
                         <p class="text-lg xl:text-2xl  font-bold">Resources</p>
                          <div class="flex gap-1">
@@ -81,12 +83,12 @@
                         {% endfor %}
                     </div>
                 </div>
-                <div class="flex flex-col h-100 xl:h-full">
+                <div class="flex flex-col h-100 xl:h-full min-h-0 flex-1">
                     <div class="flex justify-between bg-blue-500 rounded-2xl py-1 xl:py-2 px-3">
                         <p class="text-lg xl:text-2xl font-bold">Quizzes</p>
                         <div class="flex gap-1">
                             {% if request.user.user_type == "T" %}
-                                <a href="#"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
+                            <a href="#"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
                             {% endif %}
                             <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
                         </div>
@@ -103,6 +105,17 @@
             </div>
         </div>
     </div>
+    <dialog id="classroom_modal" class="modal modal-bottom sm:modal-middle" @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
+        <div class="modal-box">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            </form>
+            <div id="modal_container"></div>
+        </div>                
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
     {% endpartialdef classroom %}
 </div>
 

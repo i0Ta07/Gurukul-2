@@ -1,7 +1,7 @@
 from django.urls import path
 from apps.classes.views import (
     CreateClassroom,ViewClassroomFromOrgs,ViewClassroomDetails,
-    RenameClassroom,DeleteClassroom,ListClassrooms,ViewClassroomFromDashboard,JoinClassroom
+    RenameClassroom,DeleteClassroom,ListClassrooms,ViewClassroomFromDashboard,JoinClassroom,CreateAnnouncement
 )
 
 urlpatterns = [
@@ -13,4 +13,5 @@ urlpatterns = [
     path("join/<str:code>",JoinClassroom.as_view(),name="join-classroom"),
     path("<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-students"),
     path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-teachers"),
+    path("create/announcement/<int:classroom_id>",CreateAnnouncement.as_view(),name="create-announcement"),
 ]
