@@ -31,7 +31,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 
 from apps.users.utils import (
-    get_changeEmail_key,get_register_token_key,
+    clean_redis_keys, get_changeEmail_key,get_register_token_key,
     get_hex_token,encode_user_id,sign_str,unsign_str,
     decode_user_id,get_user_online_key
 )
@@ -393,7 +393,7 @@ class StreamNotifications(View):
 
                 async def cleanup():
                     await channel_layer.group_discard(group_name,channel_name)
-                    await cache.adelete(key)
+                    await clean_redis_keys(user_id=request.user.id)
                     user.last_seen = timezone.now()
                     await user.asave(update_fields=["last_seen"])
                     

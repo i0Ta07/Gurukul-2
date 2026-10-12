@@ -41,12 +41,12 @@
                 if (alert.dataset.initialized) return; // if timer already initialezed return 
                 alert.dataset.initialized = "true";
 
-                // Start a 3s timer 
+                // Start a 5s timer 
                 setTimeout(function () {
-                    // After 3s replace the opacity and remove the alert
-                    alert.classList.replace("opacity-100", "opacity-0");
-                    setTimeout(() => alert.remove(), 1000);
-                }, 3000);
+                    // After 5s add the animation and remove the alert
+                    alert.classList.add('fade-out-to-right')
+                    setTimeout(() => alert.remove(), 800); // 800ms equal to animation fade-out delay
+                }, 5000);
             });
         }
 

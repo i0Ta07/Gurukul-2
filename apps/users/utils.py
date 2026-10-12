@@ -8,6 +8,7 @@ from channels.layers import get_channel_layer
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.db.models import Count
+from apps.orgs.utils import get_invitation_count_key
 from apps.users.models import Notification
 from django.core.cache import cache
 
@@ -107,3 +108,9 @@ async def update_notification_icon(users_id:List):
             await cache.aset(key,obj['count'])
     await asyncio.gather(*sends)
 
+async def clean_redis_keys(user_id):
+    """Delete online user key, notification count key, invitation count key from redis"""
+    key1 = get_user_online_key(user_id=user_id)
+    key2 = get_notification_count_key(user_id=user_id)
+    key3= get_invitation_count_key(user_id=user_id)
+    await cache.adelete_many([key1,key2,key3])
