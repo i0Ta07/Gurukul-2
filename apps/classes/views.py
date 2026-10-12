@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
+from django.urls import reverse
 from apps.classes.models import Announcement, ClassMembership, Classroom
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
 from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired
@@ -174,9 +175,10 @@ class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,Logi
         users_id = list(ClassMembership.objects.filter(classroom_id = classroom.id,status = ClassMembership.Status.ACCEPTED).values_list('user_id',flat=True))
         users_id.append(classroom.owner_id) # Add owner
         users_id.remove(request.user.id) # remove current user
+        url_path = reverse('view-classroom-dashboard',kwargs={'classroom_id':classroom.id})
         body = f"New Annoucement in {self._classroom.name} by {request.user.get_full_name()}"
-        async_to_sync(create_notifications)(users_id=users_id,body = body)
-        async_to_sync(send_notifications)(users_id=users_id,body=body)
+        async_to_sync(create_notifications)(users_id=users_id,body = body,url_path=url_path)
+        async_to_sync(send_notifications)(users_id=users_id,body=body,url_path=url_path)
         async_to_sync(update_notification_icon)(users_id=users_id)
         announcement.save()
         response = render(request,template_name="classes/classroom.html#announcement",context = {'announcement':announcement})

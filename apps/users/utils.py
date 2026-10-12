@@ -56,16 +56,16 @@ def get_user_online_key(user_id):
 def get_notification_count_key(user_id):
     return f"users:{user_id}:notification-count"
 
-async def create_notifications(users_id,body:str):
+async def create_notifications(users_id,body:str,url_path:str):
     """Create Notification objects."""
-    notifications = [Notification(user_id=id, body=body) for id in users_id]
+    notifications = [Notification(user_id=id, body=body,url_path = url_path) for id in users_id]
     await Notification.objects.abulk_create(notifications)
     
 # have to implement batching if users_id is larger
-async def send_notifications(users_id:List,body:str,code:Literal["info","error","success","warning"] = "info"):
+async def send_notifications(users_id:List,body:str,url_path:str,code:Literal["info","error","success","warning"] = "info"):
     """Sends the notification to user's notification channel layer."""
     sends = []
-    notification = render_to_string(template_name = "users/partials/notifications.html",context={'notification':{'body':body,'code':code}})
+    notification = render_to_string(template_name = "users/partials/notifications.html#notification",context={'notification':{'body':body,'code':code,'url_path':url_path}})
     channel_layer = get_channel_layer()
 
     for id in users_id:
@@ -102,7 +102,8 @@ async def update_notification_icon(users_id:List):
             )
         )
         key = get_notification_count_key(obj['user_id'])
-        if (cur_count:= cache.aget(key,None)) is not None and cur_count != obj["count"]:
-            cache.aset(key,obj['count'])
+        cur_count = await cache.aget(key,None)
+        if cur_count is not None and cur_count != obj["count"]:
+            await cache.aset(key,obj['count'])
     await asyncio.gather(*sends)
 
