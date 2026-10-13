@@ -3,8 +3,8 @@
     <div class="chat-header">
         <time class="text-xs">{{ message.created_at }}</time>
     </div>
-    <div class="chat-bubble text-sm xl:text-base">
-       <i> This message was deleted.</i>
+    <div class="chat-bubble text-sm xl:text-base italic">
+        This message was deleted.
     </div>
 </div>
 {% else %}
@@ -12,8 +12,8 @@
     <div class="chat-header">
         <time class="text-xs">{{ message.created_at }}</time>
     </div>
-    <div class="chat-bubble text-sm xl:text-base chat-bubble-primary">
-        <i>You deleted this message.</i>
+    <div class="chat-bubble text-sm xl:text-base chat-bubble-primary italic">
+        You deleted this message.
     </div>
 </div>
 {% endif %}

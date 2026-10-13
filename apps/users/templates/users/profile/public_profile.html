@@ -20,7 +20,7 @@
                 <h1>{{ other_user.get_full_name }}</h1>
             </div>
             <div class="font-semibold text-xl text-center">
-                <p>Username: <i>{{ other_user.username }}</i> ({{ other_user.get_user_type_display }})</p>
+                <p>Username: <span class="italic">{{ other_user.username }}</span> ({{ other_user.get_user_type_display }})</p>
                 {% if other_user.bio %}
                 <p>Bio:{{ other_user.bio }}</p>
                 {% endif %}

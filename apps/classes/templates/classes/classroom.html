@@ -39,7 +39,7 @@
                     {% endpartialdef announcement %}
                     {% empty %}
                     <div class="flex flex-col justify-center items-center flex-1">
-                        <p class="font-bold text-gray-500"><b><i>No announcemnets created</i></b></p>
+                        <p class="font-bold text-gray-500 italic">No announcemnets created</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -78,7 +78,7 @@
                         </div>
                         {% empty %}
                         <div class="flex flex-col justify-center items-center flex-1">
-                            <p class="font-bold text-gray-500"><b><i>No resources attached</i></b></p>
+                            <p class="font-bold text-gray-500 italic">No resources attached</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -97,7 +97,7 @@
                         {% for quiz in quizzes %}
                         {% empty %}
                         <div class="flex flex-col justify-center items-center flex-1">
-                            <p class="font-bold text-gray-500"><b><i>No quizzes attached</i></b></p>
+                            <p class="font-bold text-gray-500 italic">No quizzes attached</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -110,7 +110,13 @@
             <form method="dialog">
                 <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
             </form>
-            <div id="modal_container"></div>
+            <div id="modal_container">
+                <div class="flex flex-col gap-1">
+                    <div class="skeleton h-8 w-full"></div>
+                    <div class="skeleton h-25 w-full"></div>
+                    <div class="skeleton h-8 w-full"></div>
+                </div>
+            </div>
         </div>                
         <form method="dialog" class="modal-backdrop">
             <button>close</button>
