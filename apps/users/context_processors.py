@@ -11,7 +11,7 @@ def notification_count(request):
     count = cache.get(key,None)
     if count is None:
         count = Notification.objects.filter(
-            user_id=request.user.id
+            user_id=request.user.id,is_seen = False
         ).count()
         cache.set(key=key,value=count,timeout = 900)
     return {"notification_count": count}

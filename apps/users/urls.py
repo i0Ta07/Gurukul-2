@@ -1,15 +1,8 @@
 from django.urls import path
 from django.contrib.auth.views import LogoutView
 from .views import (
-    Home,
-    CustomLoginView,
-    Dashboard,
-    RegisterEmailView,
-    CompleteRegistrationView,
-    UpdateProfile,
-    CompleteEmailUpdate,
-    StreamNotifications,
-    PublicProfile
+    Home, CustomLoginView, Dashboard, RegisterEmailView, CompleteRegistrationView, UpdateProfile, CompleteEmailUpdate,
+    StreamNotifications, PublicProfile, ViewNotifications
 )
 
 urlpatterns = [
@@ -22,5 +15,6 @@ urlpatterns = [
     path('verify-email/<str:token>',CompleteEmailUpdate.as_view(), name='verify-email'),
     path('register-email/',view = RegisterEmailView.as_view(),name= 'register-email'),
     path('register/complete/<str:token>/',view = CompleteRegistrationView.as_view(), name= 'complete-register-token'),
-    path('stream-notifications/',view =StreamNotifications.as_view(),name = 'stream-notifications')
+    path('stream-notifications/',view =StreamNotifications.as_view(),name = 'stream-notifications'),
+    path('view-notifications/',view =ViewNotifications.as_view(),name = 'view-notifications'),
 ]

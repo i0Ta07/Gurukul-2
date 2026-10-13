@@ -3,27 +3,27 @@
 
     <div class="flex items-center text-white gap-x-3">
         <p class="text-lg xl:text-3xl font-extrabold font-mono hover:scale-105">Gurukul</p>
-        <a href="{% url 'users-dashboard' %}" hx-get="{% url 'users-dashboard' %}" hx-push-url="true"
+        <a  hx-get="{% url 'users-dashboard' %}" hx-push-url="true"
             hx-target="#page-container" hx-swap="innerHTML" class="font-semibold text-sm xl:text-base hover:text-blue-400">
             Dashboard
         </a>
     </div>
-    <div class="relative flex items-center text-white" x-data="{ open_dropdown: false }" hx-ext="sse"  sse-connect="{% url 'stream-notifications' %}">
+    <div class="relative flex items-center text-white" x-data="{ open_dropdown: false }" hx-ext="sse" sse-connect="{% url 'stream-notifications' %}">
         <div sse-swap="notification-messages" hx-swap="beforeend" hx-target="this"></div>
         <div class="flex items-center justify-center gap-x-2">
             {% if request.user.user_type == 'T' %}
-            <a href="{% url 'view-invitations' %}" hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
+            <a hx-get="{% url 'view-invitations' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
                 <div class="avatar indicator"  hx-swap="innerHTML" hx-target="this" sse-swap="invitation-count">
                     {% include 'orgs/partials/invitation_icon.html' %}
                 </div>
             </a>
             {% endif %}
-            <a href="#" hx-get="#" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
+            <a hx-post="{% url 'view-notifications' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
                 <div class="avatar indicator"  hx-swap="innerHTML" hx-target="this" sse-swap="notification-count">
-                    {% include 'users/partials/notification_icon.html' %}
+                    {% include 'users/notifications/partials/notification_icon.html' %}
                 </div>
             </a>
-            <a href="{% url 'chat-home' %}" hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
+            <a hx-get="{% url 'chat-home' %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
                 <div class="avatar indicator">
                     <img class="size-6 xl:size-8" src="{% static 'chats/icons/png/chats.png' %}" alt="Chats">
                 </div>
@@ -45,7 +45,7 @@
             </div>
             <ul class="p-2 text-xs xl:text-sm text-body font-medium">
                 <li @click="open_dropdown = false">
-                    <a href="{% url 'users-profile' %}" hx-get="{% url 'users-profile' %}" hx-push-url="true" hx-target="#page-container" hx-swap="innerHTML" 
+                    <a hx-get="{% url 'users-profile' %}" hx-push-url="true" hx-target="#page-container" hx-swap="innerHTML" 
                         class=" inline-flex items-center w-full p-2  text-gray-200 hover:bg-gray-700 hover:text-white hover:rounded-lg">View
                         Profile</a>
                 </li>

@@ -60,13 +60,13 @@ def get_notification_count_key(user_id):
 async def create_notifications(users_id,body:str,url_path:str):
     """Create Notification objects."""
     notifications = [Notification(user_id=id, body=body,url_path = url_path) for id in users_id]
-    await Notification.objects.abulk_create(notifications)
+    await Notification.objects.abulk_create(notifications,50)
     
 # have to implement batching if users_id is larger
 async def send_notifications(users_id:List,body:str,url_path:str,code:Literal["info","error","success","warning"] = "info"):
     """Sends the notification to user's notification channel layer."""
     sends = []
-    notification = render_to_string(template_name = "users/partials/notifications.html#notification",context={'notification':{'body':body,'code':code,'url_path':url_path}})
+    notification = render_to_string(template_name = "users/notifications/partials/notification.html",context={'notification':{'body':body,'code':code,'url_path':url_path}})
     channel_layer = get_channel_layer()
 
     for id in users_id:
@@ -87,11 +87,11 @@ async def update_notification_icon(users_id:List):
     channel_layer = get_channel_layer()
     sends = []
     counts = Notification.objects.filter(
-        user_id__in = users_id
+        user_id__in = users_id,is_seen = False
     ).values("user_id").annotate(count = Count("id"))
 
     async for obj in counts: # create async for because of lazy evaluation of acount(); for is synchronous natively
-        notification_icon = render_to_string(template_name="users/partials/notification_icon.html",context={"notification_count":obj['count']})
+        notification_icon = render_to_string(template_name="users/notifications/partials/notification_icon.html",context={"notification_count":obj['count']})
         sends.append(
             channel_layer.group_send(
                 f"user_notifications_{obj['user_id']}",
@@ -114,3 +114,18 @@ async def clean_redis_keys(user_id):
     key2 = get_notification_count_key(user_id=user_id)
     key3= get_invitation_count_key(user_id=user_id)
     await cache.adelete_many([key1,key2,key3])
+
+async def set_notification_icon_count_to_zero(user_id):
+    """ Update the cache notification count to zero and update the notification icon count to zero. """
+    notification_icon = render_to_string(template_name="users/notifications/partials/notification_icon.html",context={"notification_count":0})
+    channel_layer = get_channel_layer()
+    await channel_layer.group_send(
+        f"user_notifications_{user_id}",
+        {
+            "type":"sse",
+            "event_name": "notification-count",
+            "html": notification_icon.replace('\n','')
+        }
+    )
+    key = get_notification_count_key(user_id=user_id)
+    await cache.aset(key,0,900)

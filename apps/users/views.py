@@ -32,19 +32,18 @@ from django.core.cache import cache
 
 from apps.users.utils import (
     clean_redis_keys, get_changeEmail_key,get_register_token_key,
-    get_hex_token,encode_user_id,sign_str,unsign_str,
+    get_hex_token,encode_user_id, set_notification_icon_count_to_zero,sign_str,unsign_str,
     decode_user_id,get_user_online_key
 )
 from config.utils import get_website_context
-from apps.users.models import User
-from apps.orgs.models import OrgInvitation
+from apps.users.models import Notification, User
 from django.contrib.auth.views import (
     LoginView,
     PasswordResetView,
     PasswordResetConfirmView,
     PasswordChangeView,
 )
-
+from asgiref.sync import async_to_sync
 from .mixins import AnonymousRequiredMixin
 
 # Views seperate the design from backend. Also it is convention to create another folder of same app 
@@ -420,3 +419,26 @@ class PublicProfile(LoginRequiredMixin,View):
         if request.htmx:
             return render(request,template_name="users/profile/public_profile.html#public-profile",context=context)
         return render(request,template_name="users/profile/public_profile.html",context=context)
+
+class ViewNotifications(LoginRequiredMixin,View):
+    def get(self,request,*args,**kwargs):
+        notifications = Notification.objects.filter(user_id = request.user.id,)
+        unseen_notifications = notifications.filter(is_seen = False)
+        seen_notifications = notifications.filter(is_seen = True)
+        context = {'unseen_notifications':unseen_notifications,'seen_notifications':seen_notifications}
+        if request.htmx:
+            return render(request,"users/notifications/view_notifications.html#view-notifications",context = context)
+        return render(request,"users/notifications/view_notifications.html",context = context)        
+
+    def post(self,request,*args,**kwargs):
+        notifications = Notification.objects.filter(user_id = request.user.id,)
+        unseen_notifications = notifications.filter(is_seen = False)
+        seen_notifications = notifications.filter(is_seen = True)
+        for notification in unseen_notifications:
+            notification.is_seen = True
+        Notification.objects.bulk_update(unseen_notifications,['is_seen'],50)
+        async_to_sync(set_notification_icon_count_to_zero)(user_id=request.user.id)
+        context = {'unseen_notifications':unseen_notifications,'seen_notifications':seen_notifications}
+        if request.htmx:
+            return render(request,"users/notifications/view_notifications.html#view-notifications",context = context)
+        return render(request,"users/notifications/view_notifications.html",context = context)   
