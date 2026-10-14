@@ -12,6 +12,7 @@ dependencies = [
     "django>=6.0.6",
     "django-celery-beat>=2.9.0",
     "django-htmx>=1.29.0",
+    "django-phonenumber-field[phonenumbers]>=8.5.0",
     "django-redis>=7.0.0",
     "django-tailwind[cookiecutter]>=4.5.0",
     "django-treebeard>=5.2.2",

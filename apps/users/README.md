@@ -46,6 +46,10 @@ The flow would be:
 4. This group will broadcast this message to each connection in the group i.e. send it to the single connection from frontend.
 5. The frontend will receive the message and make changes according to sse-swap.
 
+### Issues
+
+Have to keep `uv add django-phonenumber-field[phonenumbers]`, even after deleting the dob & phone_number package. Since previous migrations need `phonenumbers` package.
+
 ## Remeber
 
 * Since we changed the base.html from min-h-screen(scroll if content is more) to h-vdh(no scrolling) we have to manually add the scrollbar for the pages we want to scroll. Do not add overflow-y-auto scrollbar-none to page-container but rather to one class down.
