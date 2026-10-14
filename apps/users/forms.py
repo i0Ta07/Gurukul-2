@@ -3,7 +3,6 @@ from django import forms
 # from django.contrib.auth.models import User
 from .models import User
 from django.contrib.auth.forms import UserCreationForm
-from phonenumber_field.formfields import SplitPhoneNumberField
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
@@ -114,33 +113,10 @@ class CompleteRegistrationForm(UserCreationForm):
         ]
 
 
-class BootstrapSplitPhoneNumberField(SplitPhoneNumberField):
-    def prefix_field(self):
-        field = super().prefix_field()
-        field.widget.attrs.update({
-            'class': 'form-input ',
-        })
-        return field
 
-    def number_field(self):
-        field = super().number_field()
-        field.widget.attrs.update({
-            "maxlength": 10,
-            'class': 'form-input ',
-            'placeholder': '10 digit number',
-        })
-        return field
 
 
 class UpdateUserDetailsForm(forms.ModelForm):
-    
-    # We are using self.form_class(instance=request.user), if user has None then it will show None
-    # to overide it, override form's __init__ to change values during instantiation.
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if not self.instance.phone_number:
-            self.initial["phone_number"] = ["IN", None]
 
     username = forms.CharField(
         required=True,
@@ -181,28 +157,11 @@ class UpdateUserDetailsForm(forms.ModelForm):
         'class': 'form-input'}),
     )
 
-    phone_number = BootstrapSplitPhoneNumberField(
-        label=_('Phone'),
-        required=False,
-    )
-    date_of_birth = forms.DateField(
-        label=_('Date of Birth'),
-        widget=forms.DateInput(attrs={ 'type': 'date', # mention type date default string.
-        'class': 'scheme-dark form-input'}),
-        required=False
-    )
     profile_photo = forms.ImageField(widget=forms.FileInput(attrs={'class': "file-input"}),
         required=False,validators=[image_validator])
 
     bio = forms.CharField(max_length=100,strip=True,label=_('Bio'),required=False,widget=forms.Textarea(attrs={'placeholder':'About you',
     'class': 'form-input h-25'}))
-
-    # BootstrapSplitPhoneNumberField store '' instead of Null. So, predefined clean function for devs by django, called automatically.
-    def clean_phone_number(self):
-        phone = self.cleaned_data.get("phone_number")
-        if not phone:
-            return None
-        return phone
     
     def clean_profile_photo(self):
         profile_photo = self.cleaned_data.get('profile_photo')
@@ -213,7 +172,7 @@ class UpdateUserDetailsForm(forms.ModelForm):
     
     class Meta:
         model = User
-        fields = ['username','first_name','last_name','email','user_type','phone_number','date_of_birth','profile_photo','bio']
+        fields = ['username','first_name','last_name','email','user_type','profile_photo','bio']
 
 
 class ResetPasswordForm(PasswordResetForm):

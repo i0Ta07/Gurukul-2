@@ -51,23 +51,17 @@
                         <div class="hidden lg:flex lg:flex-col justify-center items-center lg:gap-y-5">
                             <p class="form-label">{{form.username.label}}</p>
                             <p class="form-label">{{form.email.label}}</p>
-                            <p class="form-label">{{form.phone_number.label}}</p>
                         </div>
                         <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
                             {{ form.username }}
                             {{ form.email }}
-                            <div class="inline-flex gap-x-2 w-full">
-                                {{ form.phone_number }}
-                            </div>
                         </div>
                     </div>
                     <div class=" flex justify-center items-center gap-x-3 bordered-card">
-                        <div class="hidden lg:flex lg:flex-col items-center whitespace-nowrap gap-5">
-                            <p class="form-label">{{form.date_of_birth.label}}</p>
-                            <p class="form-label h-22">{{form.bio.label}}</p>    
+                        <div class="hidden lg:flex lg:flex-col items-center">
+                            <p class="form-label">{{form.bio.label}}</p>    
                         </div>
-                        <div class="flex flex-col justify-center items-center gap-y-3 w-full ">
-                            {{ form.date_of_birth }}
+                        <div class="flex flex-col justify-center items-center w-full">
                             {{ form.bio }}
                         </div>
                     </div>

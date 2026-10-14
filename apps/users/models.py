@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser,UserManager
-from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
 import uuid,os
 from PIL import Image
@@ -16,11 +15,6 @@ class User(AbstractUser):
         TEACHER = 'T',_('Teacher')
         STUDENT = 'S',_('Student')
 
-    # Use splitPhoneNumberFeild in form
-    phone_number = PhoneNumberField(blank=True,unique=True,null=True)
-
-    # Give friends notifications for birthdays
-    date_of_birth = models.DateField(null=True,blank=True)
     user_type = models.CharField(
         max_length=1,
         choices=UserType,

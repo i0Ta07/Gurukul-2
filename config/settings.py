@@ -48,7 +48,6 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    'phonenumber_field',
     'treebeard',
     "tailwind",
     'social_django',
