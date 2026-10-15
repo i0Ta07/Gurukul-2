@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.classes.views import (
-    CreateClassroom,ViewClassroomFromOrgs,ViewClassroomDetails,
+    CreateClassroom,ViewClassroomFromOrgs,ViewClassroomDetails,EditAnnouncement,DeleteAnnouncement,
     RenameClassroom,DeleteClassroom,ListClassrooms,ViewClassroomFromDashboard,JoinClassroom,CreateAnnouncement
 )
 
@@ -12,6 +12,10 @@ urlpatterns = [
     path("list/classrooms/", ListClassrooms.as_view(), name="list-classrooms"), 
     path("join/<str:code>",JoinClassroom.as_view(),name="join-classroom"),
     path("<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
-    path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),
     path("create/announcement/<int:classroom_id>",CreateAnnouncement.as_view(),name="create-announcement"),
+    path("edit/announcement/<int:classroom_id>/<int:announcement_id>",EditAnnouncement.as_view(),name="edit-announcement"),
+    path("delete/announcement/<int:classroom_id>/<int:announcement_id>",DeleteAnnouncement.as_view(),name="delete-announcement"),
+
+
+    path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),
 ]

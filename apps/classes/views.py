@@ -20,6 +20,8 @@ from config.utils import create_message_and_redirect, get_website_context
 from django.db.models import Q
 from asgiref.sync import async_to_sync
 from apps.users.utils import send_notifications,create_notifications, update_notification_icon
+from django.utils import timezone
+from datetime import timedelta
 
 
 # You can view all the classrooms in the present organization, but you can access if you are owner/admin or is the owner of the class.
@@ -212,3 +214,48 @@ class JoinClassroom(LoginRequiredMixin,View):
             return render(request,"partials/messages.html")
         membership.save()
         return create_message_and_redirect(request,f"You are now part of {membership.classroom.name}.",url="list-classrooms",code="success")
+
+class EditAnnouncement(TeacherRequiredMixin,ClassroomMembershipRequired,LoginRequiredMixin,View):
+    form_class = AnnouncementForm
+    template_name = "classes/partials/edit_announcement.html"
+    def get(self,request,*args,**kwargs):
+        announcement_id= kwargs.get('announcement_id')
+        classroom = self.get_classroom()
+        announcement = get_object_or_404(Announcement,pk = announcement_id)
+        if announcement.created_by_id != request.user.id:
+            return HttpResponse(
+                "<p class='text-center'>You are not the author of this message.</p>",status=200,)
+        if announcement.created_at <= timezone.now() - timedelta(minutes=15):
+            return HttpResponse(
+                "<p class='text-center'>You can only edit an announcement before 15 minutes.</p>",status=200,)
+        if announcement.classroom_id != classroom.id:
+            return HttpResponse(
+                "<p class='text-center'>Annoucement does not belong to given class.</p>",status=200,)            
+        form = self.form_class(initial={'body':announcement.body})
+        
+        return render(request,template_name=self.template_name,context={'announcement_id':announcement_id,'form':form,'classroom_id':classroom.id})
+
+    def post(self,request,*args,**kwargs):
+        announcement_id= kwargs.get('announcement_id')
+        announcement = get_object_or_404(Announcement,pk = announcement_id)
+        classroom = self.get_classroom()
+        if announcement.created_by_id != request.user.id:
+            return HttpResponse(
+                "<p class='text-center'>You are not the author of this message.</p>",status=200,)
+        if announcement.created_at <= timezone.now() - timedelta(minutes=15):
+            return HttpResponse(
+                "<p class='text-center'>You can only edit an announcement before 15 minutes.</p>",status=200,)
+        if announcement.classroom_id != classroom.id:
+            return HttpResponse(
+                "<p class='text-center'>Annoucement does not belong to given class.</p>",status=200,)   
+        form = self.form_class(request.POST)
+        
+        if not form.is_valid():
+            return render(request,template_name=self.template_name,context={'announcement_id':announcement_id,'form':form,'classroom_id':classroom.id})
+        new_body = form.cleaned_data['body']
+        announcement.body = new_body
+        announcement.save(update_fields={'body'})
+        return render(request,'classes/classroom.html#announcement',context = {'announcement':announcement,'classroom_id':classroom.id})
+
+class DeleteAnnouncement(TeacherRequiredMixin,ClassroomMembershipRequired,LoginRequiredMixin,View):
+    pass
