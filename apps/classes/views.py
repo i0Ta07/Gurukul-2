@@ -63,8 +63,6 @@ class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
         response['HX-Trigger'] = 'classroom-created'
         return response
 
-
-
 class ViewClassroomDetails(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     template_name = "classes/partials/view_classroom_details.html"
     def get(self,request,*args,**kwargs):
@@ -181,8 +179,7 @@ class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,Logi
         async_to_sync(send_notifications)(users_id=users_id,body=body,url_path=url_path)
         async_to_sync(update_notification_icon)(users_id=users_id)
         announcement.save()
-        response = render(request,template_name="classes/classroom.html#announcement",context = {'announcement':announcement})
-        response['HX-Trigger'] = 'announcement-created'
+        response = render(request,template_name="classes/classroom.html#announcement",context = {'announcement':announcement,'classroom_id':classroom.id})
         return response
 
 class JoinClassroom(LoginRequiredMixin,View):

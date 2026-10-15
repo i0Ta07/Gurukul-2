@@ -38,7 +38,7 @@
             </button>
         </div>
         <!-- Dropdown menu -->
-        <div x-show="open_dropdown" x-cloak  x-transition @click.outside="open_dropdown = false" class="absolute right-0 top-full z-50 rounded-base shadow-lg  bg-slate-950">
+        <div x-show="open_dropdown" x-cloak  x-transition @click.outside="open_dropdown = false" class="absolute right-0 top-full z-50 rounded-2xl shadow-lg  bg-slate-950">
             <div class="px-4 py-3 text-xs xl:text-sm border-b">
                 <span class="block text-white">{{user.get_full_name}}</span>
                 <span class="block text-gray-200">{{user.email}}</span>
