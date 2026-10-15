@@ -1,4 +1,5 @@
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.urls import reverse
 from apps.orgs.mixins import TeacherRequiredMixin,OrgMembershipRequiredMixin,OrgOwnerAdminRequired,OrgOwnerRequired,AdminTeacherRequired
 from django.views import View
 from django.contrib import messages
@@ -218,7 +219,8 @@ class SendInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequi
                     "html": invitation_icon.replace('\n','')
                 }
             )
-            async_to_sync(send_notifications)(users_id=[user.id],body=f'Invitation from {invitation.from_user.get_full_name()} to join {invitation.org.name}',code="info")
+            url_path = reverse('view-invitations')
+            async_to_sync(send_notifications)(users_id=[user.id],body=f'Invitation from {invitation.from_user.get_full_name()} to join {invitation.org.name}',code="info",url_path=url_path)
 
             # Render a fresh form
             return render(request,template_name="orgs/send_invitations.html#send-invitations",context={'form':self.form_class(), **kwargs})
@@ -250,7 +252,8 @@ class SendBulkInvitations(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminR
                 for user in users
             ]
         )
-        async_to_sync(send_notifications)(users_id=[inv.to_user.id for inv in created_invitations],body=f'Invitation from {request.user.get_full_name()} to join {root_org.name}',code="info")
+        url_path = reverse('view-invitations')
+        async_to_sync(send_notifications)(users_id=[inv.to_user.id for inv in created_invitations],body=f'Invitation from {request.user.get_full_name()} to join {root_org.name}',code="info",url_path=url_path)
 
         counts = (
             OrgInvitation.objects

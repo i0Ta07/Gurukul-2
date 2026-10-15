@@ -13,7 +13,7 @@
             <div class="flex flex-col flex-1 min-h-0 gap-3">
                 <h1 class="text-center text-xl lg:text-3xl">Notifications</h1>
                 <div class="flex flex-col items-center gap-1 overflow-y-auto min-h-0 flex-1 p-1">
-                    <div class="flex flex-col gap-1 w-full" >
+                    <div class="flex flex-col gap-1 w-full">
                         {% if unseen_notifications %}
                         <div class="flex flex-col gap-1 w-full aura aura-sm text-orange-600 bg-yellow-200">
                             {% for notification in unseen_notifications %}
@@ -29,18 +29,17 @@
                         </div>
                         {% endif %}
                     </div>
-
                     <div class="flex flex-col gap-1 w-full">
-                    {% for notification in seen_notifications %}
-                    {% partial notification %}
-                    {% endfor %}
+                        {% for notification in seen_notifications %}
+                        {% partial notification %}
+                        {% endfor %}
                     </div>
                     {% if not seen_notifications and not unseen_notifications %}
                     <div class="flex flex-col justify-center items-center flex-1">
                         <p class="text-gray-500 font-bold italic">No Notifications</p>
                     </div>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
             <div class="flex flex-col items-center justify-center font-bold italic text-center">
                 <p>There are evenings when the whole world seems misaligned. To be loved then is a miracle.<br><span class="text-gray-500">~Franz kafka</span></p>
