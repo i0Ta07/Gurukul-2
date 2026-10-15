@@ -22,6 +22,7 @@ from asgiref.sync import async_to_sync
 from apps.users.utils import send_notifications,create_notifications, update_notification_icon
 from django.utils import timezone
 from datetime import timedelta
+from config.utils import annotate_is_editable
 
 
 # You can view all the classrooms in the present organization, but you can access if you are owner/admin or is the owner of the class.
@@ -142,6 +143,7 @@ class BaseClassroomView(LoginRequiredMixin,View):
         role = self.role
         classroom = self.get_classroom()
         announcemnets = Announcement.objects.filter(classroom_id = classroom.id).select_related('created_by').order_by('-created_at')
+        announcemnets = annotate_is_editable(queryset=announcemnets,minutes=15)
         resource_memberships = ResourceClassMembership.objects.filter(classroom_id =classroom.id).select_related('resource','created_by').order_by('-created_at')
         context = {"role":role,"classroom_name":classroom.name,"announcemnets":announcemnets,'resource_memberships':resource_memberships,"classroom_id":classroom.id}
         if request.htmx:
@@ -181,6 +183,7 @@ class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,Logi
         async_to_sync(send_notifications)(users_id=users_id,body=body,url_path=url_path)
         async_to_sync(update_notification_icon)(users_id=users_id)
         announcement.save()
+        announcement.is_editable = True
         response = render(request,template_name="classes/classroom.html#announcement",context = {'announcement':announcement,'classroom_id':classroom.id})
         return response
 
@@ -255,7 +258,10 @@ class EditAnnouncement(TeacherRequiredMixin,ClassroomMembershipRequired,LoginReq
         new_body = form.cleaned_data['body']
         announcement.body = new_body
         announcement.save(update_fields={'body'})
-        return render(request,'classes/classroom.html#announcement',context = {'announcement':announcement,'classroom_id':classroom.id})
+        announcement.is_editable = True
+        response = render(request,'classes/classroom.html#announcement',context = {'announcement':announcement,'classroom_id':classroom.id})
+        response['HX-Trigger'] = 'announcement-edited'
+        return response
 
 class DeleteAnnouncement(TeacherRequiredMixin,ClassroomMembershipRequired,LoginRequiredMixin,View):
     pass

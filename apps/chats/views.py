@@ -14,6 +14,7 @@ from asgiref.sync import async_to_sync
 from django.utils.dateformat import format
 from django.utils import timezone
 from datetime import timedelta
+from config.utils import annotate_is_editable
 # Create your views here.
 
 class ChatHome(LoginRequiredMixin,View):
@@ -118,20 +119,8 @@ class LoadThreadMessages(LoginRequiredMixin,View):
         other_user_is_online = cache.get(key,False)
         context = {"other_user":other_user,'form':form, 'thread_id':thread_id,'is_online':other_user_is_online}
         if not created:
-            messages = (
-                ThreadMessage.objects.filter(thread=thread).select_related("author")
-                .annotate(
-                    is_editable=Case(
-                        When(
-                            created_at__gte=timezone.now() - timedelta(minutes=15),
-                            then=Value(True),
-                        ),
-                        default=Value(False),
-                        output_field=BooleanField(),
-                    )
-                )
-                .order_by("created_at")
-            )
+            messages = ThreadMessage.objects.filter(thread=thread).select_related("author").order_by("created_at")
+            messages = annotate_is_editable(queryset=messages,minutes=15)
             context['messages'] = messages
 
         return render(request,"chats/partials/thread_messages.html",context)
@@ -140,20 +129,8 @@ class LoadRoomMessages(LoginRequiredMixin,ClassroomMembershipRequired,View):
     form_class = RoomMessageForm
     def get(self,request,*args,**kwargs):
         classroom = self.get_classroom()
-        messages = (
-            RoomMessage.objects.filter(room_id=classroom.id).select_related("author")
-            .annotate(
-                is_editable=Case(
-                    When(
-                        created_at__gte=timezone.now() - timedelta(minutes=15),
-                        then=Value(True),
-                    ),
-                    default=Value(False),
-                    output_field=BooleanField(),
-                )
-            )
-            .order_by("created_at")
-        )
+        messages = RoomMessage.objects.filter(room_id=classroom.id).select_related("author").order_by("created_at")
+        messages = annotate_is_editable(queryset=messages,minutes=15)
         form = self.form_class()
         context = {"messages":messages,"room_name":classroom.name,'form':form,'classroom_id':classroom.id,'current_user_id':request.user.id}
         return render(request,"chats/partials/room_messages.html",context)

@@ -33,7 +33,7 @@
                     {% partialdef announcement inline %}
                     <div class="flex flex-col" id="announcement-{{ announcement.id }}">
                         <hr class="text-gray-600 border">
-                        {% if announcement.created_by_id == request.user.id %}
+                        {% if announcement.created_by_id == request.user.id and announcement.is_editable %}
                         <div class="flex justify-end relative" x-data="{'open_dropdown': false}">
                             <img title="options" alt="3-dots-horizontal" class="size-5" @click="open_dropdown = ! open_dropdown" src="{% static 'classes/icons/svg/3-dots-horizontal.svg' %}">
                             <!-- Dropdown menu -->

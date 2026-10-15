@@ -57,6 +57,10 @@ One way we can implement is when we make the SSE connection for send-notificatio
 
 It will be based on the username and not the user_id, that is a security issue.
 
+### When to use HX-Trigger
+
+When you are raising an exception and it's str(e) will be rendered inside the modal, or the error response that will be rendered inside the modal inside the POST view due to some exception occured. You don't want to close the modal instantly on click. You want it to be opened and on successuful completion you want to close it.
+
 ### To do list
 
 ### Extra features

@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from django.shortcuts import redirect
 from django.contrib import messages
 from typing import Literal
@@ -9,6 +10,9 @@ import qrcode
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.contrib.sites.shortcuts import get_current_site
+from django.db.models import Case, When, Value, BooleanField
+from django.utils import timezone
+from datetime import timedelta
 
 # Session
 from apps.users.models import CustomSession
@@ -85,3 +89,16 @@ def get_website_context(request,token:str | None = None):
         context['token'] = token
 
     return context
+
+def annotate_is_editable(queryset:QuerySet,minutes:int):
+    """Annotate the queryset with is_editable based on created_at """
+    return queryset.annotate(
+        is_editable=Case(
+                When(
+                    created_at__gte=timezone.now() - timedelta(minutes=minutes),
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )

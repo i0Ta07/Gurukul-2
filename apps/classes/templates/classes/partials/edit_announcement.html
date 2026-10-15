@@ -1,9 +1,10 @@
-<form hx-post="{% url 'edit-announcement' classroom_id=classroom_id announcement_id=announcement_id %}" hx-target="#announcement-{{ announcement_id }}" hx-swap="outerHTML">
+<form hx-post="{% url 'edit-announcement' classroom_id=classroom_id announcement_id=announcement_id %}"
+ hx-target="#announcement-{{ announcement_id }}" hx-swap="outerHTML" @announcement-edited="classroom_modal.close();">
     <div class="flex flex-col justify-center items-center gap-1">
         <h1>Edit Announcement</h1>
         <div class="flex flex-col gap-3 w-full">
             {{ form.body }}
-            <button class="base-button bg-blue-500 hover:bg-blue-700" type="submit" @click="classroom_modal.close();">Update</button>
+            <button class="base-button bg-blue-500 hover:bg-blue-700" type="submit">Update</button>
         </div>
     </div>
 </form>
