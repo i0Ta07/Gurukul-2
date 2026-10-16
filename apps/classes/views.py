@@ -255,5 +255,31 @@ class EditAnnouncement(LoginRequiredMixin,View):
         response['HX-Trigger'] = 'announcement-edited'
         return response
 
-class DeleteAnnouncement(TeacherRequiredMixin,ClassroomMembershipRequired,LoginRequiredMixin,View):
-    pass
+class DeleteAnnouncement(LoginRequiredMixin,View):
+    template_name = "classes/partials/announcements/delete_announcement.html"
+
+    def get(self,request,*args,**kwargs):
+        announcement_id= kwargs.get('announcement_id')
+        announcement = get_object_or_404(Announcement,pk = announcement_id)
+        if announcement.created_by_id != request.user.id:
+            return HttpResponse(
+                "<p class='text-center'>You are not the author of this announcement.</p>",status=200,)
+        if announcement.created_at <= timezone.now() - timedelta(minutes=15):
+            return HttpResponse(
+                "<p class='text-center'>You can only delete an announcement only after 15 minutes of creation.</p>",status=200,)         
+        
+        return render(request,template_name=self.template_name,context={'announcement_id':announcement_id})
+
+    def post(self,request,*args,**kwargs):
+        announcement_id= kwargs.get('announcement_id')
+        announcement = get_object_or_404(Announcement,pk = announcement_id)
+        if announcement.created_by_id != request.user.id:
+            return HttpResponse(
+                "<p class='text-center'>You are not the author of this announcement.</p>",status=200,)
+        if announcement.created_at <= timezone.now() - timedelta(minutes=15):
+            return HttpResponse(
+                "<p class='text-center'>You can only delete an announcement only after 15 minutes of creation.</p>",status=200,)
+        announcement.delete()
+        response = HttpResponse("", status=200)
+        response['HX-Trigger'] = 'announcement-deleted'
+        return response

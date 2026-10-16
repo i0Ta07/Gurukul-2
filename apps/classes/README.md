@@ -8,4 +8,5 @@
 
 ## To do
 
-We can add feature to create classroom students list in an excel file inside the classroom.
+* We can add feature to create classroom students list in an excel file inside the classroom.
+* Categorize templates.

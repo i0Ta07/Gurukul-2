@@ -1,0 +1,10 @@
+<form hx-post="{% url 'delete-announcement' announcement_id=announcement_id %}" hx-swap="outerHTML"
+    hx-target="#announcement-{{ announcement_id }}" @announcement-deleted="classroom_modal.close();" >
+    <div class="flex flex-col items-center gap-1.5">
+        <h1>Delete Announcement</h1>
+        <div class="flex flex-col gap-3 items-center w-full">
+            <p>Are you sure you want to <span class="font-bold italic">delete</span> this announcement?</p>
+            <button type="submit" class="base-button bg-red-500 hover:bg-red-700">Delete for Everyone</button>
+        </div>
+    </div>
+</form>
