@@ -13,8 +13,8 @@ urlpatterns = [
     path("join/<str:code>",JoinClassroom.as_view(),name="join-classroom"),
     path("<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
     path("create/announcement/<int:classroom_id>",CreateAnnouncement.as_view(),name="create-announcement"),
-    path("edit/announcement/<int:classroom_id>/<int:announcement_id>",EditAnnouncement.as_view(),name="edit-announcement"),
-    path("delete/announcement/<int:classroom_id>/<int:announcement_id>",DeleteAnnouncement.as_view(),name="delete-announcement"),
+    path("edit/announcement/<int:announcement_id>",EditAnnouncement.as_view(),name="edit-announcement"),
+    path("delete/announcement/<int:announcement_id>",DeleteAnnouncement.as_view(),name="delete-announcement"),
 
 
     path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),

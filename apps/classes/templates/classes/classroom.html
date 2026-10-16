@@ -40,11 +40,11 @@
                             <div x-show="open_dropdown" x-cloak x-transition @click.outside="open_dropdown = false" class="absolute right-0 top-full z-50 rounded-2xl shadow-lg  bg-slate-950">
                                 <ul class="p-2 text-xs xl:text-sm text-body font-medium">
                                     <li @click="open_dropdown = false">
-                                        <a hx-get="{% url 'edit-announcement' classroom_id=classroom_id announcement_id=announcement.id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();"
+                                        <a hx-get="{% url 'edit-announcement' announcement_id=announcement.id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();"
                                             class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-gray-700 hover:text-white hover:rounded-lg">Edit</a>
                                     </li>
                                     <li @click="open_dropdown = false">
-                                        <a hx-get="{% url 'delete-announcement' classroom_id=classroom_id announcement_id=announcement.id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();"
+                                        <a hx-get="{% url 'delete-announcement' announcement_id=announcement.id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();"
                                             class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-gray-700 hover:text-white hover:rounded-lg">Delete</a>
                                     </li>
                                 </ul>

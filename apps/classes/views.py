@@ -156,7 +156,7 @@ class ViewClassroomFromDashboard(ClassroomMembershipRequired,BaseClassroomView):
     pass
 
 class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,LoginRequiredMixin,View):
-    template_name = "classes/partials/create_announcement.html"
+    template_name = "classes/partials/announcements/create_announcement.html"
     form_class = AnnouncementForm
 
     def get(self,request,*args,**kwargs):
@@ -218,48 +218,40 @@ class JoinClassroom(LoginRequiredMixin,View):
         membership.save()
         return create_message_and_redirect(request,f"You are now part of {membership.classroom.name}.",url="list-classrooms",code="success")
 
-class EditAnnouncement(TeacherRequiredMixin,ClassroomMembershipRequired,LoginRequiredMixin,View):
+class EditAnnouncement(LoginRequiredMixin,View):
     form_class = AnnouncementForm
-    template_name = "classes/partials/edit_announcement.html"
+    template_name = "classes/partials/announcements/edit_announcement.html"
     def get(self,request,*args,**kwargs):
         announcement_id= kwargs.get('announcement_id')
-        classroom = self.get_classroom()
         announcement = get_object_or_404(Announcement,pk = announcement_id)
         if announcement.created_by_id != request.user.id:
             return HttpResponse(
-                "<p class='text-center'>You are not the author of this message.</p>",status=200,)
+                "<p class='text-center'>You are not the author of this announcement.</p>",status=200,)
         if announcement.created_at <= timezone.now() - timedelta(minutes=15):
             return HttpResponse(
-                "<p class='text-center'>You can only edit an announcement before 15 minutes.</p>",status=200,)
-        if announcement.classroom_id != classroom.id:
-            return HttpResponse(
-                "<p class='text-center'>Annoucement does not belong to given class.</p>",status=200,)            
+                "<p class='text-center'>You can only edit an announcement only after 15 minutes of creation..</p>",status=200,)      
         form = self.form_class(initial={'body':announcement.body})
         
-        return render(request,template_name=self.template_name,context={'announcement_id':announcement_id,'form':form,'classroom_id':classroom.id})
+        return render(request,template_name=self.template_name,context={'announcement_id':announcement_id,'form':form})
 
     def post(self,request,*args,**kwargs):
         announcement_id= kwargs.get('announcement_id')
         announcement = get_object_or_404(Announcement,pk = announcement_id)
-        classroom = self.get_classroom()
         if announcement.created_by_id != request.user.id:
             return HttpResponse(
-                "<p class='text-center'>You are not the author of this message.</p>",status=200,)
+                "<p class='text-center'>You are not the author of this announcement.</p>",status=200,)
         if announcement.created_at <= timezone.now() - timedelta(minutes=15):
             return HttpResponse(
-                "<p class='text-center'>You can only edit an announcement before 15 minutes.</p>",status=200,)
-        if announcement.classroom_id != classroom.id:
-            return HttpResponse(
-                "<p class='text-center'>Annoucement does not belong to given class.</p>",status=200,)   
+                "<p class='text-center'>You can only edit an announcement only after 15 minutes of creation.</p>",status=200,)
         form = self.form_class(request.POST)
         
         if not form.is_valid():
-            return render(request,template_name=self.template_name,context={'announcement_id':announcement_id,'form':form,'classroom_id':classroom.id})
+            return render(request,template_name=self.template_name,context={'announcement_id':announcement_id,'form':form})
         new_body = form.cleaned_data['body']
         announcement.body = new_body
         announcement.save(update_fields={'body'})
         announcement.is_editable = True
-        response = render(request,'classes/classroom.html#announcement',context = {'announcement':announcement,'classroom_id':classroom.id})
+        response = render(request,'classes/classroom.html#announcement',context = {'announcement':announcement})
         response['HX-Trigger'] = 'announcement-edited'
         return response
 
