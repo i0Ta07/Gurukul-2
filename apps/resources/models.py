@@ -115,20 +115,20 @@ class ResourceClassMembership(models.Model):
             ancestors = list(parent.get_ancestors())
             root = ancestors[0]
 
-            hierarchy = ancestors[1:] + [parent]
+            hierarchy = ancestors[1:] + [parent] # remove root and add current parent
             template = root.config.template()
 
             snapshot = {
                 key: node.name
                 for key, node in zip(template, hierarchy)
             }
-            snapshot["Classroom"] = self.classroom.name
+            snapshot["Subject"] = self.classroom.name
 
             snapshots = self.resource.snapshots
             snapshots.append(snapshot)
 
-            if len(snapshots) > 10:
-                del snapshots[:-10]
+            if len(snapshots) > 5:
+                del snapshots[:-5]
 
             self.resource.save(update_fields=["snapshots"])
 

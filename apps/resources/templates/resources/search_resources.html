@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Search Resources{% endblock %}
+
+{% block content %}
+
+<div class="page-container " id="page-container" hx-history-elt>
+    {% partialdef search-resources inline %}
+    <title>Search Resources</title>
+    <form>
+        <div class="grid grid-cols-4 ">
+            <div class="">
+                {{ org_fitler_form }}
+            </div>
+            <div class="col-span-2">
+                {{ search_resource_form.title }}
+            </div>
+            <div class="flex flex-col justify-center items-center">
+                {{ search_resource_form.type }}
+            </div>
+        </div>
+    </form>
+    {% endpartialdef search-resources %}
+</div>
+
+{% endblock content %}

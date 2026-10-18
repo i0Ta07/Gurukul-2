@@ -146,7 +146,7 @@ class BaseClassroomView(LoginRequiredMixin,View):
         announcemnets = Announcement.objects.filter(classroom_id = classroom.id).select_related('created_by').order_by('-created_at')
         announcemnets = annotate_is_editable(queryset=announcemnets,minutes=15)
         resource_memberships = ResourceClassMembership.objects.filter(classroom_id =classroom.id).select_related('resource','created_by').order_by('-created_at')
-        context = {"role":role,"classroom_name":classroom.name,"announcemnets":announcemnets,'resource_memberships':resource_memberships,"classroom_id":classroom.id}
+        context = {"role":role,"classroom_name":classroom.name,"announcemnets":announcemnets,'resource_memberships':resource_memberships,"classroom_id":classroom.id,"org_id":classroom.parent_id}
         if request.htmx:
             return render(request,"classes/classroom.html#classroom",context=context)
         return render(request=request,template_name=self.template_name,context=context)

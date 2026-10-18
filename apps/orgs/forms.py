@@ -1,8 +1,6 @@
 from django import forms
 from .models import OrgConfig, Organization, OrgMembership
 from django.utils.translation import gettext_lazy as _
-from apps.orgs.utils import validata_create_child_org
-from treebeard.forms import MoveNodeForm, movenodeform_factory
 from django.template.defaultfilters import filesizeformat
 from django.core.exceptions import ValidationError
 from config.validators import excel_validator
@@ -14,7 +12,7 @@ class OrgNameForm(forms.ModelForm):
         max_length=50,
         required=True,
         label = _('Name'),
-        widget=forms.TextInput(attrs={'placeholder':'name', 
+        widget=forms.TextInput(attrs={
         'class':"form-input w-full",
         "placeholder": 'name', 'autofocus': True }),
         validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)]    

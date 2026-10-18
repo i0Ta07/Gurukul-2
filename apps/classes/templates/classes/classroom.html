@@ -68,7 +68,7 @@
                         <p class="text-lg xl:text-2xl  font-bold">Resources</p>
                          <div class="flex gap-1">
                             {% if request.user.user_type == "T" %}
-                                <a href="#"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Create</a>
+                            <a hx-get="{% url 'search-resources' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true"  class="w-fit base-button bg-red-600 hover:bg-red-800 text-xs xl:text-sm">Attach</a>
                             {% endif %}
                             <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
                          </div>
