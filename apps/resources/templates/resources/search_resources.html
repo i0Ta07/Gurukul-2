@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block title %}Search Resources{% endblock %}
 
 {% block content %}
@@ -7,18 +7,68 @@
 <div class="page-container " id="page-container" hx-history-elt>
     {% partialdef search-resources inline %}
     <title>Search Resources</title>
-    <form>
+    <form hx-post="{% url 'search-resources' org_id=org_id %}" hx-target="#resources" hx-swap="innerHTML" class="flex flex-col gap-3 flex-1 min-h-0">
         <div class="grid grid-cols-4 ">
-            <div class="">
-                {{ org_fitler_form }}
+            <div class="flex flex-col gap-5">
+                <p class="font-semibold text-2xl text-center">Fitlers</p>
+                <div class="flex flex-col xl:gap-10">
+                    {% for field in org_fitler_form %}
+                    {{ field }}
+                    {% endfor %}
+                </div>
             </div>
-            <div class="col-span-2">
-                {{ search_resource_form.title }}
+            <div class="flex flex-col col-span-2 p-1 items-center gap-3 flex-1 min-h-0">
+                <div class="flex gap-1">
+                    <div class="flex justify-center items-center w-2xl">
+                        {{ search_resource_form.title }}
+                    </div>
+                    <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit">Search</button>
+                </div>
+                <div class="flex flex-col gap-3 w-full p-1 max-w-3xl flex-1 min-h-0 overflow-y-auto" id="resources"> <!--check if scrollable and make it responsive-->
+                    {% partialdef render-results %}
+                    <p class="font-bold text-center text-2xl">Search Results</p>
+                    {% for resource in resources %}
+                    <div class="flex flex-col gap-0.5">
+                        <hr class="text-gray-600 border">
+                        <div class="flex justify-between">
+                            <div class="flex gap-1.5">
+                                <p class="font-semibold">{{ resource.title }}</p>
+                                <p class="badge badge-outline badge-info badge-xs xl:badge-md ">{{resource.get_type_display}}</p>
+                            </div>
+                            <div class="flex gap-1.5">
+                                {% if request.user.user_type == 'T' %}
+                                <a href="#" class="underline text-green-500 font-bold">Attach</a>
+                                {% endif %}
+                                {% if resource.url %}
+                                <a href="{{ resource.url }}" target="_blank" class="underline text-blue-500 font-bold">View</a>
+                                {% elif resource.file %}
+                                <a href="{{ resource.file.url }}" target="_blank" class="underline text-blue-500 font-bold">View</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ resource.created_by.get_full_name }} ({{ resource.created_at|naturaltime }})</p>
+                    </div>
+                    {% empty %}
+                        <div class="flex flex-col items-center justify-center flex-1">
+                            <p class="italic font-bold text-gray-500">No resources match the given filters</p>
+                        </div>
+                    {% endfor %}
+                    {% include 'partials/messages.html' %}
+                    {% endpartialdef render-results %}
+                </div>
+                
             </div>
-            <div class="flex flex-col justify-center items-center">
-                {{ search_resource_form.type }}
+            <div class="flex flex-col items-center gap-5">
+                <p class="font-semibold text-2xl text-center">Type</p>
+                <div class="flex flex-col xl:gap-5">
+                    {% for choice in search_resource_form.type %}
+                    {{ choice }}
+                    {% endfor %}
+                </div>
             </div>
         </div>
+        {% include "partials/form_errors.html#form-errors" with form=org_fitler_form %}
+        {% include "partials/form_errors.html#form-errors" with form=search_resource_form %}
     </form>
     {% endpartialdef search-resources %}
 </div>

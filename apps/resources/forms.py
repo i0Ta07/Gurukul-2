@@ -5,20 +5,18 @@ from apps.orgs.models import Organization
 from apps.resources.models import Resource
 from django.utils.translation import gettext_lazy as _
 
-class SearchResourceForm(forms.ModelForm):
+class SearchResourceForm(forms.Form):
     title = forms.CharField(max_length=100,
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={'placeholder':'search by title', 
         'class':"form-input w-full", 'autofocus': True }),
     )
-    type = forms.ChoiceField(
+    type = forms.MultipleChoiceField(
+        required=False,
         choices= Resource.ResourceType,
-        widget=forms.CheckboxSelectMultiple(attrs={
-        'class': 'bg-black'}),
+        widget=forms.CheckboxSelectMultiple(),
     )
-    class Meta:
-        model = Resource
-        fields = ['title','type']
+
 
 class OrgFilterForm(forms.Form):
     def __init__(self,*args,**kwargs):
@@ -32,13 +30,12 @@ class OrgFilterForm(forms.Form):
         for depth, level_name in enumerate(template[:-1], start=2):
             # If not order_by, uses default Meta.ordering
             choices = nodes.filter(depth=depth).order_by("name").values_list("name", "name").distinct("name") # need distinct on "name" and PostgreSQL DISTINCT ON requires ORDER BY to start with the distinct field
-
-            self.fields[level_name] = forms.MultipleChoiceField(
-                choices=choices,
+            self.fields[level_name] = forms.ChoiceField(
+                choices= (("", f"{level_name}"),) + tuple(choices), # choice needs tuple of (id,name)
                 required=False,
                 label=level_name,
-                widget=forms.SelectMultiple(attrs={
-                    "class": "form-select w-full",
+                widget=forms.Select(attrs={
+                    "class": "form-select w-full bg-black border border-gray-700 p-2 rounded-b-xl",
                 }),
             )
 
@@ -49,11 +46,11 @@ class OrgFilterForm(forms.Form):
             node_classrooms = Classroom.objects.filter(parent_id = node[0] ).values_list('name','name') # returns a queryset iterable
             subjects.update(node_classrooms) # extend/update not append, they traverses the queryset and append tuples. append will directly append the queryset.
 
-        self.fields[template[-1]] = forms.MultipleChoiceField(
-            choices=sorted(subjects),
+        self.fields[template[-1]] = forms.ChoiceField(
+            choices=(("", "Subjects"),) + tuple(subjects),
             required=False,
             label=template[-1],
-            widget=forms.SelectMultiple(attrs={
-                "class": "form-select w-full",
+            widget=forms.Select(attrs={
+                "class": "form-select w-full bg-black border border-gray-700 p-2 rounded-b-xl",
             }),
         )
