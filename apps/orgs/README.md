@@ -45,6 +45,9 @@ When the owner clicks the delete button and we show a confirmation. IF pressed Y
 ### Transfer Ownership
 
 We will show the owner the list of admins in which he can select an admin. We will verify the operation using OTP first. After verification the previous owner will be demoted to admin and the selected admin will be promoted to owner.
+When the user clicks on the confirmation, we will make a post request to `TransferRootOwnershipSendOTP` which will send back a form to enter the OTP and also create an OTP and store the otp hash in redis. We will send the OTP via email.
+
+When the user submit the otp we will check in post request of `TransferRootOwnership` and verify the OTP. He will get 3 chances to verify the OTP.
 
 ### Show Invitation Count
 

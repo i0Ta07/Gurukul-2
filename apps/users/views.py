@@ -423,8 +423,8 @@ class PublicProfile(LoginRequiredMixin,View):
 class ViewNotifications(LoginRequiredMixin,View):
     def get(self,request,*args,**kwargs):
         notifications = Notification.objects.filter(user_id = request.user.id,)
-        unseen_notifications = notifications.filter(is_seen = False)
-        seen_notifications = notifications.filter(is_seen = True)
+        unseen_notifications = notifications.filter(is_seen = False).order_by('-created_at')
+        seen_notifications = notifications.filter(is_seen = True).order_by('-created_at')
         context = {'unseen_notifications':unseen_notifications,'seen_notifications':seen_notifications}
         if request.htmx:
             return render(request,"users/notifications/view_notifications.html#view-notifications",context = context)
@@ -432,12 +432,15 @@ class ViewNotifications(LoginRequiredMixin,View):
 
     def post(self,request,*args,**kwargs):
         notifications = Notification.objects.filter(user_id = request.user.id,)
-        unseen_notifications = notifications.filter(is_seen = False)
-        seen_notifications = notifications.filter(is_seen = True)
+        # need list for instant evaluation and not lazy evaluation(QuerySet are always lazy)
+        # In lazy evaluation notification.is_seen = True, hence duplicated results
+        unseen_notifications = list(notifications.filter(is_seen = False).order_by('-created_at'))
+        seen_notifications = list(notifications.filter(is_seen = True).order_by('-created_at'))
         for notification in unseen_notifications:
             notification.is_seen = True
         Notification.objects.bulk_update(unseen_notifications,['is_seen'],50)
         async_to_sync(set_notification_icon_count_to_zero)(user_id=request.user.id)
+        # Here unseen_notifcation.is_seen = True
         context = {'unseen_notifications':unseen_notifications,'seen_notifications':seen_notifications}
         if request.htmx:
             return render(request,"users/notifications/view_notifications.html#view-notifications",context = context)
