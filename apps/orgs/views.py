@@ -436,7 +436,7 @@ class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,Vie
         key = delete_root_org_otp_key(user_id=request.user.id, org_id=root_org.id)
         data = cache.get(key)
         if not data:
-            return create_message_and_redirect(request,"OTP expired",url='users-dashboard',code="error")
+            return create_message_and_redirect(request,message="OTP expired",url='users-dashboard',code="error")
         data['attempts'] += 1
 
         if check_password(password=request.POST.get("otp"),encoded=data['otp_hash']):
@@ -447,7 +447,7 @@ class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,Vie
             return response
         elif data['attempts'] >= 3:
             cache.delete(key)
-            return create_message_and_redirect(request,"Maximum 3 attempts. Try again later.",url='users-dashboard',code="error")
+            return create_message_and_redirect(request,message="Maximum 3 attempts. Try again later.",url='users-dashboard',code="error")
         else:
             messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
             cache.set(key=key,value=data,timeout=300)
@@ -535,10 +535,10 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
 
         parent_org_path = kwargs.get('parent_org_path')
         if not parent_org_path and not is_root:
-            return create_message_and_redirect(request,"Invalid rename request","users-dashboard","error",)
+            return create_message_and_redirect(request,message="Invalid rename request",url="users-dashboard",code="error",)
             
         if is_root and self.role != OrgUserType.OWNER:
-            return create_message_and_redirect(request,"Only Owners can rename root organizations","users-dashboard","error",) 
+            return create_message_and_redirect(request,message="Only Owners can rename root organizations",url="users-dashboard",code="error",) 
 
         org.name = form.cleaned_data['name']
 
@@ -627,7 +627,7 @@ class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequ
         key = transfer_ownership_otp_key(owner_id=request.user.id, org_id=root_org.id)
         data = cache.get(key)
         if not data:
-            return create_message_and_redirect(request,"OTP expired",url='users-dashboard',code="error")
+            return create_message_and_redirect(request,message="OTP expired",url='users-dashboard',code="error")
         data['attempts'] += 1
 
         if check_password(password=request.POST.get("otp"),encoded=data['otp_hash']):
@@ -650,7 +650,7 @@ class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequ
             return response
         elif data['attempts'] >= 3:
             cache.delete(key)
-            return create_message_and_redirect(request,"Maximum 3 attempts. Try again later.",url='users-dashboard',code="error")
+            return create_message_and_redirect(request,message="Maximum 3 attempts. Try again later.",url='users-dashboard',code="error")
         else:
             messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
             cache.set(key=key,value=data,timeout=300)
@@ -670,4 +670,4 @@ class LeaveOrg(LoginRequiredMixin,TeacherRequiredMixin,AdminTeacherRequired,View
         root_org,_ = self.get_root_current_org()
         membership = get_object_or_404(OrgMembership, org_id = root_org.id, teacher_id = request.user.id)
         membership.delete()
-        return create_message_and_redirect(request,f"You are no longer the part of {root_org.name}.",'view-root-orgs',"info")
+        return create_message_and_redirect(request,message=f"You are no longer the part of {root_org.name}.",url='view-root-orgs',code="info")

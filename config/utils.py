@@ -18,7 +18,7 @@ from datetime import timedelta
 from apps.users.models import CustomSession
 from django.contrib.auth import logout
 
-def create_message_and_redirect(request, message: str, url: str,url_kwargs:dict|None = None, code: Literal['info', 'success', 'error', 'warning'] = 'error'):
+def create_message_and_redirect(request, message: str, url: str, url_kwargs:dict|None = None, code: Literal['info', 'success', 'error', 'warning'] = 'error'):
     """Create the message and redirects to the given URL."""
     getattr(messages, code)(request, message)
     target = reverse(url, kwargs=url_kwargs or {})

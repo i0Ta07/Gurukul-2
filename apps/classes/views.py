@@ -216,7 +216,7 @@ class JoinClassroom(LoginRequiredMixin,View):
             messages.error(request,e)
             return render(request,"partials/messages.html")
         membership.save()
-        return create_message_and_redirect(request,f"You are now part of {membership.classroom.name}.",url="list-classrooms",code="success")
+        return create_message_and_redirect(request,message = f"You are now part of {membership.classroom.name}.",url="list-classrooms",code="success")
 
 class EditAnnouncement(LoginRequiredMixin,View):
     form_class = AnnouncementForm
