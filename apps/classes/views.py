@@ -10,6 +10,7 @@ from apps.classes.forms import AnnouncementForm, ClassroomNameForm
 from django.contrib import messages
 from django.views import View
 from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
+from apps.orgs.models import OrgMembership
 from apps.orgs.utils import OrgUserType, render_error_inside_modal, build_slug
 from apps.classes.utils import ClassUserType
 from apps.chats.models import ChatRoom
@@ -196,6 +197,9 @@ class JoinClassroom(LoginRequiredMixin,View):
             return create_message_and_redirect(request,message="You are already a member of this classroom.",url="users-dashboard",code="info")
         if request.user.id == classroom.owner_id:
             return create_message_and_redirect(request,message="Owners cannot join the classroom.",url='users-dashboard',code="info")
+        root = classroom.parent.get_root()
+        if request.user.user_type == User.UserType.TEACHER and not OrgMembership.objects.filter(org_id= root.id,teacher_id = request.user.id).exists():
+            return create_message_and_redirect(request,message="You are not the part of the organization",url='users-dashboard',code="info")
         teachers = ClassMembership.objects.filter(user__user_type = User.UserType.TEACHER,classroom_id=classroom.id).values('user__first_name','user__last_name')
         student_count = ClassMembership.objects.filter(user__user_type = User.UserType.STUDENT,classroom_id=classroom.id).count()
         context = {'teachers':teachers,'classroom_name':classroom.name,'owner_name':classroom.owner.get_full_name(),'code':code,'student_count':student_count,"created_at":classroom.created_at,"ancestors":classroom.parent.get_ancestors()}
@@ -208,7 +212,9 @@ class JoinClassroom(LoginRequiredMixin,View):
             return create_message_and_redirect(request,message="You are already a member of this classroom.",url="users-dashboard",code="info")
         if request.user.id == classroom.owner_id:
             return create_message_and_redirect(request,message="Owners cannot join the classroom.",url='users-dashboard',code="info")
-
+        root = classroom.parent.get_root()
+        if request.user.user_type == User.UserType.TEACHER and not OrgMembership.objects.filter(org_id= root.id,teacher_id = request.user.id).exists():
+            return create_message_and_redirect(request,message="You are not the part of the organization",url='users-dashboard',code="info")
         membership = ClassMembership(user_id = request.user.id, classroom_id = classroom.id)
         try:
             membership.full_clean()
