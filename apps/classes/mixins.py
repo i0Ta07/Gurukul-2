@@ -20,7 +20,7 @@ class ClassroomOwnerOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrganizatio
         self.role = (
             is_org_owner_or_admin(
                 root=root,
-                user=request.user
+                user_id=request.user.id
             )
             or is_class_owner(
                 classroom=classroom,
@@ -39,7 +39,7 @@ class ClassroomOwnerTeacherOrgAdminOwnerRequired(ClassroomRequiredMixin,RootOrga
         self.role = (
             is_org_owner_or_admin(
                 root=root,
-                user=request.user
+                user_id=request.user.id
             )
             or is_class_owner_or_teacher(
                 classroom=classroom,

@@ -35,7 +35,7 @@ class OrgOwnerAdminRequired(RootOrganizationMixin):
     """Mixin that requires the user to be a owner or admin to access any view of the org using org_id given in the request."""
     def dispatch(self, request, *args, **kwargs):
         root,_ = self.get_root_current_org()
-        role = is_org_owner_or_admin(root=root,user=request.user)
+        role = is_org_owner_or_admin(root=root,user_id=request.user.id)
         if not role:
             return create_message_and_redirect(request,message="Only admins and owner can perform this action.", url="users-dashboard",code="error")
         self.role = role
@@ -46,7 +46,7 @@ class OrgOwnerRequired(RootOrganizationMixin):
     """Mixin that requires the user to be a owner or admin to access any view of the org using org_id given in the request."""
     def dispatch(self, request, *args, **kwargs):
         root,_ = self.get_root_current_org()
-        role = is_org_owner(root=root,user=request.user)
+        role = is_org_owner(root=root,user_id=request.user.id)
         if not role:
             return create_message_and_redirect(request,message="Only owner can perform this action.",url="users-dashboard",code="error")
         self.role = role
@@ -56,7 +56,7 @@ class OrgOwnerRequired(RootOrganizationMixin):
 class AdminTeacherRequired(RootOrganizationMixin):
     def dispatch(self, request, *args, **kwargs):
         root,_ = self.get_root_current_org()
-        role = is_org_admin_or_teacher(root=root,user=request.user)
+        role = is_org_admin_or_teacher(root=root,user_id=request.user.id)
         if not role:
             return create_message_and_redirect(request,message="Only teachers and admins of this organization can perform this action",url="users-dashboard",code="warning",)
         self.role = role
@@ -66,7 +66,7 @@ class OrgMembershipRequiredMixin(RootOrganizationMixin):
     """Mixin that requires the user to be the member of the given organization given by org_id to perform some task."""
     def dispatch(self, request, *args, **kwargs):
         root,_ = self.get_root_current_org()
-        role  = is_org_member(root=root,user=request.user)
+        role  = is_org_member(root=root,user_id=request.user.id)
         if not role:
             return create_message_and_redirect(request,message="You are not a part of this organization",url="users-dashboard",code="warning",)
         self.role = role

@@ -18,12 +18,12 @@ class OrgUserType(StrEnum):
     ADMIN = "Admin"
     TEACHER = "Teacher"
 
-def _get_user_org_role(root:Organization,user:User):
+def _get_user_org_role(root:Organization,user_id:int):
     """
     Check if the user belong to this root org, it yes return the role [Admin,Teacher,Owner] else return None
     """
     membership = (
-        OrgMembership.objects.filter(org=root, teacher=user).annotate(
+        OrgMembership.objects.filter(org=root, teacher_id=user_id).annotate(
             has_admin=Exists(
                 OrgAdmin.objects.filter(membership=OuterRef("id"))
             )
@@ -31,30 +31,30 @@ def _get_user_org_role(root:Organization,user:User):
     )
     if membership:
         return OrgUserType.ADMIN if membership.has_admin else OrgUserType.TEACHER
-    elif Organization.get_root_nodes().filter(id = root.id, config__owner = user).exists():
+    elif Organization.get_root_nodes().filter(id = root.id, config__owner_id = user_id).exists():
         return OrgUserType.OWNER
     return None
 
-def is_org_owner_or_admin(root:Organization,user:User):
-    role = _get_user_org_role(root=root,user=user)
+def is_org_owner_or_admin(root:Organization,user_id:int):
+    role = _get_user_org_role(root=root,user_id=user_id)
     if role in [OrgUserType.OWNER, OrgUserType.ADMIN]:
         return role
     return False
 
-def is_org_owner(root:Organization,user:User):
-    role = _get_user_org_role(root=root,user=user)
+def is_org_owner(root:Organization,user_id:int):
+    role = _get_user_org_role(root=root,user_id=user_id)
     if role == OrgUserType.OWNER:
         return role
     return False
 
-def is_org_admin_or_teacher(root:Organization,user:User):
-    role = _get_user_org_role(root=root,user=user)
+def is_org_admin_or_teacher(root:Organization,user_id:int):
+    role = _get_user_org_role(root=root,user_id=user_id)
     if role in [OrgUserType.ADMIN,OrgUserType.TEACHER]:
         return role
     return False
 
-def is_org_member(root:Organization,user:User):
-    role = _get_user_org_role(root=root,user=user)
+def is_org_member(root:Organization,user_id:User):
+    role = _get_user_org_role(root=root,user_id=user_id)
     if role:
         return role
     return False
