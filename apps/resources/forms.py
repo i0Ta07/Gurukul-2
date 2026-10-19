@@ -17,7 +17,6 @@ class SearchResourceForm(forms.Form):
         widget=forms.CheckboxSelectMultiple(),
     )
 
-
 class OrgFilterForm(forms.Form):
     def __init__(self,*args,**kwargs):
 

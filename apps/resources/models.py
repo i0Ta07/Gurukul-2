@@ -73,7 +73,7 @@ class Resource(models.Model):
                 )
 
     def __str__(self):
-        return f"{self.root.name}: {self.id}"
+        return f"{self.title}:{self.root_id}"
         
 
 class ResourceClassMembership(models.Model):
