@@ -26,7 +26,7 @@
         <!--Create Root org-->
         {% if root_org_view %}
         <div class="flex ml-auto">
-            <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " @click="org_modal.showModal();"
+            <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-sm " @click="org_modal.showModal();"
             hx-get="{% url 'create-root-org' %}" hx-target="#modal_container" hx-swap="innerHTML">
                 Create Root Organization
             </button>
@@ -36,25 +36,25 @@
         <!-- Action Buttons -->
             {% if classroom_view %}
             <div class="flex ml-auto">
-                <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @classroom-created.window="formOpen = false"
+                <button class="w-fit base-button text-xs xl:text-sm bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @classroom-created.window="formOpen = false"
                 hx-get="{% url 'create-classroom' parent_org_path=parent_org_path parent_org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin">
                 Create Classroom</button>
             </div>
             {% elif child_org_view %}
                 <div class="flex justify-between gap-x-3">
-                    <a href="{% url 'view-root-config' org_id=parent_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 ">View Config</a>
-                    <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 " x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
+                    <a href="{% url 'view-root-config' org_id=parent_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-sm">View Config</a>
+                    <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-base" x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
                     hx-get="{% url 'create-child-org' parent_org_path=parent_org_path parent_org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
                     Create {{ label }}</button>
                 </div>
             {%endif %}
 
         <!--Breadcrumb-->
-        <div class="breadcrumbs text-sm mt-3 md:text-lg">
+        <div class="breadcrumbs text-xs lg:text-base mt-1">
             <ul>
                 <li>
                     <a href="{% url 'view-root-orgs' %}">
-                        <img class="size-5" src="{% static 'orgs/icons/svg/home.svg' %}" alt="Home Icon">
+                        <img class="size-3.5 xl:size-5 shrink-0" src="{% static 'orgs/icons/svg/home.svg' %}" alt="Home Icon">
                         Home
                     </a>
                 </li>
@@ -62,7 +62,7 @@
                     {% for node in breadcrumbs %}
                         <li>
                             <a href="{% url 'view-child-orgs' org_path=node.path org_id=node.id %}">
-                                <img class="size-5" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization">
+                                <img class="size-3.5 xl:size-5 shrink-0" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization">
                                 {{ node.name }}
                             </a>
                         </li>
@@ -70,8 +70,10 @@
                 {% endif %}
                 {% if parent_org_name %}
                     <li>
-                        <img class="size-5 mr-2" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization ">
-                        {{ parent_org_name }}
+                        <div class="flex gap-2 mr-3">
+                            <img class="size-3.5 xl:size-5 shrink-0" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Organization ">
+                            <p>{{ parent_org_name }}</p>
+                        </div>
                     </li>
                 {% endif %}
             </ul>
@@ -80,7 +82,7 @@
         <!--Main List View-->
         <div class="flex flex-col flex-auto">
             <div class="flex justify-between items-center">
-                <h1 class="px-1 my-2 md:text-4xl">
+                <h1 class="px-1 my-2 text-xl lg:text-3xl">
                     {% if root_org_view %}
                         Roots
                     {% else %}
@@ -89,7 +91,7 @@
                 </h1>
 
                 {% if child_org_view or classroom_view %}
-                    <div class="badge badge-outline badge-error badge-xl">
+                    <div class="badge badge-outline badge-error badge-sm lg:badge-lg">
                         {{ role }}
                     </div>
                 {% endif %}
@@ -99,12 +101,12 @@
                 {% if orgs %}
                     {% for org in orgs %}
                         {% partialdef org-row inline %}
-                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 gap-x-2 cursor-pointer" x-data="{ open_org_menu: false }" id="org-{{ org.id }}">
+                            <div class="flex flex-col items-center text-sm md:text-lg p-1.5 lg:p-3 gap-x-2 cursor-pointer" x-data="{ open_org_menu: false }" id="org-{{ org.id }}">
                                 <!--Organization Dropdown-->
                                 <div class="relative ml-auto">
-                                    <img class="size-5 block " src="{% static 'icons/svg/menu.svg' %}" alt="Menu" @click="open_org_menu = ! open_org_menu">
-                                    <div x-show="open_org_menu" x-cloak  x-transition @click.outside="open_org_menu = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg  bg-slate-950" >
-                                        <ul class="p-2 text-sm text-body font-medium">
+                                    <img class="size-3 lg:size-5 block " src="{% static 'icons/svg/menu.svg' %}" alt="Menu" @click="open_org_menu = ! open_org_menu">
+                                    <div x-show="open_org_menu" x-cloak  x-transition @click.outside="open_org_menu = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg bg-slate-950">
+                                        <ul class="p-2 font-medium text-xs lg:text-sm">
                                             <li @click="open_org_menu = false">
                                                 <a href="{% url 'view-org-details' org_id=org.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
@@ -126,11 +128,11 @@
                                     </div>
                                 </div>
                                 <a href="{% url 'view-child-orgs' org_path=org.path org_id=org.id  %}" class="text-center">
-                                    <img class="size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Folder">
+                                    <img class="size-8 lg:size-10 block mx-auto" src="{% static 'orgs/icons/svg/folder.svg' %}" alt="Folder">
                                     <p class="font-bold min-w-20">{{ org.name|truncatechars:15 }}</p>
                                 </a>
                                 {% if root_org_view %}
-                                    <div class="badge badge-soft badge-success">{{ org.role }}</div>
+                                    <div class="badge badge-soft badge-success badge-xs lg:badge-md">{{ org.role }}</div>
                                 {% endif %}
                             </div>
                             {% include "partials/messages.html" %} <!--POST request send messages.-->
@@ -139,12 +141,12 @@
                 {% elif classrooms %}
                     {% for classroom in classrooms %}
                         {% partialdef classroom-row inline %}
-                            <div class="flex flex-col items-center text-md md:text-lg py-3 px-3 lg:px-6 cursor-pointer min-w-35"  x-data="{ open_classroom_menu: false }" id="classroom-{{ classroom.id }}">
+                            <div class="flex flex-col items-center text-sm md:text-lg p-1.5 lg:p-3 cursor-pointer min-w-20"  x-data="{ open_classroom_menu: false }" id="classroom-{{ classroom.id }}">
                                 <!--Classroom dropdown-->
                                 <div class="relative ml-auto">
-                                    <img class="size-5 block" src="{% static 'icons/svg/menu.svg' %}" alt="Menu" @click="open_classroom_menu = ! open_classroom_menu">
+                                    <img class="size-3 lg:size-5 block" src="{% static 'icons/svg/menu.svg' %}" alt="Menu" @click="open_classroom_menu = ! open_classroom_menu">
                                     <div x-show="open_classroom_menu" x-cloak  x-transition @click.outside="open_classroom_menu = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg  bg-slate-950" >
-                                        <ul class="p-2 text-sm text-body font-medium">
+                                        <ul class="p-2 font-medium text-xs lg:text-sm">
                                             <li @click="open_classroom_menu = false">
                                                 <a href="{% url 'view-classroom-details' parent_org_id=parent_org_id classroom_id=classroom.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
@@ -166,7 +168,7 @@
                                     </div>
                                 </div>
                                 <a href="{% url 'view-classroom-orgs' classroom_path=classroom.path parent_org_id=parent_org_id classroom_id=classroom.id  %}" class="text-center">
-                                    <img class="size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom">
+                                    <img class="size-12 lg:size-15 block mx-auto" src="{% static 'orgs/icons/svg/classroom.svg' %}" alt="Classroom">
                                     <label class="font-bold min-w-20">{{ classroom.name|truncatechars:15 }}</label>
                                 </a>
                             </div>
@@ -176,8 +178,8 @@
                 {% endif %}
             </div>
             {% if not classrooms and not orgs %}
-                <div  class="flex flex-col flex-auto justify-center items-center" @child-org-created.window="$el.remove();" @root-org-created.window="$el.remove();"><!--Need bubble up, from child to parent-->
-                    <span class=" text-gray-500 font-semibold text-lg">It's empty down here</span>
+                <div  class="flex flex-col flex-auto justify-center items-center" @child-org-created.window="$el.remove();" @classroom-created.window="$el.remove();" @root-org-created.window="$el.remove();"><!--Need bubble up, from child to parent-->
+                    <span class=" text-gray-500 italic text-sm font-bold  lg:text-lg">It's empty down here</span>
                 </div>
             {% endif  %}
         </div>
