@@ -57,7 +57,11 @@ class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequi
 
 class DeleteResource(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequiredMixin,View):
     def get(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
         resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
+        if resource.root_id != root.id:
+            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
+
         if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             return HttpResponse("<p class='text-center'>You do not have permission to delete this resource</p>",status=200)
         
@@ -67,7 +71,10 @@ class DeleteResource(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequir
         return render(request,"resources/partials/delete_resource.html",context= {'resource_title':resource.title,'resource_id':resource.id,'org_id':resource.root_id})
 
     def post(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
         resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
+        if resource.root_id != root.id:
+            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
         if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             messages.error(request,"You do not have permission to delete this resource")
             return render_message_from_modal_to_page(request)
@@ -105,3 +112,36 @@ class CreateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         messages.success(request,"Resource saved successfully")
         return render(request,self.template_partial_name,{'org_id':root.id,'form':self.form_class(),'org_name':root.name})
 
+class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
+    template_name="resources/partials/update_resource.html"
+    form_class = ResourceForm
+
+    def get(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
+        resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
+        if resource.root_id != root.id:
+            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
+        
+        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
+            return HttpResponse("<p class='text-center'>You do not have permission to update this resource</p>",status=200)
+
+        form = self.form_class(instance=resource)
+        return render(request,self.template_name,context={'form':form,'org_id':root.id,'resource_id':resource.id})
+
+    def post(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
+        resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
+        if resource.root_id != root.id:
+            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
+        
+        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
+            return HttpResponse("<p class='text-center'>You do not have permission to update this resource</p>",status=200)
+        
+        form = self.form_class(request.POST,request.FILES,instance=resource) 
+        if not form.is_valid():
+            return render(request,self.template_name,context={'form':form,'org_id':root.id,'resource_id':resource.id})
+
+        resource = form.save()
+        response =  render(request,"resources/search_resources.html#resource",context={'resource':resource,'org_id':root.id})
+        response['HX-Trigger'] = 'resource-updated'
+        return response

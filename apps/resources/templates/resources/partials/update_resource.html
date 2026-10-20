@@ -1,0 +1,20 @@
+<form hx-post="{% url 'update-resource' org_id=org_id resource_id=resource_id %}" hx-swap="outerHTML" hx-target="#resource-{{ resource_id }}" @resource-updated="resource_modal.close();" enctype="multipart/form-data">
+    <div class="flex flex-col gap-3 items-center">
+        <h1>Update Resource</h1>
+        <div class="flex flex-col gap-3 w-full">
+            <div class="flex flex-col lg:flex-row gap-3">
+                {{ form.title }}
+                {{ form.type }}
+            </div>
+            <div class="flex flex-col lg:flex-row justify-center items-center gap-3 lg:h-25">
+                {{ form.url }}
+                <div class="divider divider-vertical lg:divider-horizontal">OR</div>
+                <div class="flex flex-col w-full">
+                    {{ form.file }}
+                    <p class="text-xs text-gray-400 ml-3">Upload New</p>
+                </div>
+            </div>
+            <button class="base-button bg-red-500 hover:bg-red-700" type="submit">Save Changes</button>
+        </div>
+    </div>
+</form>

@@ -21,24 +21,26 @@
                 <div class="flex flex-col lg:flex-row gap-1 w-full justify-center items-center lg:h-25">
                     <div class="flex  justify-center items-center w-full gap-1.5">
                         {{ search_resource_form.title }}
-                        <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit">Search</button>
+                        <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit text-xs lg:text-base">Search</button>
                     </div>
                     <div class="divider divider-vertical lg:divider-horizontal">OR</div>
-                    <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2" hx-get="{% url 'create-resource' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">Create New Resource</a>
+                    <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2 text-xs lg:text-base" hx-get="{% url 'create-resource' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">Create New Resource</a>
                 </div>
                 <div class="flex flex-col gap-3 w-full p-1 max-w-3xl flex-1 min-h-0 overflow-y-auto" id="resources"> <!--check if scrollable and make it responsive-->
                     {% partialdef render-results %}
                     <p class="font-bold text-center text-lg lg:text-2xl">Search Results</p>
                     {% for resource in resources %}
+                    {% partialdef resource inline %}
                     <div class="flex flex-col gap-0.5" id="resource-{{ resource.id }}">
                         <hr class="text-gray-600 border">
                         <div class="flex justify-between text-xs lg:text-base">
-                            <div class="flex gap-1.5">
+                            <div class="flex gap-1.5  flex-wrap">
                                 <p class="font-semibold">{{ resource.title }}</p>
                                 <p class="badge badge-outline badge-info badge-xs xl:badge-md ">{{resource.get_type_display}}</p>
                             </div>
                             <div class="flex gap-1.5">
-                                <a href="#" class="underline text-red-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'delete-resource'  org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Delete</a>
+                                <a class="underline text-red-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'delete-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Delete</a>
+                                <a class="underline text-indigo-500 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'update-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Update</a>                                
                                 <a href="#" class="underline text-green-700 font-bold" @click="resource_modal.showModal();">Attach</a>
                                 {% if resource.url %}
                                 <a href="{{ resource.url }}" target="_blank" class="underline text-blue-500 font-bold">View</a>
@@ -49,6 +51,7 @@
                         </div>
                         <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ resource.created_by.get_full_name }} ({{ resource.created_at|naturaltime }})</p>
                     </div>
+                    {% endpartialdef resource %}
                     {% empty %}
                         <div class="flex flex-col items-center justify-center flex-1">
                             <p class="italic font-bold text-gray-500 text-xs lg:text-base">No resources match the given filters</p>
@@ -72,7 +75,7 @@
         {% include "partials/form_errors.html#form-errors" with form=search_resource_form %}
     </form>
     <dialog id="resource_modal" class="modal modal-bottom sm:modal-middle" @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
-        <div class="modal-box">
+        <div class="modal-box w-full lg:w-8/12 max-w-5xl">
             <form method="dialog">
                 <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
             </form>
