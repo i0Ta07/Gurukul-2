@@ -78,3 +78,30 @@ class DeleteResource(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequir
         resource.delete()
         response = HttpResponse("",status=200)
         return response
+
+class CreateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
+    form_class = ResourceForm
+    template_name = "resources/create_resource.html"
+    template_partial_name = "resources/create_resource.html#create-resource"
+
+    def get(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
+        form  =self.form_class()
+        context = {'org_id':root.id,'form':form,'org_name':root.name}
+        if request.htmx:
+            return render(request,self.template_partial_name,context)
+        return render(request,self.template_name,context)
+
+    def post(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
+        form  = self.form_class(request.POST,request.FILES)
+        if not form.is_valid():
+            return render(request,self.template_partial_name,{'org_id':root.id,'form':form,'org_name':root.name})
+
+        resource = form.save(commit=False)
+        resource.created_by_id = request.user.id
+        resource.root_id = root.id
+        resource.save()
+        messages.success(request,"Resource saved successfully")
+        return render(request,self.template_partial_name,{'org_id':root.id,'form':self.form_class(),'org_name':root.name})
+

@@ -24,7 +24,7 @@
                         <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit">Search</button>
                     </div>
                     <div class="divider divider-vertical lg:divider-horizontal">OR</div>
-                    <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2 ">Create New Resource</a>
+                    <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2" hx-get="{% url 'create-resource' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">Create New Resource</a>
                 </div>
                 <div class="flex flex-col gap-3 w-full p-1 max-w-3xl flex-1 min-h-0 overflow-y-auto" id="resources"> <!--check if scrollable and make it responsive-->
                     {% partialdef render-results %}

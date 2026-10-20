@@ -77,8 +77,9 @@ class SendInvitationForm(forms.Form):
         file = cleaned_data.get("file")
         email = cleaned_data.get("email")
 
-        if not file and not email:
-            raise ValidationError("Both fields cannot be empty.")
+        if bool(file) == bool(email):
+            raise ValidationError("Choose either email or file.")
+
         
 class MembershipModelChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):

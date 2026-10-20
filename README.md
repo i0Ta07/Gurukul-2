@@ -69,7 +69,7 @@ python manage.py tailwind update
 
 ## To do
 
-* Remove DOB, pone but keep bio.
+* Remove signals.py and add django-lifecycle.
 
 ## Remember
 

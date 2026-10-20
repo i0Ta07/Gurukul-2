@@ -52,17 +52,8 @@ class Resource(models.Model):
     def clean(self):
         super().clean()
 
-        if not self.root.is_root():
-            raise ValidationError("Resources can only be created for root organization")
-
-        if not self.file and not self.url:
-            raise ValidationError("Both URL and file cannot be empty.")
-
-        if self.created_by.user_type != User.UserType.TEACHER:
-             raise ValidationError("Teachers can only create resources.")
-
-        if self.file and self.url:
-            raise ValidationError("You can either upload a file or a URL, not both.")
+        if bool(self.file) == bool(self.url):
+            raise ValidationError("Provide either a URL or a file.")
 
         if self.file:
             max_size = 5242880 # 5 MB limit (5 * 1024 * 1024 bytes)

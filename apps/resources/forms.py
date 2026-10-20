@@ -4,6 +4,66 @@ from apps.classes.models import Classroom
 from apps.orgs.models import Organization
 from apps.resources.models import Resource
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+from config.validators import pdf_validator
+from django.template.defaultfilters import filesizeformat
+
+class ResourceForm(forms.ModelForm):
+    title = forms.CharField(max_length=100,
+        widget=forms.TextInput(attrs={'placeholder':'Title', 
+        'class':"form-input w-full", 'autofocus': True }),
+    )
+    type = forms.ChoiceField(
+        choices=[('', 'Select type')] + Resource.ResourceType.choices, # .choices returns a list
+        widget=forms.Select(attrs={
+            'class': 'form-select w-full bg-black border border-gray-700 p-2 rounded-b-xl',
+        }),
+    )
+    url = forms.URLField(
+        max_length=200,
+        required=False,
+        widget=forms.URLInput(attrs={
+            'placeholder':'Enter full URL',
+            'class':'form-input w-full'
+        })
+    )
+    file = forms.FileField(
+        required=False,
+        validators=[pdf_validator],
+        label=_("Accepts PDFs smaller than 5 Megabytes."),
+        widget=forms.FileInput(attrs={
+            'class':'file-input w-full'
+        })
+
+    )
+    class Meta:
+        model=Resource
+        fields = ['title', 'type', 'url', 'file']
+
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        if file:
+            max_size = 5242880 
+            if file.size > max_size:
+                raise ValidationError(
+                    f"File too large. Size must be under {filesizeformat(max_size)}."
+                    f"Current size is {filesizeformat(file.size)}."
+                )
+        return file
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        url = cleaned_data.get('url')
+        file = cleaned_data.get('file')
+
+        if bool(url) == bool(file): # either one of those
+            raise ValidationError(
+                'Provide either a URL or a file.'
+            )
+
+        return cleaned_data
+
 
 class SearchResourceForm(forms.Form):
     title = forms.CharField(max_length=100,
