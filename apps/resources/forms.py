@@ -5,8 +5,8 @@ from apps.orgs.models import Organization
 from apps.resources.models import Resource
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from apps.resources.utils import clean_file_size
 from config.validators import pdf_validator
-from django.template.defaultfilters import filesizeformat
 
 class ResourceForm(forms.ModelForm):
     title = forms.CharField(max_length=100,
@@ -43,12 +43,7 @@ class ResourceForm(forms.ModelForm):
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
-            max_size = 5242880 
-            if file.size > max_size:
-                raise ValidationError(
-                    f"File too large. Size must be under {filesizeformat(max_size)}."
-                    f"Current size is {filesizeformat(file.size)}."
-                )
+            clean_file_size(file,max_size=5)
         return file
 
     def clean(self):

@@ -2,11 +2,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 import uuid,os
 from django.core.exceptions import ValidationError
+from apps.resources.utils import clean_file_size
 from config.validators import pdf_validator
 from apps.classes.models import Classroom
 from apps.orgs.models import Organization
 from apps.users.models import User
-from django.template.defaultfilters import filesizeformat
 
 class Resource(models.Model):
     class ResourceType(models.TextChoices):
@@ -56,12 +56,7 @@ class Resource(models.Model):
             raise ValidationError("Provide either a URL or a file.")
 
         if self.file:
-            max_size = 5242880 # 5 MB limit (5 * 1024 * 1024 bytes)
-            if self.file.size > max_size:
-                raise ValidationError(
-                    f"File too large. Size must be under {filesizeformat(max_size)}."
-                    f"Current size is {filesizeformat(self.file.size)}."
-                )
+            clean_file_size(self.file,max_size=5)
 
     def __str__(self):
         return f"{self.title}:{self.root_id}"

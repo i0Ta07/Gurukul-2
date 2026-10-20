@@ -1,7 +1,7 @@
 from django import forms
+from apps.resources.utils import clean_file_size
 from .models import OrgConfig, Organization, OrgMembership
 from django.utils.translation import gettext_lazy as _
-from django.template.defaultfilters import filesizeformat
 from django.core.exceptions import ValidationError
 from config.validators import excel_validator
 from django.forms import ModelChoiceField
@@ -64,12 +64,7 @@ class SendInvitationForm(forms.Form):
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
-            max_size = 2097152 # 2 MB limit (2 * 1024 * 1024 bytes)
-            if file.size > max_size:
-                raise ValidationError(
-                    f"File too large. Size must be under {filesizeformat(max_size)}."
-                    f"Current size is {filesizeformat(file.size)}."
-                )
+            clean_file_size(file,max_size=2)
         return file
     
     def clean(self):
