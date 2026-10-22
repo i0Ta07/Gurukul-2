@@ -4,6 +4,7 @@ from django.db.models import Q,Exists, OuterRef
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import View
+from apps.classes.mixins import ClassroomOrgMembershipRequired
 from apps.classes.models import ClassMembership, Classroom
 from apps.orgs.models import Organization
 from apps.orgs.utils import OrgUserType
@@ -164,10 +165,9 @@ class ListClassroomsToAttachResource(LoginRequiredMixin,TeacherRequiredMixin,Org
         context = {'classrooms':classrooms,"org_id":root.id,"resource_id":resource.id}
         return render(request,"resources/partials/list_classrooms_to_attach_resource.html",context=context)
 
-class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
+class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,ClassroomOrgMembershipRequired,View):
     def post(self,request,*args,**kwargs):
-        classroom = get_object_or_404(Classroom,pk= kwargs.get("classroom_id"))
-        resource = self.resource
+        classroom,resource = self.classroom,self.resource
         if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
             return HttpResponse("<p class='text-center'>You do not have permissions to attach resources to this classroom.</p>")
 
@@ -185,3 +185,22 @@ class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         response['HX-Trigger'] = 'resource-attached'
         return response
 
+class DetachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,ClassroomOrgMembershipRequired,View):
+    def get(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
+        classroom,resource = self.classroom,self.resource
+        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
+            return HttpResponse("<p class='text-center'>You do not have permissions to detach resources to this classroom.</p>")
+        context = {'resource_id':resource.id,'classroom_id':classroom.id,'org_id':root.id,'resource_title':resource.title,'classroom_name':classroom.name}
+        return render(request,"resources/partials/detach_resource.html",context)
+
+    def post(self,request,*args,**kwargs):
+        classroom,resource = self.classroom,self.resource
+        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
+            return HttpResponse("<p class='text-center'>You do not have permissions to detach resources to this classroom.</p>")
+
+        res_mem = get_object_or_404(ResourceClassMembership,resource_id=resource.id,classroom_id=classroom.id)
+        res_mem.delete()
+        response = HttpResponse()
+        response['HX-Trigger'] = 'resource-detached'
+        return response

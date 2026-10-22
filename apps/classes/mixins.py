@@ -75,3 +75,14 @@ class ClassroomMembershipRequired(ClassroomRequiredMixin):
         if not self.role:
             return create_message_and_redirect(request,message="Only users that are part of the classroom can perform this action.",url="users-dashboard",code="error")
         return super().dispatch(request, *args, **kwargs)
+
+class ClassroomOrgMembershipRequired(RootOrganizationMixin):
+    def dispatch(self, request, *args, **kwargs):
+        root,_ = self.get_root_current_org()
+        classroom_id =  kwargs.get("classroom_id")
+        classroom = get_object_or_404(Classroom.objects.select_related('parent'),pk=classroom_id)
+        parent_root = classroom.parent.get_root()
+        if parent_root.id != root.id:
+            return create_message_and_redirect(request,message="The given classroom does not belong to this organization", url="users-dashboard",code="error")
+        self.classroom = classroom
+        return super().dispatch(request, *args, **kwargs)
