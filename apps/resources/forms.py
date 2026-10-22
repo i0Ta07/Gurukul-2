@@ -30,7 +30,7 @@ class ResourceForm(forms.ModelForm):
     file = forms.FileField(
         required=False,
         validators=[pdf_validator],
-        label=_("Accepts PDFs smaller than 5 Megabytes."),
+        label=_("Accepts PDFs less than equal to 10 MB."),
         widget=forms.FileInput(attrs={
             'class':'file-input w-full'
         })
@@ -43,7 +43,7 @@ class ResourceForm(forms.ModelForm):
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
-            clean_file_size(file,max_size=5)
+            clean_file_size(file,max_size=10)
         return file
 
     def clean(self):

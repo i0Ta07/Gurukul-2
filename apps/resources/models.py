@@ -56,7 +56,7 @@ class Resource(models.Model):
             raise ValidationError("Provide either a URL or a file.")
 
         if self.file:
-            clean_file_size(self.file,max_size=5)
+            clean_file_size(self.file,max_size=10)
 
     def __str__(self):
         return f"{self.title}:{self.root_id}"

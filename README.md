@@ -70,6 +70,7 @@ python manage.py tailwind update
 ## To do
 
 * Remove signals.py and add django-lifecycle.
+* Fix the mixins ordering.
 
 ## Remember
 
