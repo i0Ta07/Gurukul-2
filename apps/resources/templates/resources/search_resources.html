@@ -40,7 +40,7 @@
                                 <p class="badge badge-outline badge-info badge-xs xl:badge-md ">{{resource.get_type_display}}</p>
                             </div>
                             <div class="flex gap-1 flex-wrap">
-                                <a href="#" class="underline text-yellow-500 font-bold" @click="resource_modal.showModal();">History</a>
+                                <a class="underline text-yellow-500 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'view-resource-history' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">History</a>
                                 <a class="underline text-red-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'delete-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Delete</a>
                                 <a class="underline text-indigo-500 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'update-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Update</a>                                
                                 <a class="underline text-green-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'list-classrooms-to-attach-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Attach</a>

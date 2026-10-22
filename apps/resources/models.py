@@ -111,11 +111,12 @@ class ResourceClassMembership(models.Model):
             snapshot["Subject"] = self.classroom.name
 
             snapshots = self.resource.snapshots
-            snapshots.append(snapshot)
+            if snapshot not in snapshots:
+                snapshots.append(snapshot)
 
-            if len(snapshots) > 5:
-                del snapshots[:-5]
+                if len(snapshots) > 5:
+                    del snapshots[:-5]
 
-            self.resource.save(update_fields=["snapshots"])
+                self.resource.save(update_fields=["snapshots"])
 
         super().save(*args, **kwargs)

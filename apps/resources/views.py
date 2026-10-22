@@ -204,3 +204,9 @@ class DetachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         response = HttpResponse()
         response['HX-Trigger'] = 'resource-detached'
         return response
+
+class ViewResourceHistory(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
+    def get(self,request,*args,**kwargs):
+        resource = self.resource
+        snapshots = resource.snapshots
+        return render(request,"resources/partials/view_resource_history.html",{'snapshots':snapshots})
