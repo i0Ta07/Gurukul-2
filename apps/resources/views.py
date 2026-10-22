@@ -1,13 +1,18 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q,Exists, OuterRef
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import View
+from apps.classes.models import ClassMembership, Classroom
+from apps.orgs.models import Organization
 from apps.orgs.utils import OrgUserType
 from apps.resources.forms import ResourceForm, SearchResourceForm,OrgFilterForm
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
+from apps.resources.mixins import ResourceOrgMembershipRequired
 from apps.resources.models import Resource, ResourceClassMembership
 from apps.resources.utils import render_message_from_modal_to_page
+from django.db import IntegrityError
 
 class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequiredMixin,View):
     template_name = "resources/search_resources.html"
@@ -55,13 +60,9 @@ class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequi
 
         return render(request,'resources/search_resources.html#render-results',context={'resources':resources,'org_id':root.id})
 
-class DeleteResource(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequiredMixin,View):
+class DeleteResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     def get(self,request,*args,**kwargs):
-        root,_ = self.get_root_current_org()
-        resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
-        if resource.root_id != root.id:
-            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
-
+        resource = self.resource
         if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             return HttpResponse("<p class='text-center'>You do not have permission to delete this resource</p>",status=200)
         
@@ -71,10 +72,7 @@ class DeleteResource(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequir
         return render(request,"resources/partials/delete_resource.html",context= {'resource_title':resource.title,'resource_id':resource.id,'org_id':resource.root_id})
 
     def post(self,request,*args,**kwargs):
-        root,_ = self.get_root_current_org()
-        resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
-        if resource.root_id != root.id:
-            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
+        resource = self.resource
         if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             messages.error(request,"You do not have permission to delete this resource")
             return render_message_from_modal_to_page(request)
@@ -112,16 +110,13 @@ class CreateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         messages.success(request,"Resource saved successfully")
         return render(request,self.template_partial_name,{'org_id':root.id,'form':self.form_class(),'org_name':root.name})
 
-class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
+class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     template_name="resources/partials/update_resource.html"
     form_class = ResourceForm
 
     def get(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
-        resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
-        if resource.root_id != root.id:
-            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
-        
+        resource = self.resource
         if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             return HttpResponse("<p class='text-center'>You do not have permission to update this resource</p>",status=200)
 
@@ -130,10 +125,7 @@ class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 
     def post(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
-        resource = get_object_or_404(Resource,pk=kwargs.get("resource_id"))
-        if resource.root_id != root.id:
-            return HttpResponse("<p class='text-center'>This resource does not belong to this organization.</p>",status=200)
-        
+        resource = self.resource
         if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             return HttpResponse("<p class='text-center'>You do not have permission to update this resource</p>",status=200)
         
@@ -145,3 +137,51 @@ class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         response =  render(request,"resources/search_resources.html#resource",context={'resource':resource,'org_id':root.id})
         response['HX-Trigger'] = 'resource-updated'
         return response
+
+class ListClassroomsToAttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
+    def get(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
+
+        if self.role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
+            leafs = Organization.objects.get_descendants(root).filter(numchild=0)
+            classrooms = Classroom.objects.filter(parent__in=leafs).distinct().select_related('parent')
+
+        else:
+            classrooms = Classroom.objects.filter(Q(membership__user_id = request.user.id,membership__status = 'A') | Q(owner_id = request.user.id)).distinct().select_related('parent')
+
+        resource = self.resource
+
+        attached = ResourceClassMembership.objects.filter(
+            resource_id=self.resource.id,
+            classroom_id=OuterRef('pk'),
+        )
+
+        # Queries are lazily evaluated, hence we will only run one query. We keep on adding the filters and conditions.
+        classrooms = classrooms.annotate(
+            is_attached=Exists(attached)
+        ).filter(is_attached=False)
+
+        context = {'classrooms':classrooms,"org_id":root.id,"resource_id":resource.id}
+        return render(request,"resources/partials/list_classrooms_to_attach_resource.html",context=context)
+
+class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
+    def post(self,request,*args,**kwargs):
+        classroom = get_object_or_404(Classroom,pk= kwargs.get("classroom_id"))
+        resource = self.resource
+        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
+            return HttpResponse("<p class='text-center'>You do not have permissions to attach resources to this classroom.</p>")
+
+        try:
+            _ = ResourceClassMembership.objects.create(
+                classroom_id=classroom.id,
+                resource_id=resource.id,
+                created_by_id=request.user.id
+            )
+        except IntegrityError:
+            return HttpResponse("<p class='text-center text-green-500'>This resource is already attached to this classroom.</p>")
+
+        messages.success(request,f"{resource.title} is successfully attached to {classroom.name}")
+        response = render_message_from_modal_to_page(request)
+        response['HX-Trigger'] = 'resource-attached'
+        return response
+

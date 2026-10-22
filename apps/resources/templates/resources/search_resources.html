@@ -11,20 +11,21 @@
         <div class="flex flex-col gap-3 xl:grid xl:grid-cols-4 ">
             <div class="flex flex-col gap-3 xl:gap-5">
                 <p class="font-semibold text-lg lg:text-2xl text-center">Fitlers</p>
-                <div class="flex flex-col gap-3 xl:gap-10  text-sm lg:text-base">
+                <div class="flex flex-col gap-3 xl:gap-10 text-sm lg:text-base">
                     {% for field in org_fitler_form %}
                     {{ field }}
                     {% endfor %}
+                    <a href="#" class="base-button bg-blue-500 hover:bg-blue-700 text-center">View Orphan resources</a>
                 </div>
             </div>
             <div class="flex flex-col xl:col-span-2 p-1 items-center gap-3 flex-1 min-h-0">
                 <div class="flex flex-col lg:flex-row gap-1 w-full justify-center items-center lg:h-25">
                     <div class="flex  justify-center items-center w-full gap-1.5">
                         {{ search_resource_form.title }}
-                        <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit text-xs lg:text-base">Search</button>
+                        <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit text-xs lg:text-sm">Search</button>
                     </div>
                     <div class="divider divider-vertical lg:divider-horizontal">OR</div>
-                    <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2 text-xs lg:text-base" hx-get="{% url 'create-resource' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">Create New Resource</a>
+                    <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2 text-xs lg:text-sm" hx-get="{% url 'create-resource' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">Create New Resource</a>
                 </div>
                 <div class="flex flex-col gap-3 w-full p-1 max-w-3xl flex-1 min-h-0 overflow-y-auto" id="resources"> <!--check if scrollable and make it responsive-->
                     {% partialdef render-results %}
@@ -38,10 +39,11 @@
                                 <p class="font-semibold">{{ resource.title }}</p>
                                 <p class="badge badge-outline badge-info badge-xs xl:badge-md ">{{resource.get_type_display}}</p>
                             </div>
-                            <div class="flex gap-1.5">
+                            <div class="flex gap-1 flex-wrap">
+                                <a href="#" class="underline text-yellow-500 font-bold" @click="resource_modal.showModal();">History</a>
                                 <a class="underline text-red-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'delete-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Delete</a>
                                 <a class="underline text-indigo-500 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'update-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Update</a>                                
-                                <a href="#" class="underline text-green-700 font-bold" @click="resource_modal.showModal();">Attach</a>
+                                <a class="underline text-green-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'list-classrooms-to-attach-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Attach</a>
                                 {% if resource.url %}
                                 <a href="{{ resource.url }}" target="_blank" class="underline text-blue-500 font-bold">View</a>
                                 {% elif resource.file %}
