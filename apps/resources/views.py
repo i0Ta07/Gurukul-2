@@ -210,3 +210,9 @@ class ViewResourceHistory(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipR
         resource = self.resource
         snapshots = resource.snapshots
         return render(request,"resources/partials/view_resource_history.html",{'snapshots':snapshots})
+
+class ViewOrphanResources(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
+    def get(self,request,*args,**kwargs):
+        root,_ = self.get_root_current_org()
+        orphans = Resource.objects.filter(membership=None,root_id=root.id)
+        return render(request,"resources/partials/view_orphan_resources.html",{'orphan_resources':orphans,'org_id':root.id,'org_name':root.name})

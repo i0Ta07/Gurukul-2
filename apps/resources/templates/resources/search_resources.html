@@ -15,7 +15,7 @@
                     {% for field in org_fitler_form %}
                     {{ field }}
                     {% endfor %}
-                    <a href="#" class="base-button bg-blue-500 hover:bg-blue-700 text-center">View Orphan resources</a>
+                    <a hx-get="{% url 'view-orphan-resources' org_id=org_id %}" hx-target="#modal_container" hx-swap="innerHTML" class="base-button bg-blue-500 hover:bg-blue-700 text-center" @click="resource_modal.showModal();">View Orphan resources</a>
                 </div>
             </div>
             <div class="flex flex-col xl:col-span-2 p-1 items-center gap-3 flex-1 min-h-0">

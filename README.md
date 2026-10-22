@@ -71,6 +71,7 @@ python manage.py tailwind update
 
 * Remove signals.py and add django-lifecycle.
 * Fix the mixins ordering.
+* Add Pagination.
 
 ## Remember
 

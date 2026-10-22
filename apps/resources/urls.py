@@ -1,10 +1,11 @@
 from django.urls import path
 from apps.resources.views import (CreateResource, DeleteResource, SearchResources, UpdateResource,
-    ListClassroomsToAttachResource, AttachResource,DetachResource,ViewResourceHistory)
+    ListClassroomsToAttachResource, AttachResource,DetachResource,ViewResourceHistory,ViewOrphanResources)
 
 urlpatterns = [
     path("search/<int:org_id>", SearchResources.as_view(), name="search-resources"),
     path("create/<int:org_id>",CreateResource.as_view(),name="create-resource"),
+    path("view/orphans/<int:org_id>",ViewOrphanResources.as_view(),name="view-orphan-resources"),
     path("update/<int:org_id>/<int:resource_id>",UpdateResource.as_view(),name="update-resource"),
     path("delete/<int:org_id>/<int:resource_id>",DeleteResource.as_view(),name="delete-resource"),
     path("view/history/<int:org_id>/<int:resource_id>",ViewResourceHistory.as_view(),name="view-resource-history"),
