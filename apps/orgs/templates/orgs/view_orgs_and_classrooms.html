@@ -108,7 +108,7 @@
                                     <div x-show="open_org_menu" x-cloak  x-transition @click.outside="open_org_menu = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg bg-slate-950">
                                         <ul class="p-2 font-medium text-xs lg:text-sm">
                                             <li @click="open_org_menu = false">
-                                                <a href="{% url 'view-org-details' org_id=org.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
+                                                <a hx-get="{% url 'view-org-details' org_id=org.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
                                                 @click="org_modal.showModal();">Details</a>
                                             </li>
@@ -148,7 +148,7 @@
                                     <div x-show="open_classroom_menu" x-cloak  x-transition @click.outside="open_classroom_menu = false" class="absolute left-full top-full mt-1 z-50 rounded-2xl shadow-lg  bg-slate-950" >
                                         <ul class="p-2 font-medium text-xs lg:text-sm">
                                             <li @click="open_classroom_menu = false">
-                                                <a href="{% url 'view-classroom-details' parent_org_id=parent_org_id classroom_id=classroom.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
+                                                <a hx-get="{% url 'view-classroom-details' parent_org_id=parent_org_id classroom_id=classroom.id %}" hx-target="#modal_container" hx-push-url="false" hx-swap="innerHTML" 
                                                 class="inline-flex items-center w-full p-2 text-gray-200 hover:bg-blue-700 hover:text-white hover:rounded-lg" 
                                                 @click="org_modal.showModal();">Details</a>
                                             </li>
