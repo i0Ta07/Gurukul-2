@@ -29,11 +29,11 @@ class Resource(models.Model):
         choices = ResourceType,
     )
 
-    def file_directory_path(instance, filename):
+    def resource_file_directory_path(instance, filename):
         _, extension = os.path.splitext(filename)
-        return f"orgs/{instance.root_id}/resources/{uuid.uuid4()}{extension.lower()}"
+        return f"orgs/{instance.root_id}/resources/{instance.get_type_display()}/{uuid.uuid4()}{extension.lower()}"
     
-    file  = models.FileField(upload_to=file_directory_path,blank=True,validators=[pdf_validator])
+    file  = models.FileField(upload_to=resource_file_directory_path,blank=True,validators=[pdf_validator])
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
         User,

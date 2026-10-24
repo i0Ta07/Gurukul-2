@@ -27,12 +27,12 @@ class Classroom(models.Model):
         related_query_name='owned_classroom'
     )
 
-    def classroom_directory_path(instance,filename):
+    def classroom_qr_directory_path(instance,filename):
         _, extension = os.path.splitext(filename)
-        return f"classrooms/QRs/{uuid.uuid4()}{extension.lower()}"
+        return f"classrooms/QRs/{instance.parent_id}/{instance.slug}/{uuid.uuid4()}{extension.lower()}"
     
     qr_code = models.ImageField(
-        upload_to = classroom_directory_path,
+        upload_to = classroom_qr_directory_path,
     )
 
     # When changing the name,we have to change the slug too

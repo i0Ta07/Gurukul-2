@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='classroom',
             name='qr_code',
-            field=models.ImageField(upload_to=apps.classes.models.Classroom.classroom_directory_path),
+            field=models.ImageField(upload_to=apps.classes.models.Classroom.classroom_qr_directory_path),
         ),
     ]

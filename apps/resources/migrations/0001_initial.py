@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(max_length=100)),
                 ('url', models.URLField(blank=True)),
                 ('type', models.CharField(choices=[('NTS', 'Notes'), ('PYQ', 'Previous Year Questions'), ('RSP', 'Research Papers'), ('TTB', 'Course Text Book'), ('ATC', 'Article'), ('VDO', 'Youtube Video'), ('SLB', 'Syllabus'), ('QTB', 'Question Bank'), ('PRT', 'Presentation'), ('CSD', 'Case Study'), ('CTS', 'Cheat Sheet'), ('ASM', 'Assignment')], max_length=3)),
-                ('file', models.FileField(blank=True, upload_to=apps.resources.models.Resource.file_directory_path, validators=[config.validators.ValidateFileMimeType(allowed_mime_types=['application/pdf'])])),
+                ('file', models.FileField(blank=True, upload_to=apps.resources.models.Resource.resource_file_directory_path, validators=[config.validators.ValidateFileMimeType(allowed_mime_types=['application/pdf'])])),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('snapshots', models.JSONField(blank=True, default=list)),
                 ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='resources', related_query_name='resource', to=settings.AUTH_USER_MODEL)),
