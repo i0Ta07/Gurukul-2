@@ -37,15 +37,15 @@
     <!--Alert Timeout-->
     <script>
         function initAlerts(root = document) {
-            root.querySelectorAll(".alert").forEach(function (alert) {
-                if (alert.dataset.initialized) return; // if timer already initialezed return 
-                alert.dataset.initialized = "true";
+            root.querySelectorAll(".django_message").forEach(function (django_message) {
+                if (django_message.dataset.initialized) return; // if timer already initialezed return 
+                django_message.dataset.initialized = "true";
 
                 // Start a 5s timer 
                 setTimeout(function () {
                     // After 5s add the animation and remove the alert
-                    alert.classList.add('fade-out-to-right')
-                    setTimeout(() => alert.remove(), 800); // 800ms equal to animation fade-out delay
+                    django_message.classList.add('fade-out-to-right')
+                    setTimeout(() => django_message.remove(), 800); // 800ms equal to animation fade-out delay
                 }, 5000);
             });
         }
