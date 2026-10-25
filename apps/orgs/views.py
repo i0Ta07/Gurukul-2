@@ -68,7 +68,7 @@ class ViewChildOrgs(LoginRequiredMixin, TeacherRequiredMixin, OrgMembershipRequi
                 *build_slug(remaining_classrooms,org_path)
             ]
         context = {
-            "role":self.role,
+            "role":self.get_role(),
             "orgs":build_slug(children,org_path),
             "classrooms":classrooms,
             "parent_org_name": parent_node.name,
@@ -111,7 +111,7 @@ class CreateChildOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequir
         parent_org_path = kwargs['parent_org_path']
         row_context = {
             "org":build_slug(instance=org,parent_org_path=parent_org_path),"parent_org_path":parent_org_path,
-            "child_org_view":True, 'role': self.role
+            "child_org_view":True, 'role': self.get_role()
         }
         messages.success(request,message="Organization created successfully.")
         response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
@@ -381,7 +381,7 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
             m.teacher
             for m in memberships.filter(admin__isnull=True)
         ]
-        role = self.role
+        role = self.get_role()
         is_admin_or_owner,is_owner,is_admin_or_teacher = False,False,False
 
         if role == OrgUserType.OWNER:
@@ -536,8 +536,9 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
         parent_org_path = kwargs.get('parent_org_path')
         if not parent_org_path and not is_root:
             return create_message_and_redirect(request,message="Invalid rename request",url="users-dashboard",code="error",)
-            
-        if is_root and self.role != OrgUserType.OWNER:
+
+        role = self.get_role()
+        if is_root and role != OrgUserType.OWNER:
             return create_message_and_redirect(request,message="Only Owners can rename root organizations",url="users-dashboard",code="error",) 
 
         org.name = form.cleaned_data['name']
@@ -562,7 +563,7 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
         else:
             row_context = {
                 "org":build_slug(instance=org,parent_org_path=parent_org_path),"parent_org_path":parent_org_path,
-                "child_org_view": True, 'role': self.role
+                "child_org_view": True, 'role': role
             }            
         response = render(request, "orgs/view_orgs_and_classrooms.html#org-row",row_context)
         response['HX-Trigger'] = 'org-renamed'

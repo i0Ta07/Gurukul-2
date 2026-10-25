@@ -25,7 +25,6 @@ from django.utils import timezone
 from datetime import timedelta
 from config.utils import annotate_is_editable
 
-
 # You can view all the classrooms in the present organization, but you can access if you are owner/admin or is the owner of the class.
 
 class CreateClassroom(LoginRequiredMixin,OrgMembershipRequiredMixin,View):
@@ -96,13 +95,14 @@ class RenameClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgA
             form.add_error(field=None,error=e.message)
             return render_error_inside_modal(request,self.template_name,{'form':form,**kwargs})
         classroom.save(update_fields={"name"})
-        if self.role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
+        role = self.get_role()
+        if role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
             row_context = {
-                "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path),'role':self.role,**kwargs
+                "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path),'role':role,**kwargs
             }
-        elif self.role  == ClassUserType.OWNER:
+        elif role  == ClassUserType.OWNER:
             row_context = {
-                "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path,role = ClassUserType.OWNER),**kwargs
+                "classroom":build_slug(instance=classroom,parent_org_path=parent_org_path,role = role),**kwargs
             }            
         response =  render(request,"orgs/view_orgs_and_classrooms.html#classroom-row",row_context)
         response['HX-Trigger'] = 'classroom-renamed'
@@ -141,7 +141,7 @@ class ListClassrooms(LoginRequiredMixin,View):
 class BaseClassroomView(LoginRequiredMixin,View):
     template_name = "classes/classroom.html"
     def get(self,request, *args,**kwargs):
-        role = self.role
+        role = self.get_role()
         classroom = self.get_classroom()
         announcemnets = Announcement.objects.filter(classroom_id = classroom.id).select_related('created_by').order_by('-created_at')
         announcemnets = annotate_is_editable(queryset=announcemnets,minutes=15)
@@ -151,9 +151,9 @@ class BaseClassroomView(LoginRequiredMixin,View):
             return render(request,"classes/classroom.html#classroom",context=context)
         return render(request=request,template_name=self.template_name,context=context)
 
-class ViewClassroomFromOrgs(TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,BaseClassroomView): # class membership for students. or membership of teacher or owner of class
+class ViewClassroomFromOrgs(BaseClassroomView,TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired): # class membership for students. or membership of teacher or owner of class
     pass
-class ViewClassroomFromDashboard(ClassroomMembershipRequired,BaseClassroomView):
+class ViewClassroomFromDashboard(BaseClassroomView,ClassroomMembershipRequired):
     pass
 
 class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,LoginRequiredMixin,View):

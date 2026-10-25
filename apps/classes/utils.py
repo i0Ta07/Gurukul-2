@@ -46,8 +46,8 @@ def is_class_owner_or_teacher(classroom:Classroom,user:User):
         return role
     return False
 
-def is_student(classroom:Classroom, student: User):
-    role = _get_user_class_role(classroom=classroom,user= student)
+def is_student(classroom:Classroom, user: User):
+    role = _get_user_class_role(classroom=classroom,user= user)
     if role == ClassUserType.STUDENT:
         return role
     return False

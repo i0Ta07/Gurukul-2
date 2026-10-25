@@ -63,8 +63,8 @@ class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequi
 
 class DeleteResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     def get(self,request,*args,**kwargs):
-        resource = self.resource
-        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
+        resource,role = self.get_resource(),self.get_role()
+        if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             return HttpResponse("<p class='text-center'>You do not have permission to delete this resource</p>",status=200)
         
         if ResourceClassMembership.objects.filter(resource_id=resource.id).exists():
@@ -73,10 +73,11 @@ class DeleteResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         return render(request,"resources/partials/delete_resource.html",context= {'resource_title':resource.title,'resource_id':resource.id,'org_id':resource.root_id})
 
     def post(self,request,*args,**kwargs):
-        resource = self.resource
-        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
+        resource,role = self.get_resource(),self.get_role()
+        if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             messages.error(request,"You do not have permission to delete this resource")
             return render_message_from_modal_to_page(request)
+
         if ResourceClassMembership.objects.filter(resource_id=resource.id).exists():
             messages.error(request,"This resource is attached to a classroom. You cannot delete it")
             return render_message_from_modal_to_page(request)
@@ -117,17 +118,16 @@ class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 
     def get(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
-        resource = self.resource
-        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
+        resource,role = self.get_resource(),self.get_role()
+        if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             return HttpResponse("<p class='text-center'>You do not have permission to update this resource</p>",status=200)
-
         form = self.form_class(instance=resource)
         return render(request,self.template_name,context={'form':form,'org_id':root.id,'resource_id':resource.id})
 
     def post(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
-        resource = self.resource
-        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
+        resource,role = self.get_resource(),self.get_role()
+        if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             return HttpResponse("<p class='text-center'>You do not have permission to update this resource</p>",status=200)
         
         form = self.form_class(request.POST,request.FILES,instance=resource) 
@@ -142,18 +142,17 @@ class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 class ListClassroomsToAttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     def get(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
+        resource,role = self.get_resource(),self.get_role()
 
-        if self.role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
+        if role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
             leafs = Organization.objects.get_descendants(root).filter(numchild=0)
             classrooms = Classroom.objects.filter(parent__in=leafs).distinct().select_related('parent')
 
         else:
             classrooms = Classroom.objects.filter(Q(membership__user_id = request.user.id,membership__status = 'A') | Q(owner_id = request.user.id)).distinct().select_related('parent')
 
-        resource = self.resource
-
         attached = ResourceClassMembership.objects.filter(
-            resource_id=self.resource.id,
+            resource_id=resource.id,
             classroom_id=OuterRef('pk'),
         )
 
@@ -167,8 +166,8 @@ class ListClassroomsToAttachResource(LoginRequiredMixin,TeacherRequiredMixin,Org
 
 class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,ClassroomOrgMembershipRequired,View):
     def post(self,request,*args,**kwargs):
-        classroom,resource = self.classroom,self.resource
-        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
+        classroom,resource,role = self.get_classroom(),self.get_resource(),self.get_role()
+        if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
             return HttpResponse("<p class='text-center'>You do not have permissions to attach resources to this classroom.</p>")
 
         try:
@@ -188,15 +187,15 @@ class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 class DetachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,ClassroomOrgMembershipRequired,View):
     def get(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
-        classroom,resource = self.classroom,self.resource
-        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
+        classroom,resource,role = self.get_classroom(),self.get_resource(),self.get_role()
+        if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
             return HttpResponse("<p class='text-center'>You do not have permissions to detach resources to this classroom.</p>")
         context = {'resource_id':resource.id,'classroom_id':classroom.id,'org_id':root.id,'resource_title':resource.title,'classroom_name':classroom.name}
         return render(request,"resources/partials/detach_resource.html",context)
 
     def post(self,request,*args,**kwargs):
-        classroom,resource = self.classroom,self.resource
-        if self.role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
+        classroom,resource,role = self.get_classroom(),self.get_resource(),self.get_role()
+        if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
             return HttpResponse("<p class='text-center'>You do not have permissions to detach resources to this classroom.</p>")
 
         res_mem = get_object_or_404(ResourceClassMembership,resource_id=resource.id,classroom_id=classroom.id)
@@ -207,7 +206,7 @@ class DetachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 
 class ViewResourceHistory(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     def get(self,request,*args,**kwargs):
-        resource = self.resource
+        resource = self.get_resource()
         snapshots = resource.snapshots
         return render(request,"resources/partials/view_resource_history.html",{'snapshots':snapshots})
 
