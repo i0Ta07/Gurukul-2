@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from apps.classes.models import Announcement, ClassMembership, Classroom
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
-from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired
+from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired, ClassroomRequiredMixin
 from django.shortcuts import get_object_or_404,render
 from django.core.exceptions import ValidationError
 from apps.classes.forms import AnnouncementForm, ClassroomNameForm
@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.views import View
 from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
 from apps.orgs.models import OrgMembership
-from apps.orgs.utils import OrgUserType, render_error_inside_modal, build_slug
+from apps.orgs.utils import OrgUserType, is_org_owner_or_admin, render_error_inside_modal, build_slug
 from apps.classes.utils import ClassUserType
 from apps.chats.models import ChatRoom
 from django.db import transaction
@@ -25,6 +25,7 @@ from django.utils import timezone
 from datetime import timedelta
 from config.utils import annotate_is_editable
 import uuid
+from django.core.paginator import Paginator
 
 # You can view all the classrooms in the present organization, but you can access if you are owner/admin or is the owner of the class.
 
@@ -314,3 +315,28 @@ class FlushClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgAd
     # set is_active = False for quizzes
     # verify OTP 
     pass
+
+class ViewAllAnnouncements(LoginRequiredMixin,ClassroomRequiredMixin,View):
+    template_name= 'classes/view_all_announcements.html'
+    def get(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        root = classroom.parent.get_root()
+        if (not ClassMembership.objects.filter(user_id = request.user.id,classroom_id=classroom.id).exists() and
+            classroom.owner_id != request.user.id and not is_org_owner_or_admin(root=root,user_id=request.user.id)):
+            messages.error(request,"You cannot view announcements")
+            return render(request,"partials/messages.html")
+
+        announcements =  classroom.announcements.all().order_by('-created_at')
+        p = Paginator(announcements,10)
+        page = kwargs.get('page')
+        page_obj = p.get_page(page)
+        page_range = p.page_range
+        last_page = len(page_range)
+        context = {'current_page':page,'announcements':page_obj,'classroom_name':classroom.name,'classroom_id':classroom.id,'page_range':page_range}
+        if len(page_range)> 1:
+            context['previous'] = page-1 if page-1 > 1 else 1
+            context['next'] = page+1 if page+1 <= last_page else page
+            context['last_page'] = last_page
+        if request.htmx:
+            return render(request,'classes/view_all_announcements.html#view-all-announcements',context)
+        return render(request,self.template_name,context)

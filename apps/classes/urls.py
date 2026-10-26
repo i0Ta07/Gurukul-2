@@ -2,7 +2,7 @@ from django.urls import path
 from apps.classes.views import (
     CreateClassroom,ViewClassroomFromOrgs,ViewClassroomDetails,EditAnnouncement,DeleteAnnouncement,
     RenameClassroom,DeleteClassroom,ListClassrooms,ViewClassroomFromDashboard,JoinClassroom,CreateAnnouncement,
-    ShareClassroom,CreateNewClassroomCode
+    ShareClassroom,CreateNewClassroomCode,ViewAllAnnouncements
 )
 
 urlpatterns = [
@@ -18,7 +18,7 @@ urlpatterns = [
     path("delete/announcement/<int:announcement_id>",DeleteAnnouncement.as_view(),name="delete-announcement"),
     path("share/classroom/<int:org_id>/<int:classroom_id>",ShareClassroom.as_view(),name="share-classroom"),
     path("create/new/classroom/code/<int:org_id>/<int:classroom_id>",CreateNewClassroomCode.as_view(),name="create-new-classroom-code"),
-
+    path("view/all/announcements/<int:classroom_id>/<int:page>",ViewAllAnnouncements.as_view(),name='view-all-announcements'),
 
     path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),
 ]

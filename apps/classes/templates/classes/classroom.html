@@ -27,7 +27,7 @@
                         {% if request.user.user_type == "T" %}
                         <a hx-get="{% url  'create-announcement' classroom_id=classroom_id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();" class="w-fit base-button bg-green-700 hover:bg-green-800 text-xs xl:text-sm">Create</a>
                         {% endif %}
-                        <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
+                        <a hx-get="{% url 'view-all-announcements' classroom_id=classroom_id page=1 %}" hx-swap="innerHTML" hx-target="#page-container" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
                     </div>
                 </div>
                 <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0" id="announcements">
