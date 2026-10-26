@@ -1,7 +1,7 @@
 {% load static %}
 <div class="bg-slate-950 p-2 xl:p-3 flex items-center flex-wrap justify-between">
 
-    <div class="flex items-center text-white gap-x-3">
+    <div class="flex items-center text-white gap-x-1.5 xl:gap-x-3">
         <p class="text-lg xl:text-3xl font-extrabold font-mono hover:scale-105">Gurukul</p>
         <a  hx-get="{% url 'users-dashboard' %}" hx-push-url="true"
             hx-target="#page-container" hx-swap="innerHTML" class="font-semibold text-sm xl:text-base hover:text-blue-400">

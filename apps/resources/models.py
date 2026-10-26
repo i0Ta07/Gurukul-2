@@ -1,9 +1,5 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-import uuid,os
-from django.core.exceptions import ValidationError
-from apps.resources.utils import clean_file_size
-from config.validators import pdf_validator
 from apps.classes.models import Classroom
 from apps.orgs.models import Organization
 from apps.users.models import User
@@ -23,17 +19,11 @@ class Resource(models.Model):
         ASSIGNMENT = 'ASM',_('Assignment')
 
     title = models.CharField(max_length=100)
-    url = models.URLField(max_length=200, blank=True)
+    url = models.URLField(max_length=200)
     type = models.CharField(
         max_length=3,
         choices = ResourceType,
     )
-
-    def resource_file_directory_path(instance, filename):
-        _, extension = os.path.splitext(filename)
-        return f"orgs/{instance.root_id}/resources/{instance.get_type_display()}/{uuid.uuid4()}{extension.lower()}"
-    
-    file  = models.FileField(upload_to=resource_file_directory_path,blank=True,validators=[pdf_validator])
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
         User,
@@ -48,15 +38,6 @@ class Resource(models.Model):
         related_query_name="resource"
     )
     snapshots = models.JSONField(default=list,blank = True)
-
-    def clean(self):
-        super().clean()
-
-        if bool(self.file) == bool(self.url):
-            raise ValidationError("Provide either a URL or a file.")
-
-        if self.file:
-            clean_file_size(self.file,max_size=10)
 
     def __str__(self):
         return f"{self.title}:{self.root_id}"

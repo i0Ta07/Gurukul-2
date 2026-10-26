@@ -44,11 +44,7 @@
                                 <a class="underline text-red-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'delete-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Delete</a>
                                 <a class="underline text-indigo-500 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'update-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Update</a>                                
                                 <a class="underline text-green-700 font-bold" @click="resource_modal.showModal();" hx-get="{% url 'list-classrooms-to-attach-resource' org_id=org_id resource_id=resource.id %}" hx-target="#modal_container" hx-swap="innerHTML">Attach</a>
-                                {% if resource.url %}
                                 <a href="{{ resource.url }}" target="_blank" class="underline text-blue-500 font-bold">View</a>
-                                {% elif resource.file %}
-                                <a href="{{ resource.file.url }}" target="_blank" class="underline text-blue-500 font-bold">View</a>
-                                {% endif %}
                             </div>
                         </div>
                         <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ resource.created_by.get_full_name }} ({{ resource.created_at|naturaltime }})</p>

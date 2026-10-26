@@ -31,7 +31,7 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0" id="announcements">
-                    {% for announcement in announcemnets %}
+                    {% for announcement in announcements %}
                     {% partialdef announcement inline %}
                     <div class="flex flex-col" id="announcement-{{ announcement.id }}">
                         <hr class="text-gray-600 border">
@@ -59,7 +59,7 @@
                     {% endpartialdef announcement %}
                     {% empty %}
                     <div class="flex flex-col justify-center items-center flex-1">
-                        <p class="font-bold text-gray-500 italic">No announcemnets created</p>
+                        <p class="font-bold text-gray-500 italic">No announcements created</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -90,13 +90,7 @@
                                     <a hx-get="{% url 'detach-resource' org_id=org_id classroom_id=classroom_id resource_id=res_mem.resource.id %}" 
                                         hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();" class="underline text-red-700 font-bold cursor-pointer">Detach</a>
                                     {% endif %}
-                                    {% if res_mem.resource.url %}
-                                    <a href="{{ res_mem.resource.url }}" target="_blank"
-                                        class="underline text-blue-500 font-bold">View</a>
-                                    {% elif res_mem.resource.file %}
-                                    <a href="{{ res_mem.resource.file.url }}" target="_blank"
-                                        class="underline text-blue-500 font-bold">View</a>
-                                    {% endif %}
+                                    <a href="{{ res_mem.resource.url }}" target="_blank" class="underline text-blue-500 font-bold">View</a>
                                 </div>
                             </div>
                             <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ res_mem.created_by.get_full_name }}

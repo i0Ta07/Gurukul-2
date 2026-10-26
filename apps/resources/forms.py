@@ -4,9 +4,6 @@ from apps.classes.models import Classroom
 from apps.orgs.models import Organization
 from apps.resources.models import Resource
 from django.utils.translation import gettext_lazy as _
-from django.core.exceptions import ValidationError
-from apps.resources.utils import clean_file_size
-from config.validators import pdf_validator
 
 class ResourceForm(forms.ModelForm):
     title = forms.CharField(max_length=100,
@@ -21,43 +18,15 @@ class ResourceForm(forms.ModelForm):
     )
     url = forms.URLField(
         max_length=200,
-        required=False,
         widget=forms.URLInput(attrs={
-            'placeholder':'Enter full URL',
+            'placeholder':'Paste a resource link (e.g., Google Drive or Dropbox URL)',
             'class':'form-input w-full'
         })
     )
-    file = forms.FileField(
-        required=False,
-        validators=[pdf_validator],
-        label=_("Accepts PDFs less than equal to 10 MB."),
-        widget=forms.FileInput(attrs={
-            'class':'file-input w-full'
-        })
 
-    )
     class Meta:
         model=Resource
-        fields = ['title', 'type', 'url', 'file']
-
-    def clean_file(self):
-        file = self.cleaned_data.get('file')
-        if file:
-            clean_file_size(file,max_size=10)
-        return file
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        url = cleaned_data.get('url')
-        file = cleaned_data.get('file')
-
-        if bool(url) == bool(file): # either one of those
-            raise ValidationError(
-                'Provide either a URL or a file.'
-            )
-
-        return cleaned_data
+        fields = ['title', 'type', 'url']
 
 
 class SearchResourceForm(forms.Form):
