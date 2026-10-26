@@ -1,0 +1,33 @@
+{% load static %}
+
+<div class="flex flex-col items-center flex-1 xl:h-50 gap-5">
+    <p class='text-3xl font-bold'> Join {{ classroom_name }}</p>
+    <div class="flex flex-col lg:flex-row justify-center items-center flex-1 w-full">
+        <div x-data="{ copied:false}">
+            <button type="button" @click="copy('{{ classroom_link }}',$data);">
+                <img class="size-15 xl:size-20" src="{% static  'classes/icons/svg/link.svg' %}" alt="copy-link" title="copy-link">
+            </button>
+            <div x-show="copied;" x-cloak x-transition class="absolute bottom-1 right-1 z-50 flex flex-col gap-2 m-4">
+                <div role="alert" class="alert alert-outline text-wrap max-w-md lg:max-w-lg opacity-100 transition-opacity duration-1000 alert-info">
+                    <span>Link copied successfully!</span>
+                </div>
+            </div>
+        </div>
+        <div class="divider lg:divider-horizontal"></div>
+        <button type="button" @click="classroom_modal.showModal(); modal_container.innerHTML = `
+            <div class='flex flex-col justify-center items-center gap-3'>
+                <p class='text-3xl font-bold'> Join {{ classroom_name }} using QR</p>
+                <img class='size-50' src='{{ classroom_qr_code }}' alt='classroom-qr-code' title='classroom-qr-code'>
+                <div class='flex w-full justify-end'>
+                    <a href='{{ classroom_qr_code }}' download>
+                        <img class='size-6' src='{% static  'classes/icons/svg/download.svg' %}' alt='classroom-qr-code' title='classroom-qr-code'>
+                    </a>
+                </div>
+            </div>`;">
+            <img class="size-15 xl:size-20" src="{% static 'classes/icons/svg/qr-code.svg' %}" alt="show-qr-code" title="show-qr-code">
+        </button>
+    </div>
+    <form hx-post="{% url 'create-new-classroom-code' org_id=org_id classroom_id=classroom_id  %}" hx-target="#modal_container" hx-swap="innerHTML">
+        <button type="submit" class="base-button bg-blue-500">Create New Joining Code</button>
+    </form>
+</div>

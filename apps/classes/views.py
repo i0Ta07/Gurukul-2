@@ -24,6 +24,7 @@ from apps.users.utils import send_notifications,create_notifications, update_not
 from django.utils import timezone
 from datetime import timedelta
 from config.utils import annotate_is_editable
+import uuid
 
 # You can view all the classrooms in the present organization, but you can access if you are owner/admin or is the owner of the class.
 
@@ -289,3 +290,27 @@ class DeleteAnnouncement(LoginRequiredMixin,View):
         response = HttpResponse("", status=200)
         response['HX-Trigger'] = 'announcement-deleted'
         return response
+
+class ShareClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,View):
+    def get(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        root,_ = self.get_root_current_org()
+        website_context = get_website_context(request)
+        classroom_link = f"{website_context['protocol']}://{website_context['domain']}/classes/join/{classroom.code}"
+        context = {'classroom_link':classroom_link,'classroom_qr_code':classroom.qr_code.url,'classroom_name':classroom.name,'classroom_id':classroom.id,'org_id':root.id}
+        return render(request,"classes/partials/share_classroom.html",context)
+
+class CreateNewClassroomCode(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgAdminOwnerRequired,View):
+    def post(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        classroom.code = uuid.uuid4()
+        website_context = get_website_context(request)
+        classroom.save(website_context=website_context,update_fields=['code'])
+        response = HttpResponse("<p class='text-center'>New code has been generated. Please, close this modal.</p>")
+        return response
+
+class FlushClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgAdminOwnerRequired,View):
+    # delete class memberships announcements
+    # set is_active = False for quizzes
+    # verify OTP 
+    pass
