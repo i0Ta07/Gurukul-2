@@ -102,3 +102,9 @@ python manage.py tailwind update
 * Setup python-magic for linux in pyproject.toml.
 
 * Set DEBUG = False and handle static directories.
+
+## License & Copyright
+
+Copyright © 2026 Rohit Sharma. All rights reserved.
+
+This repository is publicly available solely for portfolio purposes. No permission or license is granted to use, copy, modify, fork, distribute, or commercially exploit any part of this source code or project without prior written permission from the copyright holder.
