@@ -12,7 +12,6 @@ urlpatterns = [
     path("delete/<int:parent_org_id>/<int:classroom_id>",DeleteClassroom.as_view(),name = "delete-classroom"),
     path("list/classrooms/", ListClassrooms.as_view(), name="list-classrooms"), 
     path("join/<str:code>",JoinClassroom.as_view(),name="join-classroom"),
-    path("<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
     path("create/announcement/<int:classroom_id>",CreateAnnouncement.as_view(),name="create-announcement"),
     path("edit/announcement/<int:announcement_id>",EditAnnouncement.as_view(),name="edit-announcement"),
     path("delete/announcement/<int:announcement_id>",DeleteAnnouncement.as_view(),name="delete-announcement"),
@@ -21,5 +20,6 @@ urlpatterns = [
     path("view/all/announcements/<int:classroom_id>/<int:page>",ViewAllAnnouncements.as_view(),name='view-all-announcements'),
     path("view/all/resources/<int:classroom_id>/<int:page>",ViewAllResources.as_view(),name='view-all-resources'),
 
+    path("<path:slug>/<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
     path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),
 ]

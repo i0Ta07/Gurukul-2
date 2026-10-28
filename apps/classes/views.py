@@ -180,7 +180,7 @@ class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,Logi
         users_id = list(ClassMembership.objects.filter(classroom_id = classroom.id,status = ClassMembership.Status.ACCEPTED).values_list('user_id',flat=True))
         users_id.append(classroom.owner_id) # Add owner
         users_id.remove(request.user.id) # remove current user
-        url_path = reverse('view-classroom-dashboard',kwargs={'classroom_id':classroom.id})
+        url_path = reverse('view-classroom-dashboard',kwargs={'slug':classroom.slug,'classroom_id':classroom.id})
         body = f"New Annoucement in {self._classroom.name} by {request.user.get_full_name()}"
         async_to_sync(create_notifications)(users_id=users_id,body = body,url_path=url_path)
         async_to_sync(send_notifications)(users_id=users_id,body=body,url_path=url_path)
