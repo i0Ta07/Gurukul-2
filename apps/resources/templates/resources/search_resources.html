@@ -7,6 +7,7 @@
 <div class="page-container " id="page-container" hx-history-elt>
     {% partialdef search-resources inline %}
     <title>Search Resources</title>
+    <h1 class="text-center">Search {{ org_name }}'s Resources</h1>
     <form hx-post="{% url 'search-resources' org_id=org_id %}" x-data hx-target="#resources" hx-swap="innerHTML" class="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto">
         <div class="flex flex-col gap-3 xl:grid xl:grid-cols-4 ">
             <div class="flex flex-col gap-3 xl:gap-5">
@@ -15,7 +16,7 @@
                     {% for field in org_fitler_form %}
                     {{ field }}
                     {% endfor %}
-                    <a hx-get="{% url 'view-orphan-resources' org_id=org_id %}" hx-target="#modal_container" hx-swap="innerHTML" class="base-button bg-blue-500 hover:bg-blue-700 text-center" @click="resource_modal.showModal();">View Orphan resources</a>
+                    <a hx-get="{% url 'view-orphan-resources' org_id=org_id %}" hx-target="#resources" hx-swap="innerHTML" class="base-button bg-blue-500 hover:bg-blue-700 text-center">View Orphan resources</a>
                 </div>
             </div>
             <div class="flex flex-col xl:col-span-2 p-1 items-center gap-3 flex-1 min-h-0">
@@ -29,7 +30,7 @@
                 </div>
                 <div class="flex flex-col gap-3 w-full p-1 max-w-3xl flex-1 min-h-0 overflow-y-auto" id="resources"> <!--check if scrollable and make it responsive-->
                     {% partialdef render-results %}
-                    <p class="font-bold text-center text-lg lg:text-2xl">Search Results</p>
+                    <p class="font-bold text-center text-lg lg:text-2xl">Results</p>
                     {% for resource in resources %}
                     {% partialdef resource inline %}
                     <div class="flex flex-col gap-0.5" id="resource-{{ resource.id }}">
@@ -72,6 +73,7 @@
         {% include "partials/form_errors.html#form-errors" with form=org_fitler_form %}
         {% include "partials/form_errors.html#form-errors" with form=search_resource_form %}
     </form>
+    {% partialdef resource-modal inline %}
     <dialog id="resource_modal" class="modal modal-bottom sm:modal-middle" x-data @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
         <div class="modal-box w-full lg:w-8/12 max-w-5xl">
             <form method="dialog">
@@ -89,6 +91,8 @@
             <button>close</button>
         </form>
     </dialog>
+    {% endpartialdef resource-modal %}
+    {% include 'partials/messages.html' %}
     {% endpartialdef search-resources %}
 </div>
 

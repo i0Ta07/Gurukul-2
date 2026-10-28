@@ -4,7 +4,7 @@
         {% for classroom in classrooms %}
         <div class="flex flex-1 p-1">
             <form hx-post="{% url 'attach-resource' org_id=org_id classroom_id=classroom.id resource_id=resource_id %}" class="flex flex-1"
-                @resource-attached="resource_modal.close();" hx-target="this" hx-swap="innerHTML">
+                @resource-attached="resource_modal.close();" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">
                 <div class="flex items-center justify-between gap-1.5 flex-1">
                     <div class="flex gap-1 text-sm  lg:text-lg flex-wrap">
                         <p class="font-semibold">{{ classroom.name }}</p>
@@ -19,4 +19,5 @@
         <p class="font-bold italic text-gray-500 text-center">Given resource is already attached to all the classes in which you are authorized to attach it.</p>
         {% endfor %}
     </div>
+    {% include 'partials/modal_messages.html' %}
 </div>

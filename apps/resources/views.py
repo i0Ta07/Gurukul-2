@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q,Exists, OuterRef
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from apps.classes.mixins import ClassroomOrgMembershipRequired
 from apps.classes.models import ClassMembership, Classroom
@@ -24,7 +24,7 @@ class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequi
         root,_ = self.get_root_current_org()
         search_resource_form = self.search_resource_form_class()
         org_fitler_form = self.org_fitler_form_class(root_org = root.id)
-        context = {'search_resource_form':search_resource_form,'org_fitler_form':org_fitler_form,'org_id':kwargs.get('org_id')}
+        context = {'search_resource_form':search_resource_form,'org_fitler_form':org_fitler_form,'org_id':root.id,'org_name':root.name}
         if request.htmx:
             return render(request,'resources/search_resources.html#search-resources',context)
         return render(request,self.template_name,context)
@@ -35,7 +35,7 @@ class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequi
         org_fitler_form = self.org_fitler_form_class(request.POST,root_org = root.id)
         if not search_resource_form.is_valid() or not org_fitler_form.is_valid():
             return render(request,'resources/search_resources.html#search-resources',context = {
-                'search_resource_form':search_resource_form,'org_fitler_form':org_fitler_form,'org_id':kwargs.get('org_id')
+                'search_resource_form':search_resource_form,'org_fitler_form':org_fitler_form,'org_id':root.id,'org_name':root.name
                 }
             )
         
@@ -109,8 +109,8 @@ class CreateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         resource.created_by_id = request.user.id
         resource.root_id = root.id
         resource.save()
-        messages.success(request,"Resource saved successfully")
-        return render(request,self.template_partial_name,{'org_id':root.id,'form':self.form_class(),'org_name':root.name})
+        messages.success(request,"Resource created successfully")
+        return redirect('list-classrooms-to-attach-resource', root.id, resource.id)
 
 class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     template_name="resources/partials/update_resource.html"
@@ -167,6 +167,7 @@ class ListClassroomsToAttachResource(LoginRequiredMixin,TeacherRequiredMixin,Org
 class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,ClassroomOrgMembershipRequired,View):
     def post(self,request,*args,**kwargs):
         classroom,resource,role = self.get_classroom(),self.get_resource(),self.get_role()
+        root,_ = self.get_root_current_org()
         if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and classroom.owner_id != request.user.id and not ClassMembership.objects.filter(classroom_id=classroom.id,user_id=request.user.id).exists():
             return HttpResponse("<p class='text-center'>You do not have permissions to attach resources to this classroom.</p>")
 
@@ -180,7 +181,7 @@ class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
             return HttpResponse("<p class='text-center text-green-500'>This resource is already attached to this classroom.</p>")
 
         messages.success(request,f"{resource.title} is successfully attached to {classroom.name}")
-        response = render_message_from_modal_to_page(request)
+        response = redirect("search-resources",root.id)
         response['HX-Trigger'] = 'resource-attached'
         return response
 
@@ -214,4 +215,4 @@ class ViewOrphanResources(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipR
     def get(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
         orphans = Resource.objects.filter(membership=None,root_id=root.id)
-        return render(request,"resources/partials/view_orphan_resources.html",{'orphan_resources':orphans,'org_id':root.id,'org_name':root.name})
+        return render(request,"resources/partials/view_orphan_resources.html",{'orphan_resources':orphans,'org_id':root.id})

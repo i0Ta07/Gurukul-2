@@ -7,7 +7,7 @@
 <div class="page-container" id="page-container" hx-history-elt>
     {% partialdef create-resource inline %}
     <title>Create Resource ({{ org_name }})</title>
-    <form class="flex flex-col flex-1 justify-center items-center gap-3" hx-post="{% url 'create-resource' org_id=org_id %}" hx-swap="outerHTML" hx-target="this" enctype="multipart/form-data">
+    <form class="flex flex-col flex-1 justify-center items-center gap-3" x-data  @submit="resource_modal.showModal();" hx-post="{% url 'create-resource' org_id=org_id %}" hx-swap="innerHTML" hx-target="#modal_container">
         <h1>Create Resource ({{ org_name }})</h1>
         <div class="bordered-card flex flex-col gap-5 max-w-6xl">
             <div class="flex flex-col lg:flex-row gap-3">
@@ -18,8 +18,8 @@
             <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700">Submit</button>
         </div>
         {% include 'partials/form_errors.html' %}
-        {% include 'partials/messages.html' %}
     </form>
+    {% include 'resources/search_resources.html#resource-modal' %}
     {% endpartialdef create-resource %}
 </div>
 

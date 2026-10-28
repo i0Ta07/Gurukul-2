@@ -1,0 +1,49 @@
+{% if messages %}
+<div class="fixed bottom-1 right-1 z-50 flex flex-col gap-2 m-4">
+    {% for message in messages %}
+    <div role="alert" class="alert modal_message text-wrap max-w-md lg:max-w-lg opacity-0 transition-opacity duration-1000     
+    {% if message.tags == 'error' %}
+    alert-error 
+    {% elif message.tags == 'info' %}
+    alert-info
+    {% elif message.tags == 'success' %}
+    alert-success
+    {% elif message.tags == 'warning' %}
+    alert-warning
+    {% endif %}">
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+<script>
+    function initModalAlerts(root = document) {
+        root.querySelectorAll(".modal_message").forEach(function (modal_message) {
+            if (modal_message.dataset.initialized) return;
+            modal_message.dataset.initialized = "true";
+
+            // Fade in, after 50ms initialization time
+            setTimeout(function () {
+                modal_message.classList.remove("opacity-0");
+                modal_message.classList.add("opacity-100");
+            }, 50);
+
+            // Fade out after 3 seconds
+            setTimeout(function () {
+                modal_message.classList.remove("opacity-100");
+                modal_message.classList.add("opacity-0");
+
+                // Remove after fade-out completes
+                setTimeout(function () {
+                    modal_message.remove();
+                }, 1000);
+            }, 3000);
+        });
+    }
+
+    document.body.addEventListener("htmx:afterSwap", function (event) {
+        initModalAlerts(event.target);
+    });
+</script>
