@@ -6,15 +6,16 @@
 <div class="page-container " id="page-container" hx-history-elt>
     {% partialdef view-all-announcements inline %}
     <title>{{ classroom_name }}'s Announcements</title>
-    <div class="flex flex-col flex-1 min-h-0 gap-3 xl:gap-5">
+    <div class="flex flex-col flex-1 min-h-0 gap-3 xl:gap-5 px-5 xl:px-25" x-data>
         <h1 class="text-center">{{ classroom_name }}'s Announcements</h1>
-        <div class="flex flex-col gap-3 xl:gap-5 px-5 xl:px-25 text-sm xl:text-base flex-1 overflow-y-auto min-h-0"  id="announcements">
+        {% if request.user.user_type == "T" %}
+        <div class="flex justify-end">
+            <a hx-get="{% url  'create-announcement' classroom_id=classroom_id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();" class="w-fit base-button bg-green-700 hover:bg-green-800 text-xs xl:text-sm">Create</a>
+        </div>
+        {% endif %}
+        <div class="flex flex-col gap-3 xl:gap-5 text-sm xl:text-base flex-1 overflow-y-auto min-h-0"  id="announcements">
             {% for announcement in announcements %}
-                <div class="flex flex-col" id="announcement-{{ announcement.id }}">
-                    <hr class="text-gray-600 border">
-                    <p>{{ announcement.body }}</p>
-                    <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ announcement.created_by.get_full_name }} ({{ announcement.created_at|naturaltime }})</p>
-                </div>
+            {% include 'classes/classroom.html#announcement' %}
             {% empty %}
             <div class="flex flex-col justify-center items-center flex-1">
                 <p class="font-bold text-gray-500 italic">No announcements created</p>
@@ -38,6 +39,7 @@
             </div>
         </div>
     </div>
+    {% include 'classes/classroom.html#classroom-modal' %}
     {% endpartialdef view-all-announcements %}
 </div>
 {% endblock content %}

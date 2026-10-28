@@ -27,7 +27,7 @@
                         {% if request.user.user_type == "T" %}
                         <a hx-get="{% url  'create-announcement' classroom_id=classroom_id %}" hx-swap="innerHTML" hx-target="#modal_container" @click="classroom_modal.showModal();" class="w-fit base-button bg-green-700 hover:bg-green-800 text-xs xl:text-sm">Create</a>
                         {% endif %}
-                        <a hx-get="{% url 'view-all-announcements' classroom_id=classroom_id page=1 %}" hx-swap="innerHTML" hx-target="#page-container" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
+                        <a hx-get="{% url 'view-all-announcements' classroom_id=classroom_id page=1 %}" hx-push-url="true" hx-swap="innerHTML" hx-target="#page-container" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
                     </div>
                 </div>
                 <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0" id="announcements">
@@ -72,12 +72,12 @@
                             {% if request.user.user_type == "T" %}
                             <a hx-get="{% url 'search-resources' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true"  class="w-fit base-button bg-green-700 hover:bg-green-800 text-xs xl:text-sm">Attach</a>
                             {% endif %}
-                            <a href="#" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
+                            <a hx-get="{% url 'view-all-resources' classroom_id=classroom_id page=1 %}" hx-swap="innerHTML" hx-push-url="true" hx-target="#page-container"class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 text-xs xl:text-sm">View All</a>
                          </div>
-                        
                     </div>
                     <div class="flex flex-col gap-1 p-1 text-sm xl:text-base flex-1 overflow-y-auto min-h-0">
                         {% for res_mem in resource_memberships %}
+                        {% partialdef resource-membership inline %}
                         <div class="flex flex-col gap-0.5" id="res_mem-{{ res_mem.resource.id}}">
                             <hr class="text-gray-600 border">
                             <div class="flex justify-between">
@@ -96,6 +96,7 @@
                             <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ res_mem.created_by.get_full_name }}
                                 ({{ res_mem.created_at|naturaltime }})</p>
                         </div>
+                        {% endpartialdef resource-membership %}
                         {% empty %}
                         <div class="flex flex-col justify-center items-center flex-1">
                             <p class="font-bold text-gray-500 italic">No resources attached</p>
@@ -125,6 +126,7 @@
             </div>
         </div>
     </div>
+    {% partialdef classroom-modal inline %}
     <dialog id="classroom_modal" class="modal modal-bottom sm:modal-middle" x-data @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
         <div class="modal-box">
             <form method="dialog">
@@ -142,6 +144,7 @@
             <button>close</button>
         </form>
     </dialog>
+    {% endpartialdef classroom-modal %}
     {% block scripts %}
         <script>
             async function copy(text,alpine_state){

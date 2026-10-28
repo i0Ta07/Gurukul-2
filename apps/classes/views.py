@@ -326,8 +326,9 @@ class ViewAllAnnouncements(LoginRequiredMixin,ClassroomRequiredMixin,View):
             messages.error(request,"You cannot view announcements")
             return render(request,"partials/messages.html")
 
-        announcements =  classroom.announcements.all().order_by('-created_at')
-        p = Paginator(announcements,10)
+        announcements =  classroom.announcements.all().select_related('created_by').order_by('-created_at')
+        announcements = annotate_is_editable(queryset=announcements,minutes=15)
+        p = Paginator(announcements,9)
         page = kwargs.get('page')
         page_obj = p.get_page(page)
         page_range = p.page_range
@@ -340,3 +341,30 @@ class ViewAllAnnouncements(LoginRequiredMixin,ClassroomRequiredMixin,View):
         if request.htmx:
             return render(request,'classes/view_all_announcements.html#view-all-announcements',context)
         return render(request,self.template_name,context)
+
+class ViewAllResources(LoginRequiredMixin,ClassroomMembershipRequired,View):
+    template_name= "classes/view_all_resources.html"
+    def get(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        root = classroom.parent.get_root()
+        if (not ClassMembership.objects.filter(user_id = request.user.id,classroom_id=classroom.id).exists() and
+            classroom.owner_id != request.user.id and not is_org_owner_or_admin(root=root,user_id=request.user.id)):
+            messages.error(request,"You cannot view resources")
+            return render(request,"partials/messages.html")
+
+        resource_memberships = classroom.resource_memberships.all().order_by('-created_by').select_related('resource','created_by').order_by('-created_at')
+        p = Paginator(resource_memberships,10)
+        page = kwargs.get('page')
+        page_obj = p.get_page(page)
+        page_range = p.page_range
+        last_page = len(page_range)
+        context = {'current_page':page,'resource_memberships':page_obj,'classroom_name':classroom.name,'classroom_id':classroom.id,'page_range':page_range,'org_id':classroom.parent_id}
+        if len(page_range)> 1:
+            context['previous'] = page-1 if page-1 > 1 else 1
+            context['next'] = page+1 if page+1 <= last_page else page
+            context['last_page'] = last_page
+        if request.htmx:
+            return render(request,'classes/view_all_resources.html#view-all-resources',context)
+        return render(request,self.template_name,context)
+
+        

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ classroom_name }}'s Resources{% endblock %}
+{% load humanize %}
+{% block content %}
+
+<div class="page-container " id="page-container" hx-history-elt>
+    {% partialdef view-all-resources inline %}
+    <title>{{ classroom_name }}'s Resources</title>
+    <div class="flex flex-col flex-1 min-h-0 gap-3 xl:gap-5 px-5 xl:px-25">
+        <h1 class="text-center">{{ classroom_name }}'s Resources</h1>
+        {% if request.user.user_type == "T" %}
+        <div class="flex justify-end">
+            <a hx-get="{% url 'search-resources' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true"  class="w-fit base-button bg-green-700 hover:bg-green-800 text-xs xl:text-sm">Attach</a>
+        </div>
+        {% endif %}
+        <div class="flex flex-col gap-3 xl:gap-5 text-sm xl:text-base flex-1 overflow-y-auto min-h-0">
+            {% for res_mem in resource_memberships %}
+                {% include 'classes/classroom.html#resource-membership' %}
+            {% empty %}
+            <div class="flex flex-col justify-center items-center flex-1">
+                <p class="font-bold text-gray-500 italic">No resources created</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex items-center justify-center" x-data>
+            <div class="join">
+                {% if page_range|length < 5 %}
+                {% for page in page_range %}
+                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' classroom_id=classroom_id page=page %}" 
+                    hx-target="#page-container" hx-swap="innerHTML" :class="{ 'btn-active': {{current_page}} === {{page}} }">{{page}}</button>
+                {% endfor %}
+                {% else %}
+                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' classroom_id=classroom_id page=previous %}" 
+                    hx-target="#page-container" hx-swap="innerHTML" :class="{ 'btn-disabled': {{ current_page }}  === 1 }">«</button>
+                <button class="join-item btn xl:btn-lg">{{ current_page }}</button>
+                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' classroom_id=classroom_id page=next %}" 
+                    hx-target="#page-container" hx-swap="innerHTML" :class="{ 'btn-disabled': {{ current_page }}  === {{ last_page }} }">»</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% include 'classes/classroom.html#classroom-modal' %}
+    {% endpartialdef view-all-resources %}
+</div>
+{% endblock content %}
