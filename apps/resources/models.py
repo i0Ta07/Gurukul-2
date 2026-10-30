@@ -19,7 +19,7 @@ class Resource(models.Model):
         ASSIGNMENT = 'ASM',_('Assignment')
 
     title = models.CharField(max_length=100)
-    url = models.URLField(max_length=200)
+    url = models.URLField(max_length=200,unique=True)
     type = models.CharField(
         max_length=3,
         choices = ResourceType,

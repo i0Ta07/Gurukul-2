@@ -101,16 +101,20 @@ class CreateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 
     def post(self,request,*args,**kwargs):
         root,_ = self.get_root_current_org()
-        form  = self.form_class(request.POST,request.FILES)
+        form  = self.form_class(request.POST)
         if not form.is_valid():
-            return render(request,self.template_partial_name,{'org_id':root.id,'form':form,'org_name':root.name})
+            response = render(request,self.template_partial_name,{'org_id':root.id,'form':form,'org_name':root.name})
+            response["HX-Retarget"] = "#page-container" 
+            return response
 
         resource = form.save(commit=False)
         resource.created_by_id = request.user.id
         resource.root_id = root.id
         resource.save()
         messages.success(request,"Resource created successfully")
-        return redirect('list-classrooms-to-attach-resource', root.id, resource.id)
+        response = redirect('list-classrooms-to-attach-resource', root.id, resource.id)
+        response['HX-Trigger'] = 'resource-created'
+        return response
 
 class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     template_name="resources/partials/update_resource.html"

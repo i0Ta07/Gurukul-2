@@ -40,12 +40,16 @@
                 hx-get="{% url 'create-classroom' parent_org_path=parent_org_path parent_org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin">
                 Create Classroom</button>
             </div>
-            {% elif child_org_view %}
-                <div class="flex justify-between gap-x-3">
-                    <a href="{% url 'view-root-config' org_id=parent_org_id %}" class="w-fit base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-sm">View Config</a>
-                    <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-base" x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
-                    hx-get="{% url 'create-child-org' parent_org_path=parent_org_path parent_org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin" >
-                    Create {{ label }}</button>
+            {% elif child_org_view%}
+                <div class="flex justify-end items-center gap-x-3">
+                    {% if role == 'Admin' or role == 'Owner' %}
+                        <button class="w-fit base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-sm" x-bind:disabled = "formOpen" @click="formOpen = true" @child-org-created.window="formOpen = false"
+                            hx-get="{% url 'create-child-org' parent_org_path=parent_org_path parent_org_id=parent_org_id %}" hx-target="#main-list" hx-swap="afterbegin">Create {{ label }}
+                        </button>
+                    {% endif %}
+                    <a href="{% url 'view-root-config' org_id=parent_org_id %}">
+                        <img class="size-6" src="{% static 'icons/svg/settings.svg' %}" alt="settings" title="settings">
+                    </a>
                 </div>
             {%endif %}
 
