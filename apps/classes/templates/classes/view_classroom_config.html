@@ -18,7 +18,7 @@
             <a href="#" class="w-fit base-button bg-indigo-500 hover:bg-indigo-700 text-xs xl:text-sm">Transfer Ownership</a>
             {% endif %}
             {% if not is_owner %}
-            <button hx-get="#" type="button" class="w-fit base-button bg-red-500 hover:bg-red-700" @click="classroom_modal.showModal();" hx-swap="innerHTML" hx-target="#modal_container">Leave Classroom</a>
+            <button hx-get="{% url 'leave-classroom' classroom_id=classroom_id %}" type="button" class="w-fit base-button bg-red-500 hover:bg-red-700" @click="classroom_modal.showModal();" hx-swap="innerHTML" hx-target="#modal_container">Leave Classroom</a>
             {% endif %}
         </div>
         <p class="md:text-xl font-bold px-5">{{ owner_name }}</p>
@@ -56,10 +56,12 @@
                         {% for students_mem in students_memberships %}
                         <div class="flex justify-between items-center md:h-10" id="teacher-{{ teacher.id }}">
                             <p class="md:text-xl font-bold">{{ students_mem.user.get_full_name }}</p>
+                            {% if request.user.user_type == 'T' %}
                             <button class="size-8 md:size-10 cursor-pointer" type="button"
                                 @click="classroom_modal.showModal();" hx-get="#" hx-target="#modal_container" hx-swap="innerHTML">
                                 <img class="size-6 md:size-8" src="{% static 'orgs/icons/svg/delete-left.svg' %}" alt="Remove" title="Remove">
                             </button>
+                            {% endif %}
                         </div>
                         {% empty %}
                         <p class="md:text-xl font-semibold text-gray-400">Classroom does have any students yet.</p>

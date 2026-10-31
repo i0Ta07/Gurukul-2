@@ -88,6 +88,15 @@ class ClassroomOwnerTeacherOrgAdminOwnerRequired(BaseClassroomOrgRoleMixin):
             or is_class_owner_or_teacher(classroom=classroom,user=user)
         )
 
+class ClassroomMemberOrgAdminOwnerRequired(BaseClassroomOrgRoleMixin):
+    """User should be classroom's owner/teacher/student or organization's admin/owner"""
+    error_message = "Only classroom owners/teachers/student, Organization's Admins/Owners can perform this action."
+    def check_role(self, root, classroom, user):
+        return (
+            is_org_owner_or_admin(root=root, user_id=user.id)
+            or is_member(classroom=classroom,user=user)
+        )
+
 class ClassroomStudentRequired(BaseClassroomRoleRequiredMixin):
     """User should be a student of the classroom """
     error_message = "Students that are part of this classroom can perform this action."

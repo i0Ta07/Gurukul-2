@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from apps.classes.models import Announcement, ClassMembership, Classroom
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
-from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired, ClassroomRequiredMixin
+from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired, ClassroomMemberOrgAdminOwnerRequired, ClassroomRequiredMixin
 from django.shortcuts import get_object_or_404,render
 from django.core.exceptions import ValidationError
 from apps.classes.forms import AnnouncementForm, ClassroomNameForm
@@ -367,7 +367,7 @@ class ViewAllResources(LoginRequiredMixin,ClassroomMembershipRequired,View):
             return render(request,'classes/view_all_resources.html#view-all-resources',context)
         return render(request,self.template_name,context)
 
-class ViewClassroomConfig(LoginRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,View):
+class ViewClassroomConfig(LoginRequiredMixin,ClassroomMemberOrgAdminOwnerRequired,View):
     template_name = "classes/view_classroom_config.html"
     def get(self,request,*args,**kwargs):
         classroom = self.get_classroom()
@@ -384,9 +384,28 @@ class ViewClassroomConfig(LoginRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerR
         context = {
             'owner_name':owner_name,'teachers_memberships':teachers_memberships,
             'students_memberships':students_memberships,'classroom_name':classroom.name,
-            'is_admin_or_owner':is_admin_or_owner,
+            'is_admin_or_owner':is_admin_or_owner,'classroom_id':classroom.id,
             'is_owner':is_owner,'role':role,
         }
         if request.htmx:
             return render(request,'classes/view_classroom_config.html#view-classroom-config',context)
         return render(request,self.template_name,context)
+
+class LeaveClassroom(LoginRequiredMixin,ClassroomMembershipRequired,View):
+
+    def get(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        role = self.get_role()
+        if role == ClassUserType.OWNER:
+            return HttpResponse('You are the current owner of the classroom. To leave the classroom, make someone else a owner.')
+        return render(request,'classes/partials/leave_classroom.html',{'classroom_name':classroom.name,'classroom_id':classroom.id})
+
+    def post(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        role = self.get_role()
+        if role == ClassUserType.OWNER:
+            return HttpResponse('You are the current owner of the classroom. To leave the classroom, make someone else a owner.')
+        membership = get_object_or_404(ClassMembership, classroom_id= classroom.id,user_id = request.user.id)
+        membership.delete()
+        return create_message_and_redirect(request,f'You are no longer part of {classroom.name}','users-dashboard',code="success")
+
