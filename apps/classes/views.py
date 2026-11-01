@@ -375,17 +375,18 @@ class ViewClassroomConfig(LoginRequiredMixin,ClassroomMemberOrgAdminOwnerRequire
         memberships = ClassMembership.objects.filter(
             status=ClassMembership.Status.ACCEPTED,
             classroom_id=classroom.id
-        ).select_related('user').only('user__first_name', 'user__last_name')
+        ).select_related('user').only('user__first_name', 'user__last_name','created_at')
         teachers_memberships = memberships.filter(user__user_type = User.UserType.TEACHER)
         students_memberships = memberships.filter(user__user_type = User.UserType.STUDENT)
         role = self.get_role()
+        
         is_admin_or_owner = True if role in [OrgUserType.ADMIN,OrgUserType.OWNER,ClassUserType.OWNER] else False
         is_owner = True if classroom.owner_id == request.user.id else False
         context = {
             'owner_name':owner_name,'teachers_memberships':teachers_memberships,
             'students_memberships':students_memberships,'classroom_name':classroom.name,
             'is_admin_or_owner':is_admin_or_owner,'classroom_id':classroom.id,
-            'is_owner':is_owner,'role':role,
+            'is_owner':is_owner,'role':role,'org_id':classroom.parent_id
         }
         if request.htmx:
             return render(request,'classes/view_classroom_config.html#view-classroom-config',context)

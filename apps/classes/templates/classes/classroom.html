@@ -8,19 +8,12 @@
 <div class="page-container " id="page-container" hx-history-elt>
     {% partialdef classroom inline %}
     <title>{{ classroom_name }}</title>
-    <div class="flex flex-col gap-1 flex-1 static overflow-y-auto xl:overflow-visible xl:min-h-0" x-data>
-        <p class="badge badge-outline badge-error badge-sm xl:badge-lg absolute right-2 top-13 xl:top-18">{{ role }}</p>
-        <div class="flex gap-1 items-center justify-center">
-            <h1 class="text-2xl xl:text-4xl">{{ classroom_name }}</h1>
-            {% if request.user.user_type == "T" %}
-            <button type="button" @click="classroom_modal.showModal();" hx-get="{% url 'share-classroom' org_id=org_id classroom_id=classroom_id %}" hx-swap="innerHTML" hx-target="#modal_container">
-                <img class="size-6" src="{% static  'classes/icons/svg/share.svg' %}" alt="share" title="share">
-            </button>
-            {% endif %}
-            <a hx-get="{% url 'view-classroom-config' org_id=org_id classroom_id=classroom_id %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
-                <img class="size-6" src="{% static 'icons/svg/settings.svg' %}">
-            </a>
-        </div>
+    <div class="flex flex-col gap-2 flex-1 relative overflow-y-auto xl:overflow-visible xl:min-h-0 " x-data>
+        <p class="badge badge-outline badge-error badge-sm xl:badge-lg absolute left-0 top-0">{{ role }}</p>
+        <a class="absolute right-0 top-0" hx-get="{% url 'view-classroom-config' org_id=org_id classroom_id=classroom_id %}" hx-swap="innerHTML" hx-target="#page-container" hx-push-url="true">
+            <img class="size-4.5 lg:size-6" src="{% static 'icons/svg/settings.svg' %}">
+        </a>
+        <h1 class="text-2xl xl:text-4xl text-center">{{ classroom_name }}</h1>
         <div class="flex flex-col xl:grid xl:grid-cols-2 flex-1 p-1 gap-1 xl:gap-5 min-h-0">
             <div class="flex flex-col h-100 xl:h-full xl:min-h-0 flex-1">
                 <div class="flex justify-between bg-blue-500 rounded-2xl py-1 xl:py-2 px-3">

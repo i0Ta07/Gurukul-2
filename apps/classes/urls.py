@@ -22,6 +22,6 @@ urlpatterns = [
     path("view/config/<int:org_id>/<int:classroom_id>",ViewClassroomConfig.as_view(),name='view-classroom-config'),
     path("leave/classroom/<int:classroom_id>",LeaveClassroom.as_view(),name='leave-classroom'),
 
-    path("<path:slug>/<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
+    path("classroom/<path:slug>/<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
     path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),
 ]

@@ -33,7 +33,7 @@ def _get_user_org_role(root:Organization,user_id:int):
         return OrgUserType.ADMIN if membership.has_admin else OrgUserType.TEACHER
     elif Organization.get_root_nodes().filter(id = root.id, config__owner_id = user_id).exists():
         return OrgUserType.OWNER
-    return None
+    return False
 
 def is_org_owner_or_admin(root:Organization,user_id:int):
     role = _get_user_org_role(root=root,user_id=user_id)
