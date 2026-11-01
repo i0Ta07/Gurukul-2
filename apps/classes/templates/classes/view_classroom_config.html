@@ -19,7 +19,7 @@
         <div class="bg-blue-500 p-3 flex justify-between items-center rounded-2xl">
             <h1 class="text-lg md:text-3xl">Owner</h1>
             {% if is_admin_or_owner %}
-            <a href="#" class="w-fit base-button bg-indigo-500 hover:bg-indigo-700 text-xs xl:text-sm">Transfer Ownership</a>
+            <button hx-get="{% url 'transfer-classroom-ownership' org_id=org_id classroom_id=classroom_id %}" type="button" class="w-fit base-button bg-indigo-500 hover:bg-indigo-700 text-xs xl:text-sm" @click="classroom_modal.showModal();" hx-swap="innerHTML" hx-target="#modal_container">Transfer Ownership</a>
             {% endif %}
             {% if not is_admin_or_owner %}
             <button hx-get="{% url 'leave-classroom' classroom_id=classroom_id %}" type="button" class="w-fit base-button bg-red-500 hover:bg-red-700" @click="classroom_modal.showModal();" hx-swap="innerHTML" hx-target="#modal_container">Leave Classroom</a>

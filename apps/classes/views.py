@@ -410,3 +410,23 @@ class LeaveClassroom(LoginRequiredMixin,ClassroomMembershipRequired,View):
         membership.delete()
         return create_message_and_redirect(request,f'You are no longer part of {classroom.name}','users-dashboard',code="success")
 
+class TransferClassroomOwnership(LoginRequiredMixin,ClassroomOwnerOrgAdminOwnerRequired,View):
+    def get(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        teachers_memberships = ClassMembership.objects.filter(
+            user__user_type = User.UserType.TEACHER,
+            classroom_id=classroom.id).select_related('user').only('user__first_name', 'user__last_name')
+        context = {'teachers_memberships':teachers_memberships,'classroom_id':classroom.id,'org_id':classroom.parent_id}
+        return render(request,'classes/partials/transfer_classroom_ownership.html',context)
+
+    def post(self,request,*args,**kwargs):
+        classroom = self.get_classroom()
+        new_owner_id = request.POST.get("new_owner_id")
+        owner_membership = get_object_or_404(ClassMembership,classroom_id = classroom.id, user_id=new_owner_id)
+        with transaction.atomic():
+            owner_membership.delete()
+            ClassMembership.objects.create(classroom_id=classroom.id,user_id=classroom.owner_id,)
+            classroom.owner_id = new_owner_id
+            classroom.save(update_fields=['owner'])
+            
+        return create_message_and_redirect(request,"Owner changed successfully",'users-dashboard',code="success")

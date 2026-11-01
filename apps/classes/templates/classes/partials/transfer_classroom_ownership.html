@@ -1,0 +1,18 @@
+<div class="flex flex-col justify-center items-center gap-3 p-3">
+    <div class="flex flex-col gap-0.5">
+        <h1>Choose New Owner</h1>
+        <p class="text-sm text-center italic font-bold text-gray-400">Current owner will be demoted to Teacher.</p>
+    </div>
+    <form class="flex flex-col justify-between items-center w-full gap-2" hx-post="{% url 'transfer-classroom-ownership' org_id=org_id classroom_id=classroom_id %}" hx-target="#page-container" hx-swap="beforeend">
+    {% for teacher_mem in teachers_memberships  %}
+    <div class="flex justify-between w-full">
+        <p class="font-bold">{{ teacher_mem.user.get_full_name }}</p>
+        <button class=" w-fit base-button bg-blue-500 hover:bg-blue-700" value="{{ teacher_mem.user_id }}" name="new_owner_id" type="submit">Select</button>
+    </div>
+    {% empty %}
+    <div class="flex flex-col">
+        <p class="text-center italic font-bold text-gray-400">Classrooms does not have any teachers, who can be the new owner.</p>
+    </div>
+    {% endfor %}
+    </form>
+</div>

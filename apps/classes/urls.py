@@ -2,7 +2,8 @@ from django.urls import path
 from apps.classes.views import (
     CreateClassroom,ViewClassroomFromOrgs,ViewClassroomDetails,EditAnnouncement,DeleteAnnouncement,
     RenameClassroom,DeleteClassroom,ListClassrooms,ViewClassroomFromDashboard,JoinClassroom,CreateAnnouncement,
-    ShareClassroom,CreateNewClassroomCode,ViewAllAnnouncements,ViewAllResources,ViewClassroomConfig,LeaveClassroom
+    ShareClassroom,CreateNewClassroomCode,ViewAllAnnouncements,ViewAllResources,ViewClassroomConfig,LeaveClassroom,
+    TransferClassroomOwnership
 )
 
 urlpatterns = [
@@ -21,6 +22,7 @@ urlpatterns = [
     path("view/all/resources/<int:org_id>/<int:classroom_id>/<int:page>",ViewAllResources.as_view(),name='view-all-resources'),
     path("view/config/<int:org_id>/<int:classroom_id>",ViewClassroomConfig.as_view(),name='view-classroom-config'),
     path("leave/classroom/<int:classroom_id>",LeaveClassroom.as_view(),name='leave-classroom'),
+    path("transfer/ownership/<int:org_id>/<int:classroom_id>",TransferClassroomOwnership.as_view(),name='transfer-classroom-ownership'),
 
     path("classroom/<path:slug>/<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
     path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),
