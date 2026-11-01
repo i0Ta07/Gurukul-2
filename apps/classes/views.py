@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from apps.classes.models import Announcement, ClassMembership, Classroom
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
-from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired, ClassroomMemberOrgAdminOwnerRequired, ClassroomRequiredMixin
+from apps.classes.mixins import ClassroomOwnerOrgAdminOwnerRequired,ClassroomOwnerTeacherOrgAdminOwnerRequired,ClassroomMembershipRequired,ClassroomOwnerTeacherRequired, ClassroomMemberOrgAdminOwnerRequired
 from django.shortcuts import get_object_or_404,render
 from django.core.exceptions import ValidationError
 from apps.classes.forms import AnnouncementForm, ClassroomNameForm
@@ -316,7 +316,7 @@ class FlushClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgAd
     # verify OTP 
     pass
 
-class ViewAllAnnouncements(LoginRequiredMixin,ClassroomRequiredMixin,View):
+class ViewAllAnnouncements(LoginRequiredMixin,ClassroomMemberOrgAdminOwnerRequired,View):
     template_name= 'classes/view_all_announcements.html'
     def get(self,request,*args,**kwargs):
         classroom = self.get_classroom()
@@ -333,7 +333,7 @@ class ViewAllAnnouncements(LoginRequiredMixin,ClassroomRequiredMixin,View):
         page_obj = p.get_page(page)
         page_range = p.page_range
         last_page = len(page_range)
-        context = {'current_page':page,'announcements':page_obj,'classroom_name':classroom.name,'classroom_id':classroom.id,'page_range':page_range}
+        context = {'current_page':page,'announcements':page_obj,'classroom_name':classroom.name,'classroom_id':classroom.id,'org_id':classroom.parent_id,'page_range':page_range}
         if len(page_range)> 1:
             context['previous'] = page-1 if page-1 > 1 else 1
             context['next'] = page+1 if page+1 <= last_page else page
@@ -342,7 +342,7 @@ class ViewAllAnnouncements(LoginRequiredMixin,ClassroomRequiredMixin,View):
             return render(request,'classes/view_all_announcements.html#view-all-announcements',context)
         return render(request,self.template_name,context)
 
-class ViewAllResources(LoginRequiredMixin,ClassroomMembershipRequired,View):
+class ViewAllResources(LoginRequiredMixin,ClassroomMemberOrgAdminOwnerRequired,View):
     template_name= "classes/view_all_resources.html"
     def get(self,request,*args,**kwargs):
         classroom = self.get_classroom()
@@ -358,7 +358,7 @@ class ViewAllResources(LoginRequiredMixin,ClassroomMembershipRequired,View):
         page_obj = p.get_page(page)
         page_range = p.page_range
         last_page = len(page_range)
-        context = {'current_page':page,'resource_memberships':page_obj,'classroom_name':classroom.name,'classroom_id':classroom.id,'page_range':page_range,'org_id':classroom.parent_id}
+        context = {'current_page':page,'resource_memberships':page_obj,'classroom_name':classroom.name,'org_id':classroom.parent_id,'classroom_id':classroom.id,'page_range':page_range,'org_id':classroom.parent_id}
         if len(page_range)> 1:
             context['previous'] = page-1 if page-1 > 1 else 1
             context['next'] = page+1 if page+1 <= last_page else page

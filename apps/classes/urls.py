@@ -17,8 +17,8 @@ urlpatterns = [
     path("delete/announcement/<int:announcement_id>",DeleteAnnouncement.as_view(),name="delete-announcement"),
     path("share/classroom/<int:org_id>/<int:classroom_id>",ShareClassroom.as_view(),name="share-classroom"),
     path("create/new/classroom/code/<int:org_id>/<int:classroom_id>",CreateNewClassroomCode.as_view(),name="create-new-classroom-code"),
-    path("view/all/announcements/<int:classroom_id>/<int:page>",ViewAllAnnouncements.as_view(),name='view-all-announcements'),
-    path("view/all/resources/<int:classroom_id>/<int:page>",ViewAllResources.as_view(),name='view-all-resources'),
+    path("view/all/announcements/<int:org_id>/<int:classroom_id>/<int:page>",ViewAllAnnouncements.as_view(),name='view-all-announcements'),
+    path("view/all/resources/<int:org_id>/<int:classroom_id>/<int:page>",ViewAllResources.as_view(),name='view-all-resources'),
     path("view/config/<int:org_id>/<int:classroom_id>",ViewClassroomConfig.as_view(),name='view-classroom-config'),
     path("leave/classroom/<int:classroom_id>",LeaveClassroom.as_view(),name='leave-classroom'),
 

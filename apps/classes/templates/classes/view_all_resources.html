@@ -26,14 +26,14 @@
             <div class="join">
                 {% if page_range|length < 5 %}
                 {% for page in page_range %}
-                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' classroom_id=classroom_id page=page %}" 
+                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' org_id=org_id classroom_id=classroom_id page=page %}" 
                     hx-target="#page-container" hx-swap="innerHTML" :class="{ 'btn-active': {{current_page}} === {{page}} }">{{page}}</button>
                 {% endfor %}
                 {% else %}
-                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' classroom_id=classroom_id page=previous %}" 
+                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' org_id=org_id classroom_id=classroom_id page=previous %}" 
                     hx-target="#page-container" hx-swap="innerHTML" :class="{ 'btn-disabled': {{ current_page }}  === 1 }">«</button>
                 <button class="join-item btn xl:btn-lg">{{ current_page }}</button>
-                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' classroom_id=classroom_id page=next %}" 
+                <button class="join-item btn xl:btn-lg" hx-get="{% url 'view-all-resources' org_id=org_id classroom_id=classroom_id page=next %}" 
                     hx-target="#page-container" hx-swap="innerHTML" :class="{ 'btn-disabled': {{ current_page }}  === {{ last_page }} }">»</button>
                 {% endif %}
             </div>
