@@ -1,5 +1,5 @@
 from django import forms
-from apps.resources.utils import clean_file_size
+from apps.orgs.utils import clean_file_size
 from .models import OrgConfig, Organization, OrgMembership
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError

@@ -15,14 +15,13 @@ from apps.orgs.utils import ( OrgUserType,
     validata_create_child_org,validate_create_root_org,build_slug,
     resolve_parent_path_and_build_breadcrumbs,get_emails_from_excel,
     build_membership_slug,annotate_memberships,generate_numeric_otp,
-    delete_root_org_otp_key,validate_rename_org,render_error_inside_modal,
-    transfer_ownership_otp_key,
+    delete_root_org_otp_key,validate_rename_org,transfer_ownership_otp_key,
     )
 from apps.classes.utils import ClassUserType
 from django.core.cache import cache
 from apps.orgs.utils import get_invitation_count_key
 from django.contrib.auth.hashers import make_password,check_password
-from config.utils import send_email
+from config.utils import send_email,render_template_inside_modal
 from config.settings import EMAIL_EXPIRY_DURATION
 from django.template.loader import render_to_string
 from channels.layers import get_channel_layer
@@ -133,7 +132,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
         config_form = self.config_form(request.POST)
 
         if not root_form.is_valid() or not config_form.is_valid():
-            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+            return render_template_inside_modal(request=request,template_name=self.template_name,context={
                 "root_form": root_form,
                 "config_form": config_form,                
             })
@@ -145,7 +144,7 @@ class CreateRootOrgAndConfig(LoginRequiredMixin,TeacherRequiredMixin,View):
             validate_create_root_org(instance=org)
         except ValidationError as e:
             root_form.add_error(field=None,error=e.message)
-            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+            return render_template_inside_modal(request=request,template_name=self.template_name,context={
                 "root_form": root_form,
                 "config_form": config_form,                
             })
@@ -451,7 +450,7 @@ class DeleteRootOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequired,Vie
         else:
             messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
             cache.set(key=key,value=data,timeout=300)
-            return  render_error_inside_modal(request=request,template_name='orgs/partials/delete_root_org_verify_otp.html',
+            return  render_template_inside_modal(request=request,template_name='orgs/partials/delete_root_org_verify_otp.html',
                 context={"root_org_name":root_org.name,**kwargs}
             )
 
@@ -480,7 +479,6 @@ class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminR
         teacher_name = f"{first_name} {last_name}"
         return render(request,template_name="orgs/partials/revoke_org_membership.html",context={**kwargs,"teacher_name":teacher_name})
 
-    
     def post(self,request,*args, **kwargs):
         root_org,_ = self.get_root_current_org()
         # In DB, a ForeignKey field like teacher is stored as a teacher_id column containing the primary key of the related User,
@@ -529,7 +527,7 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
         form = self.form_class(request.POST)
         is_root = (root_org == org)
         if not form.is_valid():
-            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+            return render_template_inside_modal(request=request,template_name=self.template_name,context={
                 **kwargs,"form":form,"root_org_view":is_root, "child_org_view":not is_root
             })
 
@@ -550,7 +548,7 @@ class RenameOrg(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminRequired,Vi
                 validate_rename_org(instance=org, parent=org.get_parent())
         except ValidationError as e:
             form.add_error(field=None,error=e.message)
-            return render_error_inside_modal(request=request,template_name=self.template_name,context={
+            return render_template_inside_modal(request=request,template_name=self.template_name,context={
                 **kwargs,"form":form,"root_org_view":is_root, "child_org_view":not(is_root)
             })
             
@@ -655,7 +653,7 @@ class TransferRootOwnership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerRequ
         else:
             messages.error(request,message=f"Incorrect OTP. Attempts Remaining: {(3 - data['attempts'])}")
             cache.set(key=key,value=data,timeout=300)
-            return  render_error_inside_modal(request=request,template_name='orgs/partials/transfer_root_ownership_verify_otp.html',
+            return  render_template_inside_modal(request=request,template_name='orgs/partials/transfer_root_ownership_verify_otp.html',
                 context={"root_org_name":root_org.name,**kwargs}
             )
     # Check if user exists. 

@@ -6,12 +6,13 @@ from enum import StrEnum
 from config.settings import MAX_DEPTH
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
-from django.shortcuts import get_object_or_404,render
+from django.shortcuts import get_object_or_404
 from openpyxl import load_workbook
 from django.core.validators import EmailValidator
 from collections.abc import Iterable
 from django.db.models.query import QuerySet
 import secrets
+from django.template.defaultfilters import filesizeformat
 
 class OrgUserType(StrEnum):
     OWNER = "Owner"
@@ -301,16 +302,14 @@ def delete_root_org_otp_key(user_id:int,org_id:int):
 def transfer_ownership_otp_key(owner_id:int,org_id:int):
     return f"otp:change_owner:{org_id}:{owner_id}"
 
-def render_error_inside_modal(request,template_name,context):
-    """Change the htmx target and swap to modal to render error after a successful POST."""
-    response = render(
-        request,
-        template_name,
-        context,
-    )
-    response["HX-Retarget"] = "#modal_container" 
-    response["HX-Reswap"] = "innerHTML" 
-    return response
-
 def get_invitation_count_key(user_id):
     return f'users:{user_id}:invitation-count'
+
+def clean_file_size(file,max_size:int):
+    """max_size in megabytes"""
+    max_size = max_size * 1024 * 1024 
+    if file.size > max_size:
+        raise ValidationError(
+            f"File too large. Size must be under {filesizeformat(max_size)}."
+            f"Current size is {filesizeformat(file.size)}."
+        )

@@ -6,13 +6,14 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.template.loader import render_to_string
 from config.tasks import send_email_task
-import qrcode
+import qrcode,json
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models import Case, When, Value, BooleanField
 from django.utils import timezone
 from datetime import timedelta
+from django.shortcuts import render
 
 # Session
 from apps.users.models import CustomSession
@@ -102,3 +103,31 @@ def annotate_is_editable(queryset:QuerySet,minutes:int):
                 output_field=BooleanField(),
             )
         )
+
+def htmx_redirect(response:HttpResponse,redirect_url:str,swap_method:str,target_element:str):
+    # Django HTTP response headers must be strings.
+    response['HX-Location'] = json.dumps({
+        'path': redirect_url,
+        'swap': swap_method,
+        'target': target_element,
+        'push': False
+    })
+    return response
+
+def render_message_to_page(request):
+    """From a modal if you want to render the message in the main page."""
+    response = render(request,"partials/messages.html")
+    response["HX-Retarget"] = "#page-container" 
+    response["HX-Reswap"] = "beforeend"
+    return response
+
+def render_template_inside_modal(request,template_name,context):
+    """Change the htmx target and swap to modal to render error after a successful POST."""
+    response = render(
+        request,
+        template_name,
+        context,
+    )
+    response["HX-Retarget"] = "#modal_container" 
+    response["HX-Reswap"] = "innerHTML" 
+    return response

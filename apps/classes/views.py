@@ -11,11 +11,12 @@ from django.contrib import messages
 from django.views import View
 from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
 from apps.orgs.models import OrgMembership
-from apps.orgs.utils import OrgUserType, is_org_owner_or_admin, render_error_inside_modal, build_slug
+from apps.orgs.utils import OrgUserType, build_slug
 from apps.classes.utils import ClassUserType
 from apps.chats.models import ChatRoom
 from django.db import transaction
 from apps.resources.models import ResourceClassMembership
+from config.utils import render_message_to_page,render_template_inside_modal
 from apps.users.models import User
 from config.utils import create_message_and_redirect, get_website_context
 from django.db.models import Q
@@ -85,7 +86,7 @@ class RenameClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgA
     def post(self,request,*args,**kwargs):
         form = self.form_class(request.POST)
         if not form.is_valid():
-            return render_error_inside_modal(request,self.template_name,{'form':form,**kwargs})
+            return render_template_inside_modal(request,self.template_name,{'form':form,**kwargs})
 
         _,parent = self.get_root_current_org()
         classroom = self.get_classroom()
@@ -95,7 +96,7 @@ class RenameClassroom(LoginRequiredMixin,TeacherRequiredMixin,ClassroomOwnerOrgA
             validate_unique_classroom_siblings(parent = parent,instance=classroom)
         except ValidationError as e:
             form.add_error(field=None,error=e.message)
-            return render_error_inside_modal(request,self.template_name,{'form':form,**kwargs})
+            return render_template_inside_modal(request,self.template_name,{'form':form,**kwargs})
         classroom.save(update_fields={"name"})
         role = self.get_role()
         if role in [OrgUserType.ADMIN,OrgUserType.OWNER]:
@@ -177,15 +178,15 @@ class CreateAnnouncement(ClassroomOwnerTeacherRequired,TeacherRequiredMixin,Logi
         announcement = form.save(commit=False)
         announcement.created_by_id = request.user.id
         announcement.classroom_id = classroom.id
+        announcement.save()
         users_id = list(ClassMembership.objects.filter(classroom_id = classroom.id,status = ClassMembership.Status.ACCEPTED).values_list('user_id',flat=True))
         users_id.append(classroom.owner_id) # Add owner
         users_id.remove(request.user.id) # remove current user
         url_path = reverse('view-classroom-dashboard',kwargs={'slug':classroom.slug,'classroom_id':classroom.id})
-        body = f"New Annoucement in {self._classroom.name} by {request.user.get_full_name()}"
+        body = f"{request.user.get_full_name()}({self._classroom.name}) said {announcement.body}"
         async_to_sync(create_notifications)(users_id=users_id,body = body,url_path=url_path)
         async_to_sync(send_notifications)(users_id=users_id,body=body,url_path=url_path)
         async_to_sync(update_notification_icon)(users_id=users_id)
-        announcement.save()
         announcement.is_editable = True
         response = render(request,template_name="classes/classroom.html#announcement",context = {'announcement':announcement,'classroom_id':classroom.id})
         return response
@@ -320,12 +321,6 @@ class ViewAllAnnouncements(LoginRequiredMixin,ClassroomMemberOrgAdminOwnerRequir
     template_name= 'classes/view_all_announcements.html'
     def get(self,request,*args,**kwargs):
         classroom = self.get_classroom()
-        root = classroom.parent.get_root()
-        if (not ClassMembership.objects.filter(user_id = request.user.id,classroom_id=classroom.id).exists() and
-            classroom.owner_id != request.user.id and not is_org_owner_or_admin(root=root,user_id=request.user.id)):
-            messages.error(request,"You cannot view announcements")
-            return render(request,"partials/messages.html")
-
         announcements =  classroom.announcements.all().select_related('created_by').order_by('-created_at')
         announcements = annotate_is_editable(queryset=announcements,minutes=15)
         p = Paginator(announcements,9)
@@ -346,11 +341,6 @@ class ViewAllResources(LoginRequiredMixin,ClassroomMemberOrgAdminOwnerRequired,V
     template_name= "classes/view_all_resources.html"
     def get(self,request,*args,**kwargs):
         classroom = self.get_classroom()
-        root = classroom.parent.get_root()
-        if (not ClassMembership.objects.filter(user_id = request.user.id,classroom_id=classroom.id).exists() and
-            classroom.owner_id != request.user.id and not is_org_owner_or_admin(root=root,user_id=request.user.id)):
-            messages.error(request,"You cannot view resources")
-            return render(request,"partials/messages.html")
 
         resource_memberships = classroom.resource_memberships.all().order_by('-created_by').select_related('resource','created_by').order_by('-created_at')
         p = Paginator(resource_memberships,10)

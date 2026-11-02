@@ -12,7 +12,7 @@ from apps.resources.forms import ResourceForm, SearchResourceForm,OrgFilterForm
 from apps.orgs.mixins import OrgMembershipRequiredMixin, TeacherRequiredMixin
 from apps.resources.mixins import ResourceOrgMembershipRequired
 from apps.resources.models import Resource, ResourceClassMembership
-from apps.resources.utils import render_message_from_modal_to_page
+from config.utils import render_message_to_page,htmx_redirect
 from django.db import IntegrityError
 
 class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequiredMixin,View):
@@ -76,11 +76,11 @@ class DeleteResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         resource,role = self.get_resource(),self.get_role()
         if role not in [OrgUserType.ADMIN,OrgUserType.OWNER] and resource.created_by_id != request.user.id:
             messages.error(request,"You do not have permission to delete this resource")
-            return render_message_from_modal_to_page(request)
+            return render_message_to_page(request)
 
         if ResourceClassMembership.objects.filter(resource_id=resource.id).exists():
             messages.error(request,"This resource is attached to a classroom. You cannot delete it")
-            return render_message_from_modal_to_page(request)
+            return render_message_to_page(request)
 
         resource.delete()
         response = HttpResponse("",status=200)
@@ -161,6 +161,7 @@ class ListClassroomsToAttachResource(LoginRequiredMixin,TeacherRequiredMixin,Org
         )
 
         # Queries are lazily evaluated, hence we will only run one query. We keep on adding the filters and conditions.
+        # Remove those classrooms, to which resource is already attached
         classrooms = classrooms.annotate(
             is_attached=Exists(attached)
         ).filter(is_attached=False)

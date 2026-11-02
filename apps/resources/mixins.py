@@ -1,9 +1,6 @@
-from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from apps.orgs.utils import OrgUserType, render_error_inside_modal
-from apps.resources.utils import render_message_from_modal_to_page
 from config.utils import create_message_and_redirect
-from apps.orgs.mixins import OrgMembershipRequiredMixin, RootOrganizationMixin
+from apps.orgs.mixins import RootOrganizationMixin
 from apps.resources.models import Resource
 
 class ResourceRequiredMixin:
