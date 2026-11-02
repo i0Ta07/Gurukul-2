@@ -420,3 +420,51 @@ class TransferClassroomOwnership(LoginRequiredMixin,ClassroomOwnerOrgAdminOwnerR
             classroom.save(update_fields=['owner'])
             
         return create_message_and_redirect(request,"Owner changed successfully",'users-dashboard',code="success")
+
+class RemoveStudentFromClassroom(LoginRequiredMixin,ClassroomOwnerTeacherOrgAdminOwnerRequired,View):
+    def get(self,request,*args,**kwargs):
+        student_id = kwargs.get('student_id')
+        user = get_object_or_404(User,pk=student_id)
+        classroom = self.get_classroom()
+        if not ClassMembership.objects.filter(user_id = user.id,classroom_id=classroom.id).exists():
+            return HttpResponse("Given user is not the part of this classroom.")
+        if user.user_type != User.UserType.STUDENT:
+            return HttpResponse("Given user is not a student")
+        context = {'classroom_name':classroom.name,'user_name':user.get_full_name(),'org_id':classroom.parent_id,'classroom_id':classroom.id,'user_id':user.id,'render_student_url':True}
+        return render(request,'classes/partials/remove_user_from_classroom.html',context)
+    
+    def post(self,request,*args,**kwargs):
+        student_id = kwargs.get('student_id')
+        user = get_object_or_404(User,pk=student_id)
+        if user.user_type != User.UserType.STUDENT:
+            messages.error(request,"Given user is not a student")
+            return render_message_to_page(request)
+        classroom = self.get_classroom()
+        membership = get_object_or_404(ClassMembership,user_id = user.id,classroom_id=classroom.id)
+        membership.status = ClassMembership.Status.REVOKED
+        membership.save(update_fields=['status'])
+        return HttpResponse()
+
+class RemoveTeacherFromClassroom(LoginRequiredMixin,ClassroomOwnerOrgAdminOwnerRequired,View):
+    def get(self,request,*args,**kwargs):
+        teacher_id = kwargs.get('teacher_id')
+        user = get_object_or_404(User,pk=teacher_id)
+        classroom = self.get_classroom()
+        if not ClassMembership.objects.filter(user_id=user.id,classroom_id=classroom.id).exists():
+            return HttpResponse("Given user is not the part of this classroom.")
+        if user.user_type != User.UserType.TEACHER:
+            return HttpResponse("Given user is not a teacher")
+        context = {'classroom_name':classroom.name,'user_name':user.get_full_name(),'org_id':classroom.parent_id,'classroom_id':classroom.id,'user_id':user.id,'render_teacher_url':True}
+        return render(request,'classes/partials/remove_user_from_classroom.html',context)
+
+    def post(self,request,*args,**kwargs):
+        teacher_id = kwargs.get('teacher_id')
+        user = get_object_or_404(User,pk=teacher_id)
+        if user.user_type != User.UserType.TEACHER:
+            messages.error(request,"Given user is not a teacher")
+            return render_message_to_page(request)
+        classroom = self.get_classroom()
+        membership = get_object_or_404(ClassMembership,user_id=user.id,classroom_id=classroom.id)
+        membership.status = ClassMembership.Status.REVOKED
+        membership.save(update_fields=['status'])
+        return HttpResponse()

@@ -3,7 +3,7 @@ from apps.classes.views import (
     CreateClassroom,ViewClassroomFromOrgs,ViewClassroomDetails,EditAnnouncement,DeleteAnnouncement,
     RenameClassroom,DeleteClassroom,ListClassrooms,ViewClassroomFromDashboard,JoinClassroom,CreateAnnouncement,
     ShareClassroom,CreateNewClassroomCode,ViewAllAnnouncements,ViewAllResources,ViewClassroomConfig,LeaveClassroom,
-    TransferClassroomOwnership
+    TransferClassroomOwnership,RemoveStudentFromClassroom,RemoveTeacherFromClassroom
 )
 
 urlpatterns = [
@@ -23,6 +23,9 @@ urlpatterns = [
     path("view/config/<int:org_id>/<int:classroom_id>",ViewClassroomConfig.as_view(),name='view-classroom-config'),
     path("leave/classroom/<int:classroom_id>",LeaveClassroom.as_view(),name='leave-classroom'),
     path("transfer/ownership/<int:org_id>/<int:classroom_id>",TransferClassroomOwnership.as_view(),name='transfer-classroom-ownership'),
+    path("remove/student/<int:org_id>/<int:classroom_id>/<int:student_id>",RemoveStudentFromClassroom.as_view(),name='remove-student-from-classroom'),
+    path("remove/teacher/<int:org_id>/<int:classroom_id>/<int:teacher_id>",RemoveTeacherFromClassroom.as_view(),name='remove-teacher-from-classroom'),
+
 
     path("classroom/<path:slug>/<int:classroom_id>", ViewClassroomFromDashboard.as_view(), name="view-classroom-dashboard"),
     path("<path:classroom_path>/<int:parent_org_id>/<int:classroom_id>", ViewClassroomFromOrgs.as_view(), name="view-classroom-orgs"),

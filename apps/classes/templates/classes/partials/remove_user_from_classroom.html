@@ -1,0 +1,19 @@
+<form hx-post="{% if render_student_url %}
+        {% url 'remove-student-from-classroom' org_id=org_id classroom_id=classroom_id student_id=user_id %}
+        {% elif render_teacher_url %}
+        {% url 'remove-teacher-from-classroom' org_id=org_id classroom_id=classroom_id teacher_id=user_id %}
+        {%  endif %}"
+    hx-target="{% if render_student_url %}
+        #student-{{ user_id }}
+        {% elif render_teacher_url %}
+        #teacher-{{ user_id }}
+        {%  endif %}" 
+    hx-swap="delete">
+    <div class="flex flex-col gap-2 p-1.5">
+        <p class="text-center font-bold">Are you sure you want to revoke {{ user_name }}'s membership from {{ classroom_name }}</p>
+        <div class="flex gap-1.5 w-full">
+            <button class="base-button bg-red-500 hover:bg-red-700" type="submit" @click="classroom_modal.close();">Yes, I am sure</button>
+            <button class="base-button bg-blue-500 hover:bg-blue-700" type="button" @click="classroom_modal.close();">No, take me back</button>
+        </div>
+    </div>
+</form>
