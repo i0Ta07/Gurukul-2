@@ -13,7 +13,7 @@ from treebeard.mp_tree import MP_Node
 
 # ForeignKey field, child --> parent; Reverse(related_name), parent --> children
 class Organization(MP_Node):
-    name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)])
+    name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 .-]+$','Only alphanumeric characters, spaces, periods, and hyphens are allowed.',)])
     slug = models.SlugField(max_length=50)
     # Used as related_name = user.created_orgs.all(); related_query_name = User.objects.filter(created_org__name = "SomeName")
     created_by = models.ForeignKey(

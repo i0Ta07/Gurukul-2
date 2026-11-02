@@ -140,15 +140,6 @@
         </form>
     </dialog>
     {% endpartialdef classroom-modal %}
-    {% block scripts %}
-        <script>
-            async function copy(text,alpine_state){
-                await navigator.clipboard.writeText(text);
-                alpine_state.copied=true;
-                setTimeout(() => alpine_state.copied = false, 3000);
-            }
-        </script>
-    {% endblock scripts %}
     {% endpartialdef classroom %}
 </div>
 

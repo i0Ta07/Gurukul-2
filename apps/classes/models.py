@@ -9,7 +9,7 @@ from config.utils import create_qr_code
 from django.core.exceptions import ValidationError
 
 class Classroom(models.Model):
-    name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)])
+    name = models.CharField(max_length=50,validators=[RegexValidator(r'^[A-Za-z0-9 .-]+$','Only alphanumeric characters, spaces, periods, and hyphens are allowed.',)])
     slug = models.SlugField(max_length=50)
     code = models.UUIDField(unique=True,default=uuid.uuid4) # Callable, not the actual instance with (),if uuid4(), same uuid for every class
     # Links directly to one specific node in the tree

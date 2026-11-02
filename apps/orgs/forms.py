@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from config.validators import excel_validator
 from django.forms import ModelChoiceField
-from django.core.validators import RegexValidator
 
 class OrgNameForm(forms.ModelForm):
     name = forms.CharField(
@@ -15,7 +14,6 @@ class OrgNameForm(forms.ModelForm):
         widget=forms.TextInput(attrs={
         'class':"form-input w-full",
         "placeholder": 'name', 'autofocus': True }),
-        validators=[RegexValidator(r'^[A-Za-z0-9 ]+$','Only alphanumeric characters with spaces are allowed.',)]    
     )
     class Meta:
         model = Organization
