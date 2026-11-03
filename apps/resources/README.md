@@ -9,3 +9,7 @@ The Root Cause (MRO & Cooperative Inheritance): Python handles multiple inherita
 Solution A (Top-Down Execution): Letting super().dispatch() run first allows the parent mixins to initialize their variables down the chain before the child mixin performs its validation checks.
 
 Solution B (Lazy-Loading / Memoization - Recommended): Implementing helper methods (like self.get_resource() or self.get_role() guarded by hasattr) completely decouples attribute initialization from rigid execution order. When called from anywhere in the child mixin, they evaluate, cache, and return the required data safely on demand.
+
+### To do
+
+* While listing clasrooms and inside lst classrooms in student show hierarchy. Show a common function that takes a classroom ids and gives you json to map.

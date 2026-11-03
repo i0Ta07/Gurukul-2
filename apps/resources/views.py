@@ -2,7 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q,Exists, OuterRef
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views import View
 from apps.classes.mixins import ClassroomOrgMembershipRequired
 from apps.classes.models import ClassMembership, Classroom
@@ -14,6 +15,8 @@ from apps.resources.mixins import ResourceOrgMembershipRequired
 from apps.resources.models import Resource, ResourceClassMembership
 from config.utils import render_message_to_page,htmx_redirect
 from django.db import IntegrityError
+from apps.users.utils import send_notifications,create_notifications, update_notification_icon
+from asgiref.sync import async_to_sync
 
 class SearchResources(OrgMembershipRequiredMixin,TeacherRequiredMixin,LoginRequiredMixin,View):
     template_name = "resources/search_resources.html"
@@ -110,11 +113,16 @@ class CreateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
         resource = form.save(commit=False)
         resource.created_by_id = request.user.id
         resource.root_id = root.id
-        resource.save()
+        try:
+            resource.save()
+        except IntegrityError:
+            messages.error(request,f"Resource with same URL, exisits with {root.name}. Attach the resource rather than creating new.")
+            return render_message_to_page(request)
         messages.success(request,"Resource created successfully")
-        response = redirect('list-classrooms-to-attach-resource', root.id, resource.id)
+        response = HttpResponse()
         response['HX-Trigger'] = 'resource-created'
-        return response
+        redirect_url = reverse('list-classrooms-to-attach-resource',kwargs={'org_id':root.id,'resource_id':resource.id})
+        return htmx_redirect(response=response,redirect_url=redirect_url,swap_method="innerHTML",target_element="#modal_container")
 
 class UpdateResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     template_name="resources/partials/update_resource.html"
@@ -184,10 +192,18 @@ class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
             )
         except IntegrityError:
             return HttpResponse("<p class='text-center text-green-500'>This resource is already attached to this classroom.</p>")
-
-        messages.success(request,f"{resource.title} is successfully attached to {classroom.name}")
-        response = redirect("search-resources",root.id)
-        response['HX-Trigger'] = 'resource-attached'
+        users_id = list(ClassMembership.objects.filter(classroom_id = classroom.id,status = ClassMembership.Status.ACCEPTED).values_list('user_id',flat=True))
+        users_id.append(classroom.owner_id) # Add owner
+        try:
+            users_id.remove(request.user.id)
+        except ValueError:
+            pass  # remove current user
+        url_path = reverse('view-classroom-dashboard',kwargs={'slug':classroom.slug,'classroom_id':classroom.id})
+        body = f"{request.user.get_full_name()} attached {resource.title} to {self._classroom.name}"
+        async_to_sync (create_notifications)(users_id=users_id,body = body,url_path=url_path)
+        async_to_sync(send_notifications)(users_id=users_id,body=body,url_path=url_path)
+        async_to_sync(update_notification_icon)(users_id=users_id)
+        response = HttpResponse(f"<p class='text-green-700 italic font-bold'>{resource.title} is successfully attached to {classroom.name}</p>")
         return response
 
 class DetachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,ClassroomOrgMembershipRequired,View):
