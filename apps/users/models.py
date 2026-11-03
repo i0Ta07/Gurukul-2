@@ -104,10 +104,10 @@ class Notification(models.Model):
         related_name="notifications",
         related_query_name="notification"
     )
-    body = models.CharField(max_length=150)
+    body = models.CharField(max_length=350)
     is_seen = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     url_path = models.CharField(max_length=150)
 
     def __str__(self):
-        return f"{self.user.get_full_name()}"
+        return f"{self.user_id}"

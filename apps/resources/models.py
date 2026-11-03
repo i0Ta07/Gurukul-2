@@ -19,7 +19,7 @@ class Resource(models.Model):
         ASSIGNMENT = 'ASM',_('Assignment')
 
     title = models.CharField(max_length=100)
-    url = models.URLField(max_length=200,unique=True)
+    url = models.URLField(max_length=200)
     type = models.CharField(
         max_length=3,
         choices = ResourceType,
@@ -41,6 +41,14 @@ class Resource(models.Model):
 
     def __str__(self):
         return f"{self.title}:{self.root_id}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['url', 'root'], 
+                name='unique_resource_inside_org'
+            )
+        ]
         
 
 class ResourceClassMembership(models.Model):
