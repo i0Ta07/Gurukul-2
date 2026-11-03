@@ -6,12 +6,14 @@
 <div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
     {% partialdef dashboard inline %}
     <title>My Dashboard</title>
-    <div class="flex flex-col gap-y-3">
-        <h1>Welcome to Dashboard page</h1>
-        {% if request.user.user_type == 'T' %}
-        <a href="{% url 'view-root-orgs'  %}" class="base-button w-fit bg-blue-500 hover:bg-blue-700">View Orgs</a>
-        {% endif %}
-        <a href="{% url 'list-classrooms'  %}" class="base-button w-fit bg-blue-500 hover:bg-blue-700">View Classrooms</a>
+    <div class="flex flex-col gap-y-3 flex-1 items-center justify-center text-center">
+        <h1 >Welcome to Dashboard page</h1>
+        <div class="flex gap-1.5 items-center justify-center w-full lg:w-1/2">
+            {% if request.user.user_type == 'T' %}
+            <a href="{% url 'view-root-orgs'  %}" class="base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-sm">Roots</a>
+            {% endif %}
+            <a href="{% url 'list-classrooms'  %}" class="base-button bg-blue-500 hover:bg-blue-700 text-xs lg:text-sm">Classrooms</a>
+        </div>
     </div>
     {% endpartialdef %}    
 </div>

@@ -7,7 +7,7 @@
 <div class="page-container" id="page-container" hx-history-elt>
     {% partialdef create-resource inline %}
     <title>Create Resource ({{ org_name }})</title>
-    <form class="flex flex-col flex-1 justify-center items-center gap-3" x-data  @resource-created="resource_modal.showModal();" hx-post="{% url 'create-resource' org_id=org_id %}" hx-swap="innerHTML" hx-target="#modal_container">
+    <form class="flex flex-col flex-1 justify-center items-center gap-3" x-data @resource-created="resource_modal.showModal();" hx-post="{% url 'create-resource' org_id=org_id %}" hx-swap="innerHTML" hx-target="#modal_container">
         <h1>Create Resource ({{ org_name }})</h1>
         <div class="bordered-card flex flex-col gap-5 max-w-6xl">
             <div class="flex flex-col lg:flex-row gap-3">

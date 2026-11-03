@@ -11,12 +11,12 @@
     <form hx-post="{% url 'search-resources' org_id=org_id %}" x-data hx-target="#resources" hx-swap="innerHTML" class="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto">
         <div class="flex flex-col gap-3 xl:grid xl:grid-cols-4 ">
             <div class="flex flex-col gap-3 xl:gap-5">
-                <p class="font-semibold text-lg lg:text-2xl text-center">Fitlers</p>
-                <div class="flex flex-col gap-3 xl:gap-10 text-sm lg:text-base">
+                <p class="font-semibold text-lg lg:text-2xl text-center">Filters</p>
+                <div class="flex flex-col items-center justify-center gap-3 xl:gap-10 text-sm lg:text-base">
                     {% for field in org_fitler_form %}
                     {{ field }}
                     {% endfor %}
-                    <a hx-get="{% url 'view-orphan-resources' org_id=org_id %}" hx-target="#resources" hx-swap="innerHTML" class="base-button bg-blue-500 hover:bg-blue-700 text-center">View Orphan resources</a>
+                    <a hx-get="{% url 'view-orphan-resources' org_id=org_id %}" hx-target="#resources" hx-swap="innerHTML" class="base-button bg-blue-500 hover:bg-blue-700 text-center text-xs lg:text-sm w-1/2 lg:w-full">View Orphan resources</a>
                 </div>
             </div>
             <div class="flex flex-col xl:col-span-2 p-1 items-center gap-3 flex-1 min-h-0">
@@ -56,7 +56,6 @@
                             <p class="italic font-bold text-gray-500 text-xs lg:text-base">No resources match the given filters</p>
                         </div>
                     {% endfor %}
-                    {% include 'partials/messages.html' %}
                     {% endpartialdef render-results %}
                 </div>
                 
@@ -92,7 +91,6 @@
         </form>
     </dialog>
     {% endpartialdef resource-modal %}
-    {% include 'partials/messages.html' %}
     {% endpartialdef search-resources %}
 </div>
 

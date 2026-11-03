@@ -390,7 +390,7 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
         if role in [OrgUserType.ADMIN, OrgUserType.TEACHER]:
             is_admin_or_teacher = True
 
-        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"is_admin_or_owner":is_admin_or_owner,"is_owner":is_owner,"is_admin_or_teacher":is_admin_or_teacher}
+        context = {"owner":owner,"admins":admins,"teachers":teachers,"root_org_name":root_org.name,"root_org_id":root_org.id,"is_admin_or_owner":is_admin_or_owner,"is_owner":is_owner,"is_admin_or_teacher":is_admin_or_teacher,'role':role}
         if request.htmx:
             return render(request,template_name="orgs/view_root_config.html#view-root-config",context=context)
         return render(request,self.template_name,context)
@@ -487,7 +487,7 @@ class RevokeOrgMembership(LoginRequiredMixin,TeacherRequiredMixin,OrgOwnerAdminR
         is_admin = OrgAdmin.objects.filter(membership_id = mem_obj.id).exists()
         if is_admin:
             messages.error(request,"Admin can only remove members.")
-            return render(request=request,template_name="partials/messages.html")
+            return render(request=request,template_name="partials/modal_messages.html")
         mem_obj.delete()
         return HttpResponse("", status=200)
 

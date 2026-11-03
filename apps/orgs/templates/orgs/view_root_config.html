@@ -7,8 +7,17 @@
 <div class="page-container" id="page-container" hx-target="#page-container" hx-boost="true" hx-history-elt>
     {% partialdef view-root-config inline %}
     <title>{{ root_org_name }}</title>
-    <div class="flex flex-col p-2 md:p-5 gap-5 min-h-0 flex-auto" x-data>
+    <div class="flex flex-col p-2 md:p-5 gap-5 min-h-0 flex-auto relative" x-data>
         <h1 class="text-center text-2xl md:text-4xl">{{root_org_name}}</h1>
+        <p class="badge badge-outline badge-error badge-sm xl:badge-lg absolute left-0 top-0">{{ role }}</p>
+        <div class="absolute right-0 top-0 flex gap-1.5">
+            <a hx-get="{% url 'search-resources' org_id=root_org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true" >
+                <img class="size-12" src="{% static 'orgs/icons/svg/resource.svg' %}">
+            </a>
+            <a hx-get="#" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">
+                <img class="size-13" src="{% static 'orgs/icons/svg/quiz.svg' %}">
+            </a>
+        </div>
         <div class="bg-blue-500 p-3 flex justify-between items-center rounded-2xl">
             <h1 class="text-lg md:text-3xl">Owner</h1>
             {% if is_owner %}
@@ -23,7 +32,7 @@
             <div class="flex flex-col flex-auto min-h-0 gap-3 h-75 md:h-full md:w-50">
                 <div class="bg-blue-500 p-3 flex justify-between items-center rounded-2xl">
                     <h1 class="text-lg md:text-3xl">Admins</h1>
-                        {% if is_admin_or_owner %}
+                        {% if is_owner %}
                         <a href="{% url 'create-admin' org_id=root_org_id %}" class="w-fit base-button bg-indigo-600 hover:bg-indigo-800 ">Create</a>
                         {% endif %}
                 </div>
