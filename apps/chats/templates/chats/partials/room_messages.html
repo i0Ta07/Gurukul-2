@@ -9,15 +9,7 @@
     {% if message.author.id != current_user_id %}
     <div class="chat chat-start" id="{{ message.id }}">
         <div class="chat-image avatar">
-            <div>
-                <a hx-get="{% url 'public-profile' other_user_id=message.author.id %}" hx-target="#page-container" hx-swap="innerHTML">
-                {% if message.author.profile_photo %}
-                <img class="size-12 p-1 rounded-full border border-gray-700" src="{{ message.author.profile_photo.url }}" alt="Profile Picture">
-                {% else %}
-                <img class="size-12 p-1 rounded-full border border-gray-700" src="{% static 'images/default_profile.png' %}" alt="Default profile">
-                {% endif %}
-                </a>
-            </div>
+            {% include "orgs/view_root_config.html#render-profile-icon" with user=message.author %}
         </div>
         <div class="chat-header">
             {{ message.author.get_full_name }} ({{ message.author.username }})
