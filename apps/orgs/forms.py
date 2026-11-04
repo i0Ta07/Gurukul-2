@@ -74,12 +74,12 @@ class SendInvitationForm(forms.Form):
             raise ValidationError("Choose either email or file.")
 
         
-class MembershipModelChoiceField(ModelChoiceField):
+class UserModelChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
-        return f"{obj.teacher.get_full_name()} ({obj.teacher.email})"
+        return f"{obj.teacher.get_full_name()} (@{obj.teacher.username})"
     
 class CreateAdminForm(forms.Form):
-    teachers = MembershipModelChoiceField(
+    teachers = UserModelChoiceField(
         empty_label="Select Teacher",
         queryset=OrgMembership.objects.none(),
         widget=forms.Select(attrs={'class': ' form-input'}),
@@ -93,10 +93,6 @@ class CreateAdminForm(forms.Form):
             .filter(org=root_org)
             .filter(admin__isnull=True)
         )
-
-class UserModelChoiceField(ModelChoiceField):
-    def label_from_instance(self, obj):
-        return f"{obj.teacher.get_full_name()}"
 
 class TransferOwnershipForm(forms.Form):
     admins = UserModelChoiceField(

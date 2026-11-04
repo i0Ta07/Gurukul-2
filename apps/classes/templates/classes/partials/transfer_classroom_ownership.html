@@ -6,7 +6,7 @@
     <form class="flex flex-col justify-between items-center w-full gap-2" hx-post="{% url 'transfer-classroom-ownership' org_id=org_id classroom_id=classroom_id %}" hx-target="#page-container" hx-swap="beforeend">
     {% for teacher_mem in teachers_memberships  %}
     <div class="flex justify-between w-full">
-        <p class="font-bold">{{ teacher_mem.user.get_full_name }}</p>
+        <p class="font-bold">{{ teacher_mem.user.get_full_name }} (@{{teacher_mem.user.username}})</p>
         <button class=" w-fit base-button bg-blue-500 hover:bg-blue-700" value="{{ teacher_mem.user_id }}" name="new_owner_id" type="submit">Select</button>
     </div>
     {% empty %}

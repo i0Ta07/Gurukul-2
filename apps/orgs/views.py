@@ -369,7 +369,7 @@ class ViewRootOrgConfig(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipReq
     def get(self,request, *args, **kwargs):
         root_org,_ = self.get_root_current_org()
         owner = root_org.config.owner
-        memberships = OrgMembership.objects.filter(org=root_org)
+        memberships = OrgMembership.objects.filter(org=root_org).select_related('teacher')
 
         admins = [
             m.teacher
