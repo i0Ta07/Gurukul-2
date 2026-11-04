@@ -411,11 +411,11 @@ class StreamNotifications(View):
 
 class PublicProfile(LoginRequiredMixin,View):
     def get(self,request,*args,**kwargs):
-        other_user_id = kwargs.get('other_user_id')
-        if other_user_id == request.user.id:
+        username = kwargs.get('username')
+        if username == request.user.username:
             return redirect("users-profile")
-        other_user = get_object_or_404(User,pk=other_user_id)
-        context = {'other_user':other_user}
+        user = get_object_or_404(User,username=username)
+        context = {'user':user}
         if request.htmx:
             return render(request,template_name="users/profile/public_profile.html#public-profile",context=context)
         return render(request,template_name="users/profile/public_profile.html",context=context)
