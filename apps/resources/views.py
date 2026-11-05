@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.views import View
 from apps.classes.mixins import ClassroomOrgMembershipRequired
 from apps.classes.models import ClassMembership, Classroom
+from apps.classes.utils import generate_classroom_hierarchy
 from apps.orgs.models import Organization
 from apps.orgs.utils import OrgUserType
 from apps.resources.forms import ResourceForm, SearchResourceForm,OrgFilterForm
@@ -174,7 +175,8 @@ class ListClassroomsToAttachResource(LoginRequiredMixin,TeacherRequiredMixin,Org
             is_attached=Exists(attached)
         ).filter(is_attached=False)
 
-        context = {'classrooms':classrooms,"org_id":root.id,"resource_id":resource.id}
+        hierarchies = generate_classroom_hierarchy(classrooms = classrooms)
+        context = {'hierarchies':hierarchies,"org_id":root.id,"resource_id":resource.id}
         return render(request,"resources/partials/list_classrooms_to_attach_resource.html",context=context)
 
 class AttachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,ClassroomOrgMembershipRequired,View):

@@ -4,6 +4,8 @@ from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from apps.users.models import User
 from enum import StrEnum
+from typing import Iterable
+from apps.orgs.utils import generate_org_hierarchy
 
 class ClassUserType(StrEnum):
     OWNER = "Classroom Owner"
@@ -63,4 +65,12 @@ def is_class_owner(classroom:Classroom,teacher:User):
     if role == ClassUserType.OWNER:
         return role
     return False
-        
+
+def generate_classroom_hierarchy(classrooms:Iterable[Classroom]):
+    """Generates classroom's root to parent hierarchy. Returns [(classroom_id,hierarchy)]"""
+    parents = set(c.parent for c in classrooms)
+    hierarchy = generate_org_hierarchy(parents)
+    classroom_hierarchy = dict()
+    for classroom in classrooms:
+        classroom_hierarchy[classroom.id] = hierarchy[classroom.parent_id] + [classroom]
+    return classroom_hierarchy

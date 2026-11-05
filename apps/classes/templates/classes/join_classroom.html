@@ -19,12 +19,13 @@
                 {{teacher.user__first_name}} {{teacher.user__last_name}},
                 {% endfor %}
                 </p>
-                <p>
-                    Hierarchy:
-                    {% for anc in ancestors %}
-                    {{ anc.name }} >
-                    {% endfor %}
-                    {{ classroom_name }}
+                <p class="font-semibold"></p>
+                {% for classroom_id,hierarchy in hierarchies.items %}
+                {% for node in hierarchy %}
+                    {{ node.name }}
+                    {% if not forloop.last %}>{% endif %}
+                {% endfor %}
+                {% endfor %}
                 </p>
                 <p>Age: Created {{ created_at|naturaltime }}</p>
                 <p>Student Count: {{ student_count }}</p>

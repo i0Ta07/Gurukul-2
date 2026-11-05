@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.classes.models import Classroom
+from apps.classes.utils import generate_classroom_hierarchy
 from apps.orgs.models import Organization
 from apps.users.models import User
 
@@ -83,22 +84,17 @@ class ResourceClassMembership(models.Model):
     def __str__(self):
         return f"{self.classroom.name}: {self.resource.id}"
 
-
     def save(self, *args, **kwargs):
         if not self.pk:
-            parent = self.classroom.parent
-            ancestors = list(parent.get_ancestors())
-            root = ancestors[0]
-
-            hierarchy = ancestors[1:] + [parent] # remove root and add current parent
+            hierarchies = generate_classroom_hierarchy(classrooms=[self.classroom])
+            hierarchy = hierarchies[self.classroom_id]
+            root = hierarchy.pop(0) # consume root
             template = root.config.template()
 
             snapshot = {
                 key: node.name
                 for key, node in zip(template, hierarchy)
             }
-            snapshot["Subject"] = self.classroom.name
-
             snapshots = self.resource.snapshots
             if snapshot not in snapshots:
                 snapshots.append(snapshot)

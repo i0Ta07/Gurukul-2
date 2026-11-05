@@ -1,14 +1,20 @@
 <div class="flex flex-col flex-1 max-h-100">
     <h1 class="text-center">Attach Resource</h1>
     <div class="flex flex-col gap-3 p-1 overflow-y-auto min-h-0 flex-1">
-        {% for classroom in classrooms %}
+        {% for classroom_id,hierarchy in hierarchies.items %}
         <div class="flex flex-1 p-1">
-            <form hx-post="{% url 'attach-resource' org_id=org_id classroom_id=classroom.id resource_id=resource_id %}" class="flex flex-1"
+            <form hx-post="{% url 'attach-resource' org_id=org_id classroom_id=classroom_id resource_id=resource_id %}" class="flex flex-1"
                 hx-target="this" hx-swap="innerHTML">
                 <div class="flex items-center justify-between gap-1.5 flex-1">
                     <div class="flex gap-1 text-sm  lg:text-lg flex-wrap">
-                        <p class="font-semibold">{{ classroom.name }}</p>
-                        <p class="italic">({{ classroom.parent.name }})</span></p>
+                        {% for node in hierarchy %}
+                        {% if not forloop.first %}
+                        <p class="font-semibold">{{ node.name }}</p>
+                            {% if not forloop.last %}
+                            <span>></span>
+                            {% endif %}
+                        {% endif %}
+                        {% endfor %}
                     </div>
                     <button class="base-button bg-blue-500 w-fit text-xs lg:text-sm shrink-0" type="submit">Attach</button>
                 </div>

@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from apps.classes.forms import AnnouncementForm, ClassroomNameForm
 from django.contrib import messages
 from django.views import View
-from apps.classes.utils import validate_classroom,validate_unique_classroom_siblings
+from apps.classes.utils import generate_classroom_hierarchy, validate_classroom,validate_unique_classroom_siblings
 from apps.orgs.models import OrgMembership
 from apps.orgs.utils import OrgUserType, build_slug
 from apps.classes.utils import ClassUserType
@@ -205,7 +205,8 @@ class JoinClassroom(LoginRequiredMixin,View):
             return create_message_and_redirect(request,message="You are not the part of the organization",url='users-dashboard',code="info")
         teachers = ClassMembership.objects.filter(user__user_type = User.UserType.TEACHER,classroom_id=classroom.id).values('user__first_name','user__last_name')
         student_count = ClassMembership.objects.filter(user__user_type = User.UserType.STUDENT,classroom_id=classroom.id).count()
-        context = {'teachers':teachers,'classroom_name':classroom.name,'owner_name':classroom.owner.get_full_name(),'code':code,'student_count':student_count,"created_at":classroom.created_at,"ancestors":classroom.parent.get_ancestors()}
+        hierarchies = generate_classroom_hierarchy(classrooms = [classroom])
+        context = {'teachers':teachers,'classroom_name':classroom.name,'owner_name':classroom.owner.get_full_name(),'code':code,'student_count':student_count,"created_at":classroom.created_at,"hierarchies":hierarchies}
         return render(request,self.template_name,context)
 
     def post(self,request,*args,**kwargs):

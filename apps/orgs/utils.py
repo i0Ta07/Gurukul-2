@@ -303,3 +303,38 @@ def transfer_ownership_otp_key(owner_id:int,org_id:int):
 
 def get_invitation_count_key(user_id):
     return f'users:{user_id}:invitation-count'
+
+# this is pure beauty
+def generate_org_hierarchy(parents: Iterable[Organization]) -> dict:
+    """Generate org structure without querying db again and again if nodes share same parents."""
+    unique_parents = set(parents)
+    unique_path_prefixes = set()
+
+    # Extract all required ancestor prefix strings for every unique parent
+    for parent in unique_parents:
+        path = parent.path
+        # Treebeard default step width is 4 characters per level
+        for i in range(4, len(path) + 1, 4):
+            unique_path_prefixes.add(path[:i])
+
+    if not unique_path_prefixes:
+        return {}
+
+    # Bulk fetch all organizations matching those prefixes in ONE query
+    orgs = Organization.objects.filter(path__in=unique_path_prefixes).only('path', 'id', 'name')
+    
+    # Map path strings to organization objects for O(1) in-memory lookups
+    path_to_org = {org.path: org for org in orgs}
+
+    hierarchies = {}
+    # Assemble hierarchies locally in memory with zero extra queries
+    for parent in unique_parents:
+        hierarchy = []
+        path = parent.path
+        for i in range(4, len(path) + 1, 4):
+            prefix = path[:i]
+            if prefix in path_to_org:
+                hierarchy.append(path_to_org[prefix])
+        hierarchies[parent.id] = hierarchy
+
+    return hierarchies
