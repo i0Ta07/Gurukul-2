@@ -12,7 +12,6 @@ from django.core.validators import EmailValidator
 from collections.abc import Iterable
 from django.db.models.query import QuerySet
 import secrets
-from django.template.defaultfilters import filesizeformat
 
 class OrgUserType(StrEnum):
     OWNER = "Owner"
@@ -304,12 +303,3 @@ def transfer_ownership_otp_key(owner_id:int,org_id:int):
 
 def get_invitation_count_key(user_id):
     return f'users:{user_id}:invitation-count'
-
-def clean_file_size(file,max_size:int):
-    """max_size in megabytes"""
-    max_size = max_size * 1024 * 1024 
-    if file.size > max_size:
-        raise ValidationError(
-            f"File too large. Size must be under {filesizeformat(max_size)}."
-            f"Current size is {filesizeformat(file.size)}."
-        )

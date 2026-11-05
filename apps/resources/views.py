@@ -229,8 +229,18 @@ class DetachResource(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequir
 class ViewResourceHistory(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,ResourceOrgMembershipRequired,View):
     def get(self,request,*args,**kwargs):
         resource = self.get_resource()
+        root,_ = self.get_root_current_org()
         snapshots = resource.snapshots
-        return render(request,"resources/partials/view_resource_history.html",{'snapshots':snapshots})
+        template = root.config.template()
+        final = []
+        for snap in snapshots:
+            temp = {}
+            for node in template:
+                if node in snap:
+                    temp[node] = snap[node]
+            final.append(temp)
+
+        return render(request,"resources/partials/view_resource_history.html",{'snapshots':final})
 
 class ViewOrphanResources(LoginRequiredMixin,TeacherRequiredMixin,OrgMembershipRequiredMixin,View):
     def get(self,request,*args,**kwargs):

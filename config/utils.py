@@ -14,6 +14,8 @@ from django.db.models import Case, When, Value, BooleanField
 from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import render
+from django.core.exceptions import ValidationError
+from django.template.defaultfilters import filesizeformat
 
 # Session
 from apps.users.models import CustomSession
@@ -131,3 +133,12 @@ def render_template_inside_modal(request,template_name,context):
     response["HX-Retarget"] = "#modal_container" 
     response["HX-Reswap"] = "innerHTML" 
     return response
+
+def clean_file_size(file,max_size:int):
+    """max_size in megabytes"""
+    max_size = max_size * 1024 * 1024 
+    if file.size > max_size:
+        raise ValidationError(
+            f"File too large. Size must be under {filesizeformat(max_size)}."
+            f"Current size is {filesizeformat(file.size)}."
+        )
