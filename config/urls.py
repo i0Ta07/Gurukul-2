@@ -32,10 +32,11 @@ urlpatterns = [
 
     # Apps
     path("", include("apps.users.urls")),
-    path("orgs/", include("apps.orgs.urls")),
-    path("classes/", include("apps.classes.urls")),
-    path("chats/", include("apps.chats.urls")),
-    path("resources/", include("apps.resources.urls")),
+    path("o/", include("apps.orgs.urls")),
+    path("c/", include("apps.classes.urls")),
+    path("ch/", include("apps.chats.urls")),
+    path("r/", include("apps.resources.urls")),
+    path("q/", include("apps.quizzes.urls")),
     
     # Password
     path('reset-password/',ResetPasswordView.as_view(),name='reset-password'),
