@@ -68,8 +68,8 @@ class ResourceClassMembership(models.Model):
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name="created_resource_memberships",
-        related_query_name="created_resource_membership"
+        related_name="resource_memberships",
+        related_query_name="resource_membership"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     
