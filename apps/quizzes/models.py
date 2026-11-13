@@ -4,6 +4,7 @@ from apps.orgs.models import Organization
 from apps.users.models import User
 from datetime import timedelta
 import os,uuid
+from django.utils.translation import gettext_lazy as _
 
 class Quiz(models.Model):
     root = models.ForeignKey(
@@ -121,3 +122,76 @@ class QuizClassMembership(models.Model):
 
     def __str__(self):
         return f"{self.quiz_id}:{self.classroom_id}"
+
+class Attempt(models.Model):
+    class Status(models.TextChoices):
+        IN_PROGRESS = 'P',_('In Progress')
+        COMPLETED = 'C',_('Completed')
+    student = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="attempts",
+        related_query_name="attempt"
+    )
+    membership = models.ForeignKey(
+        QuizClassMembership,
+        on_delete=models.CASCADE,
+        related_name="attempts",
+        related_query_name="attempt"
+    )
+    sections_question_order = models.JSONField(default=list) # [{"section_id": 3, "question_ids": [12, 7, 9]}, {"section_id": 5, "question_ids": [4, 2]}]
+    marks_obtained = models.DecimalField(max_digits=6, decimal_places=2,null=True,blank=True)
+    total_marks = models.DecimalField(max_digits=6, decimal_places=2,blank=True,null=True)
+    quiz_version = models.PositiveIntegerField()
+    connects = models.PositiveIntegerField(default=0) # count number of connects, should not be >=3, user can 2 chances of reconnect.
+    current_section_index = models.PositiveIntegerField(null=True,blank=True) # reject any answer whose question isn’t in the current section and in case of reconnect start from this section.
+    status = models.CharField(
+        choices=Status,
+        default=Status.IN_PROGRESS,
+        max_length=1
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['membership','student'],
+                name='unique_attempt_per_membership'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['membership', 'quiz_version'], name='membership_version_index'),
+        ]
+
+    def __str__(self):
+        return f"{self.student_id}:{self.membership_id}"
+
+class Answer(models.Model):
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="answers",
+        related_query_name="answer"
+    )
+    attempt = models.ForeignKey(
+        Attempt,
+        on_delete=models.CASCADE,
+        related_name="answers",
+        related_query_name="answer"
+    )
+    selected_options = models.JSONField(default=list)
+    is_correct = models.BooleanField(blank=True,null=True)
+    marks_awarded = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields= ['attempt','question'],
+                name="unique_answer_per_question_per_attempt"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.attempt_id}:{self.question_id}"
