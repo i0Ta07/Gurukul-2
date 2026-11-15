@@ -14,7 +14,7 @@
             <a hx-get="{% url 'search-resources' org_id=root_org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true" >
                 <img class="size-12" src="{% static 'orgs/icons/svg/resource.svg' %}">
             </a>
-            <a hx-get="#" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">
+            <a hx-get="{% url 'search-quizzes' org_id=root_org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">
                 <img class="size-13" src="{% static 'orgs/icons/svg/quiz.svg' %}">
             </a>
         </div>

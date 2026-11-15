@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ org_name }} | Search Quizzes{% endblock %}
+
+{% block content %}
+
+<div class="page-container " id="page-container" hx-history-elt>
+    {% partialdef search-quizzes inline %}
+    <title>{{ org_name }} | Search Quizzes</title>
+    <h1 class="text-center">Search {{ org_name }}'s Quizzes</h1>
+    <form hx-post="{% url 'search-quizzes' org_id=org_id %}" x-data hx-target="#quizzes" hx-swap="innerHTML" class="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto">
+        <div class="flex flex-col gap-3 xl:grid xl:grid-cols-5">
+            <div class="flex flex-col gap-3 xl:gap-5">
+                <p class="font-semibold text-lg lg:text-2xl text-center">Filters</p>
+                <div class="flex flex-col items-center justify-center gap-3 xl:gap-10 text-sm lg:text-base">
+                    {% for field in org_fitler_form %}
+                    {{ field }}
+                    {% endfor %}
+                    <a hx-get="#" hx-target="#quizzes" hx-swap="innerHTML" class="base-button bg-blue-500 hover:bg-blue-700 text-center text-xs lg:text-sm w-1/2 lg:w-full">View Orphan quizzes</a>
+                </div>
+            </div>
+            <div class="flex flex-col xl:col-span-4 p-1 items-center gap-3 flex-1 min-h-0">
+                <div class="flex flex-col lg:flex-row gap-1 w-full justify-center items-center lg:h-25">
+                    <div class="flex  justify-center items-center w-full gap-1.5">
+                        {{ search_quiz_form.title }}
+                        <button type="submit" class="base-button bg-blue-500 hover:bg-blue-700 w-fit text-xs lg:text-sm">Search</button>
+                    </div>
+                    <div class="divider divider-vertical lg:divider-horizontal">OR</div>
+                    <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2 text-xs lg:text-sm" hx-get="{% url 'create-quiz' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">Create New quiz</a>
+                </div>
+                <div class="flex flex-col gap-3 w-full p-1 flex-1 min-h-0 overflow-y-auto" id="quizzes"> <!--check if scrollable and make it responsive-->
+                    {% partialdef render-results %}
+                    <p class="font-bold text-center text-lg lg:text-2xl">Results</p>
+                    {% for quiz in quizzes %}
+                    {% partialdef quiz inline %}
+                    <div class="flex flex-col gap-0.5" id="quiz-{{ quiz.id }}">
+                        <hr class="text-gray-600 border">
+                        <div class="flex justify-between text-xs lg:text-base">
+                            <p class="font-semibold">{{ quiz.title }}</p>
+                            <div class="flex gap-1 flex-wrap">
+                                <a class="underline text-yellow-500 font-bold" @click="quiz_modal.showModal();" hx-get="#" hx-target="#modal_container" hx-swap="innerHTML">History</a>
+                                <a class="underline text-red-700 font-bold" @click="quiz_modal.showModal();" hx-get="#" hx-target="#modal_container" hx-swap="innerHTML">Delete</a>
+                                <a class="underline text-indigo-500 font-bold" @click="quiz_modal.showModal();" hx-get="#" hx-target="#modal_container" hx-swap="innerHTML">Update</a>                                
+                                <a class="underline text-green-700 font-bold" @click="quiz_modal.showModal();" hx-get="#" hx-target="#modal_container" hx-swap="innerHTML">Attach</a>
+                                <a href="#" target="_blank" class="underline text-blue-500 font-bold">View</a>
+                            </div>
+                        </div>
+                        <p class="text-right font-semibold text-gray-500 text-xs xl:text-sm">~{{ quiz.created_by.get_full_name }} ({{ quiz.created_at|naturaltime }})</p>
+                    </div>
+                    {% endpartialdef quiz %}
+                    {% empty %}
+                        <div class="flex flex-col items-center justify-center flex-1">
+                            <p class="italic font-bold text-gray-500 text-xs lg:text-base">No quizzes match the given filters</p>
+                        </div>
+                    {% endfor %}
+                    {% endpartialdef render-results %}
+                </div>
+            </div>
+        </div>
+        {% include "partials/form_errors.html#form-errors" with form=org_fitler_form %}
+        {% include "partials/form_errors.html#form-errors" with form=search_quiz_form %}
+    </form>
+    {% partialdef quiz-modal inline %}
+    <dialog id="quiz_modal" class="modal modal-bottom sm:modal-middle" x-data @close="setTimeout(() => {modal_container.innerHTML = '';}, 200);">
+        <div class="modal-box w-full lg:w-8/12 max-w-5xl">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            </form>
+            <div id="modal_container">
+                <div class="flex flex-col gap-1">
+                    <div class="skeleton h-8 w-full mt-5"></div>
+                    <div class="skeleton h-25 w-full"></div>
+                    <div class="skeleton h-8 w-full"></div>
+                </div>
+            </div>
+        </div>                
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+    {% endpartialdef quiz-modal %}
+    {% endpartialdef search-quizzes %}
+</div>
+
+{% endblock content %}

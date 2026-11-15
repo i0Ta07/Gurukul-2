@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Search Resources{% endblock %}
+{% block title %}{{ org_name }} | Search Resources{% endblock %}
 
 {% block content %}
 
 <div class="page-container " id="page-container" hx-history-elt>
     {% partialdef search-resources inline %}
-    <title>Search Resources</title>
+    <title>{{ org_name }} | Search Resources</title>
     <h1 class="text-center">Search {{ org_name }}'s Resources</h1>
     <form hx-post="{% url 'search-resources' org_id=org_id %}" x-data hx-target="#resources" hx-swap="innerHTML" class="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto">
-        <div class="flex flex-col gap-3 xl:grid xl:grid-cols-4 ">
+        <div class="flex flex-col gap-3 xl:grid xl:grid-cols-5">
             <div class="flex flex-col gap-3 xl:gap-5">
                 <p class="font-semibold text-lg lg:text-2xl text-center">Filters</p>
                 <div class="flex flex-col items-center justify-center gap-3 xl:gap-10 text-sm lg:text-base">
@@ -19,7 +19,7 @@
                     <a hx-get="{% url 'view-orphan-resources' org_id=org_id %}" hx-target="#resources" hx-swap="innerHTML" class="base-button bg-blue-500 hover:bg-blue-700 text-center text-xs lg:text-sm w-1/2 lg:w-full">View Orphan resources</a>
                 </div>
             </div>
-            <div class="flex flex-col xl:col-span-2 p-1 items-center gap-3 flex-1 min-h-0">
+            <div class="flex flex-col xl:col-span-3 p-1 items-center gap-3 flex-1 min-h-0">
                 <div class="flex flex-col lg:flex-row gap-1 w-full justify-center items-center lg:h-25">
                     <div class="flex  justify-center items-center w-full gap-1.5">
                         {{ search_resource_form.title }}
@@ -28,7 +28,7 @@
                     <div class="divider divider-vertical lg:divider-horizontal">OR</div>
                     <a class="base-button bg-blue-500 hover:bg-blue-700 text-center w-1/2 text-xs lg:text-sm" hx-get="{% url 'create-resource' org_id=org_id %}" hx-target="#page-container" hx-swap="innerHTML" hx-push-url="true">Create New Resource</a>
                 </div>
-                <div class="flex flex-col gap-3 w-full p-1 max-w-3xl flex-1 min-h-0 overflow-y-auto" id="resources"> <!--check if scrollable and make it responsive-->
+                <div class="flex flex-col gap-3 w-full p-1 flex-1 min-h-0 overflow-y-auto" id="resources"> <!--check if scrollable and make it responsive-->
                     {% partialdef render-results %}
                     <p class="font-bold text-center text-lg lg:text-2xl">Results</p>
                     {% for resource in resources %}
@@ -63,8 +63,8 @@
             <div class="flex flex-col items-center gap-3 xl:gap-5">
                 <p class="font-semibold text-lg lg:text-2xl text-center">Type</p>
                 <div class="flex xl:flex-col gap-3 flex-wrap text-sm lg:text-base">
-                    {% for choice in search_resource_form.type %}
-                    {{ choice }}
+                    {% for type in search_resource_form.type %}
+                    {{ type }}
                     {% endfor %}
                 </div>
             </div>
